@@ -16,7 +16,7 @@ The developer also needs logs and live tuning, without a hardware debugger.
 - **A CDC ACM serial console** exists only in the `debug` build. It prints
   logs and accepts text commands for tuning. The `release` build is HID
   only.
-- **USB identity:** VID:PID `1209:0001` (pid.codes test PID) during phase 1,
+- **USB identity:** VID:PID `1209:0001` (release) and `1209:0002` (debug), pid.codes test PIDs, during phase 1,
   a dedicated pid.codes PID before production. Product string "DISLED",
   serial number from the chip unique ID, `bcdDevice` from the firmware
   version, `bMaxPower` = 300 mA.

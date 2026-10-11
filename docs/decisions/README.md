@@ -13,3 +13,4 @@ one.
 | [0005](0005-licensing.md) | GPL-3.0-or-later with a WCH SDK exception, CERN-OHL-S-2.0 | Accepted |
 | [0006](0006-desktop-app.md) | Tauri 2 desktop app with Vue 3 | Accepted |
 | [0007](0007-device-behavior.md) | The device owns the lamp state; the host synchronizes | Accepted |
+| [0008](0008-toolchain-baseline.md) | Toolchain baseline from the spike (versions, interrupts, clocks) | Accepted |

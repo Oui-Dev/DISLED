@@ -1,0 +1,22 @@
+{
+  "name": "tinyusb",
+  "version": "0.21.0",
+  "description": "TinyUSB device stack built for the CH32V20x USBD (FSDEV) port. The upstream sources are the upstream/ git submodule, pinned to tag 0.21.0.",
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "ch32v",
+  "build": {
+    "srcDir": "upstream/src",
+    "includeDir": "upstream/src",
+    "srcFilter": [
+      "-<*>",
+      "+<tusb.c>",
+      "+<common/*.c>",
+      "+<device/*.c>",
+      "+<class/hid/hid_device.c>",
+      "+<class/cdc/cdc_device.c>",
+      "+<portable/st/stm32_fsdev/dcd_stm32_fsdev.c>",
+      "+<portable/st/stm32_fsdev/fsdev_common.c>"
+    ]
+  }
+}
