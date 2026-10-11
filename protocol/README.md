@@ -92,7 +92,7 @@ at all. Unselected bytes are ignored, whatever their value.
 
 | Offset | Size | Field |
 |---|---|---|
-| 0 | 2 | `state_seq`: increases by one at every change of the other fields |
+| 0 | 2 | `state_seq`: increases by one with every `STATE` message that carries a change; a reply without change repeats it |
 | 2 | 1 | `on` |
 | 3 | 1 | `color` |
 | 4 | 1 | `brightness_mode` |
@@ -102,8 +102,9 @@ at all. Unselected bytes are ignored, whatever their value.
 | 8 | 1 | `source` of the latest change: 0 boot, 1 touch, 2 host, 3 automatic brightness, 4 USB |
 
 Unsolicited `STATE` messages caused only by automatic brightness are sent
-at most every 500 ms. A host that sees `state_seq` jump has missed
-messages and should send `GET_STATE`.
+at most every 500 ms; changes in between are merged into the next message.
+A host that sees `state_seq` jump by more than one has missed a message
+and should send `GET_STATE`.
 
 ### TELEMETRY body (32 bytes)
 
@@ -145,5 +146,6 @@ Fields of a vector:
   pairs; the rest of the payload is zero.
 - commands: `status` (`ok`, `unknown_command`, `bad_length`,
   `bad_value`), `type`, `seq` and, when relevant, `set_state` or
-  `telemetry_period_ms`.
+  `telemetry_period_ms`. `"canonical": false` marks bytes that a decoder
+  must accept but an encoder never produces (non-zero unselected fields).
 - messages: `kind` and the decoded fields.

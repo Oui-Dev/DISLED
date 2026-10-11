@@ -25,11 +25,16 @@ typedef struct {
     usb_link_t link;
 } state_content_t;
 
-static state_content_t s_content; /* latest observed state */
+/*
+ * s_seen is the state observed on the last pass, s_sent the state carried by
+ * the last STATE message. The sequence number grows by one with each STATE
+ * message that carries new content, so the host sees a gap only when it
+ * really lost a message, even when level changes are coalesced.
+ */
+static state_content_t s_seen;
+static state_content_t s_sent;
 static uint16_t s_state_seq;
 static change_source_t s_source;
-static bool s_notify_pending;
-static bool s_pending_level_only; /* only the automatic level changed */
 static uint32_t s_last_level_notify_ms;
 
 static uint16_t s_telemetry_period_ms;
@@ -54,43 +59,50 @@ static bool same_lamp(const lamp_state_t *a, const lamp_state_t *b)
            a->manual_level == b->manual_level;
 }
 
-/* Bumps the sequence number when the state differs from the last one seen,
- * and records why. */
-static void track_changes(void)
+static bool same_content(const state_content_t *a, const state_content_t *b)
 {
-    const state_content_t now = observe();
-    const bool lamp_changed = !same_lamp(&now.lamp, &s_content.lamp);
-    const bool link_changed = now.link != s_content.link;
-    const bool level_changed = now.applied_percent != s_content.applied_percent;
-    if (!lamp_changed && !link_changed && !level_changed) {
-        return;
-    }
-
-    if (lamp_changed) {
-        s_source = app.source;
-    } else if (link_changed) {
-        s_source = CHANGE_SOURCE_USB;
-    } else {
-        s_source = CHANGE_SOURCE_AUTO_BRIGHTNESS;
-    }
-    const bool level_only = !lamp_changed && !link_changed;
-    s_pending_level_only = s_notify_pending ? (s_pending_level_only && level_only) : level_only;
-    s_notify_pending = true;
-    s_content = now;
-    s_state_seq++;
-
-    if (link_changed && now.link != USB_LINK_CONFIGURED) {
-        s_telemetry_period_ms = 0; /* the host left: stop streaming */
-    }
+    return same_lamp(&a->lamp, &b->lamp) && a->applied_percent == b->applied_percent &&
+           a->link == b->link;
 }
 
+/* Records the cause of the latest change. */
+static void observe_changes(void)
+{
+    const state_content_t now = observe();
+    if (!same_lamp(&now.lamp, &s_seen.lamp)) {
+        s_source = app.source;
+    } else if (now.link != s_seen.link) {
+        s_source = CHANGE_SOURCE_USB;
+        if (now.link != USB_LINK_CONFIGURED) {
+            s_telemetry_period_ms = 0; /* the host left: stop streaming */
+        }
+    } else if (now.applied_percent != s_seen.applied_percent) {
+        s_source = CHANGE_SOURCE_AUTO_BRIGHTNESS;
+    }
+    s_seen = now;
+}
+
+static bool notification_pending(void)
+{
+    return !same_content(&s_seen, &s_sent);
+}
+
+/* Only the automatic brightness changed since the last STATE message. */
+static bool only_level_pending(void)
+{
+    return same_lamp(&s_seen.lamp, &s_sent.lamp) && s_seen.link == s_sent.link;
+}
+
+/* Sends the current state; `seq` is the request it answers (0: none). */
 static bool send_state(uint8_t seq)
 {
+    const bool new_content = notification_pending();
+    const uint16_t state_seq = new_content ? (uint16_t)(s_state_seq + 1u) : s_state_seq;
     const proto_state_t state = {
-        .state_seq = s_state_seq,
-        .lamp = s_content.lamp,
-        .applied_percent = s_content.applied_percent,
-        .link = s_content.link,
+        .state_seq = state_seq,
+        .lamp = s_seen.lamp,
+        .applied_percent = s_seen.applied_percent,
+        .link = s_seen.link,
         .source = s_source,
     };
     uint8_t payload[PROTO_REPORT_SIZE];
@@ -98,7 +110,8 @@ static bool send_state(uint8_t seq)
     if (!usb_hid_send(payload)) {
         return false;
     }
-    s_notify_pending = false;
+    s_state_seq = state_seq;
+    s_sent = s_seen;
     return true;
 }
 
@@ -152,7 +165,7 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             send_info(command.seq);
             break;
         case PROTO_CMD_GET_STATE:
-            track_changes();
+            observe_changes();
             (void)send_state(command.seq);
             break;
         case PROTO_CMD_SET_STATE:
@@ -164,7 +177,7 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             }
             /* The answer is the new state; it also serves as the
              * notification of the change. */
-            track_changes();
+            observe_changes();
             (void)send_state(command.seq);
             break;
         case PROTO_CMD_SET_TELEMETRY:
@@ -211,10 +224,10 @@ static void send_telemetry(uint32_t now_ms)
 
 void app_host_init(void)
 {
-    s_content = observe();
+    s_seen = observe();
+    s_sent = s_seen;
     s_state_seq = 0;
     s_source = CHANGE_SOURCE_BOOT;
-    s_notify_pending = false;
 }
 
 void app_host_task(uint32_t now_ms)
@@ -224,11 +237,12 @@ void app_host_task(uint32_t now_ms)
         handle_command(payload, now_ms);
     }
 
-    track_changes();
-    if (s_notify_pending && app.link == USB_LINK_CONFIGURED) {
-        const bool throttled = s_pending_level_only &&
-                               time_elapsed_ms(now_ms, s_last_level_notify_ms) < APP_AUTO_LEVEL_NOTIFY_MS;
-        if (!throttled && send_state(0) && s_pending_level_only) {
+    observe_changes();
+    if (notification_pending() && app.link == USB_LINK_CONFIGURED) {
+        const bool level_only = only_level_pending();
+        const bool throttled =
+            level_only && time_elapsed_ms(now_ms, s_last_level_notify_ms) < APP_AUTO_LEVEL_NOTIFY_MS;
+        if (!throttled && send_state(0) && level_only) {
             s_last_level_notify_ms = now_ms;
         }
     }

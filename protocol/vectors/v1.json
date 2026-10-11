@@ -43,7 +43,8 @@
       "set_state": {
         "fields": 2,
         "color": 2
-      }
+      },
+      "canonical": false
     },
     {
       "name": "set_state_power_off",
