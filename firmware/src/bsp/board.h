@@ -29,11 +29,11 @@
 #define BOARD_TOUCH_ADC_CHANNEL ADC_Channel_9
 
 /* Ambient light sensor VEML7700 on I2C1, default pin mapping. */
-#define BOARD_I2C            I2C1
-#define BOARD_I2C_PORT       GPIOB
-#define BOARD_I2C_SCL_PIN    GPIO_Pin_6
-#define BOARD_I2C_SDA_PIN    GPIO_Pin_7
-#define BOARD_VEML7700_ADDR  0x10u
+#define BOARD_I2C           I2C1
+#define BOARD_I2C_PORT      GPIOB
+#define BOARD_I2C_SCL_PIN   GPIO_Pin_6
+#define BOARD_I2C_SDA_PIN   GPIO_Pin_7
+#define BOARD_VEML7700_ADDR 0x10u
 
 /*
  * Unused pins, set to analog input (lowest leakage, no floating inputs).
@@ -43,8 +43,9 @@
  *  - PB8 is bonded to BOOT0: never drive it.
  *  - PA13/PA14 are the SDI debug pads, PD0/PD1 the crystal.
  */
-#define BOARD_UNUSED_PINS_A \
-    (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_9 | GPIO_Pin_15)
+#define BOARD_UNUSED_PINS_A                                                                     \
+    (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_9 | \
+     GPIO_Pin_15)
 #define BOARD_UNUSED_PINS_B (GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5)
 
 _Static_assert((BOARD_UNUSED_PINS_A & GPIO_Pin_10) == 0, "PA10 shares a pad with USB D-");

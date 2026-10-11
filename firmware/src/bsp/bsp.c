@@ -49,7 +49,8 @@ static void init_clocks(void)
         RCC_USBCLKConfig(RCC_USBCLKSource_PLLCLK_Div3); /* 144 / 3 = 48 MHz */
     }
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO,
+                           ENABLE);
 }
 
 static void init_unused_pins(void)

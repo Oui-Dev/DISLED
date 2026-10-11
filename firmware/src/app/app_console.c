@@ -71,13 +71,14 @@ static void cmd_state(int argc, char **argv)
     console_printf("lamp %s, %s, %s, manual %u%%, applied %u per mille\r\n",
                    app.lamp.on ? "on" : "off", color_names[app.lamp.color],
                    app.lamp.brightness_mode == BRIGHTNESS_MODE_AUTO ? "auto" : "manual",
-                   (unsigned)app.lamp.manual_level, (unsigned)brightness_level_permille(&app.brightness));
+                   (unsigned)app.lamp.manual_level,
+                   (unsigned)brightness_level_permille(&app.brightness));
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
-    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty %u/%u/%u of %u\r\n",
-                   link_names[app.link], (unsigned long)(estimate / 10u),
-                   (unsigned long)(estimate % 10u), (unsigned)led_output_cap_ma(&app.output),
-                   (unsigned)app.duty[LED_CHANNEL_RED], (unsigned)app.duty[LED_CHANNEL_GREEN],
-                   (unsigned)app.duty[LED_CHANNEL_BLUE], (unsigned)led_pwm_period());
+    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty %u/%u/%u of %u\r\n", link_names[app.link],
+                   (unsigned long)(estimate / 10u), (unsigned long)(estimate % 10u),
+                   (unsigned)led_output_cap_ma(&app.output), (unsigned)app.duty[LED_CHANNEL_RED],
+                   (unsigned)app.duty[LED_CHANNEL_GREEN], (unsigned)app.duty[LED_CHANNEL_BLUE],
+                   (unsigned)led_pwm_period());
 }
 
 static void cmd_set(int argc, char **argv)
@@ -139,7 +140,8 @@ static void cmd_touch(int argc, char **argv)
     } else if (argc == 2 && strcmp(argv[1], "recal") == 0) {
         touch_detector_recalibrate(&app.touch);
     } else {
-        console_printf("usage: touch phase <0-%u>|dither|recal\r\n", (unsigned)(led_pwm_period() - 1u));
+        console_printf("usage: touch phase <0-%u>|dither|recal\r\n",
+                       (unsigned)(led_pwm_period() - 1u));
         return;
     }
     console_printf("sample phase %u ticks\r\n", (unsigned)led_pwm_sample_phase());
@@ -203,13 +205,12 @@ void app_console_task(uint32_t now_ms)
     s_watch_next_ms = now_ms + s_watch_period_ms;
     const uint32_t lux = app.als.lux_centi;
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
-    console_printf("%u %u %u %d %u | %lu.%02lu | %lu.%lu\r\n", (unsigned)touch_detector_raw(&app.touch),
-                   (unsigned)touch_detector_value(&app.touch),
-                   (unsigned)touch_detector_baseline(&app.touch),
-                   (int)touch_detector_delta_permille(&app.touch),
-                   (unsigned)touch_detector_state(&app.touch), (unsigned long)(lux / 100u),
-                   (unsigned long)(lux % 100u), (unsigned long)(estimate / 10u),
-                   (unsigned long)(estimate % 10u));
+    console_printf(
+        "%u %u %u %d %u | %lu.%02lu | %lu.%lu\r\n", (unsigned)touch_detector_raw(&app.touch),
+        (unsigned)touch_detector_value(&app.touch), (unsigned)touch_detector_baseline(&app.touch),
+        (int)touch_detector_delta_permille(&app.touch), (unsigned)touch_detector_state(&app.touch),
+        (unsigned long)(lux / 100u), (unsigned long)(lux % 100u), (unsigned long)(estimate / 10u),
+        (unsigned long)(estimate % 10u));
 }
 
 #endif

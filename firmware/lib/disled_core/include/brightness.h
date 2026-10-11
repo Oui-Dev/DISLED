@@ -28,9 +28,9 @@ typedef struct {
 typedef struct {
     const brightness_point_t *curve; /* sorted by lux, at least 2 points */
     uint8_t curve_points;
-    uint8_t filter_shift;        /* time constant: 2^shift lux updates */
-    uint16_t deadband_permille;  /* target changes smaller than this are ignored */
-    uint16_t fallback_permille;  /* automatic level without a lux reading */
+    uint8_t filter_shift;       /* time constant: 2^shift lux updates */
+    uint16_t deadband_permille; /* target changes smaller than this are ignored */
+    uint16_t fallback_permille; /* automatic level without a lux reading */
 } brightness_config_t;
 
 typedef struct {

@@ -23,8 +23,8 @@
 
 typedef struct {
     uint16_t full_scale_ma[LED_CHANNEL_COUNT]; /* current at 100 % duty, <= POWER_MAX_MA */
-    uint16_t unconfigured_cap_ma; /* no host: USB allows 100 mA in total */
-    uint16_t configured_cap_ma;   /* thermal limit of the closed cube */
+    uint16_t unconfigured_cap_ma;              /* no host: USB allows 100 mA in total */
+    uint16_t configured_cap_ma;                /* thermal limit of the closed cube */
 } power_config_t;
 
 /* LED current allowed in a USB state; zero while suspended. */

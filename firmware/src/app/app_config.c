@@ -36,13 +36,15 @@ const veml7700_config_t app_veml7700_config = {
 
 /* Ambient light to brightness. Tune (V1): the review expects 30-100 %
  * during the day and 2-20 % in the evening. */
+/* clang-format off */
 static const brightness_point_t brightness_curve[] = {
-    { LUX(1), 20 },
-    { LUX(10), 80 },
-    { LUX(100), 300 },
-    { LUX(1000), 800 },
+    {    LUX(1),   20 },
+    {   LUX(10),   80 },
+    {  LUX(100),  300 },
+    { LUX(1000),  800 },
     { LUX(3000), 1000 },
 };
+/* clang-format on */
 
 const brightness_config_t app_brightness_config = {
     .curve = brightness_curve,
@@ -54,15 +56,17 @@ const brightness_config_t app_brightness_config = {
 
 /* Colors at full brightness, linear light. Tune the orange and the warm
  * white by eye through the PLA, then the per-channel balance. */
+/* clang-format off: keep the table readable */
 const color_config_t app_color_config = {
     .palette = {
-        [LAMP_COLOR_GREEN] = { 0, 65535, 0 },
-        [LAMP_COLOR_ORANGE] = { 65535, 16384, 0 },
-        [LAMP_COLOR_RED] = { 65535, 0, 0 },
+        [LAMP_COLOR_GREEN]      = {     0, 65535,    0 },
+        [LAMP_COLOR_ORANGE]     = { 65535, 16384,    0 },
+        [LAMP_COLOR_RED]        = { 65535,     0,    0 },
         [LAMP_COLOR_WARM_WHITE] = { 65535, 36000, 9000 },
     },
     .balance = { 65535, 65535, 65535 },
 };
+/* clang-format on */
 
 /* Worst-case LED currents at 100 % duty (review N2: 5.25 V, lowest
  * forward voltage). Caps: 70 mA + about 25 mA for the MCU stays within the

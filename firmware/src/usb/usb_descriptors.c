@@ -17,7 +17,8 @@
 
 /* bcdDevice = firmware MAJOR.MINOR in BCD (two digits each). */
 #define TO_BCD2(value) ((uint16_t)((((value) / 10u) % 10u) << 4 | ((value) % 10u)))
-#define USB_BCD_DEVICE ((uint16_t)(TO_BCD2(DISLED_FW_VERSION_MAJOR) << 8 | TO_BCD2(DISLED_FW_VERSION_MINOR)))
+#define USB_BCD_DEVICE \
+    ((uint16_t)(TO_BCD2(DISLED_FW_VERSION_MAJOR) << 8 | TO_BCD2(DISLED_FW_VERSION_MINOR)))
 
 enum {
     STRID_LANGID = 0,
@@ -57,20 +58,18 @@ static const uint8_t desc_hid_report[] = {
     HID_USAGE_PAGE_N(HID_USAGE_PAGE_VENDOR, 2),
     HID_USAGE(0x01),
     HID_COLLECTION(HID_COLLECTION_APPLICATION),
-        HID_REPORT_ID(PROTO_REPORT_ID_COMMAND)
-        HID_USAGE(0x02),
-        HID_LOGICAL_MIN(0x00),
-        HID_LOGICAL_MAX_N(0xFF, 2),
-        HID_REPORT_SIZE(8),
-        HID_REPORT_COUNT(PROTO_REPORT_SIZE),
-        HID_OUTPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
-        HID_REPORT_ID(PROTO_REPORT_ID_MESSAGE)
-        HID_USAGE(0x03),
-        HID_LOGICAL_MIN(0x00),
-        HID_LOGICAL_MAX_N(0xFF, 2),
-        HID_REPORT_SIZE(8),
-        HID_REPORT_COUNT(PROTO_REPORT_SIZE),
-        HID_INPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
+    HID_REPORT_ID(PROTO_REPORT_ID_COMMAND) HID_USAGE(0x02),
+    HID_LOGICAL_MIN(0x00),
+    HID_LOGICAL_MAX_N(0xFF, 2),
+    HID_REPORT_SIZE(8),
+    HID_REPORT_COUNT(PROTO_REPORT_SIZE),
+    HID_OUTPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
+    HID_REPORT_ID(PROTO_REPORT_ID_MESSAGE) HID_USAGE(0x03),
+    HID_LOGICAL_MIN(0x00),
+    HID_LOGICAL_MAX_N(0xFF, 2),
+    HID_REPORT_SIZE(8),
+    HID_REPORT_COUNT(PROTO_REPORT_SIZE),
+    HID_INPUT(HID_DATA | HID_VARIABLE | HID_ABSOLUTE),
     HID_COLLECTION_END,
 };
 
@@ -79,9 +78,9 @@ static const uint8_t desc_hid_report[] = {
 
 static const uint8_t desc_configuration[] = {
     TUD_CONFIG_DESCRIPTOR(1, USB_ITF_COUNT, 0, CONFIG_TOTAL_LEN, 0x00, USB_MAX_POWER_MA),
-    TUD_HID_INOUT_DESCRIPTOR(USB_ITF_HID, STRID_HID, HID_ITF_PROTOCOL_NONE,
-                             sizeof(desc_hid_report), USB_EP_HID_OUT, USB_EP_HID_IN,
-                             CFG_TUD_HID_EP_BUFSIZE, USB_HID_POLL_INTERVAL_MS),
+    TUD_HID_INOUT_DESCRIPTOR(USB_ITF_HID, STRID_HID, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report),
+                             USB_EP_HID_OUT, USB_EP_HID_IN, CFG_TUD_HID_EP_BUFSIZE,
+                             USB_HID_POLL_INTERVAL_MS),
 #if CFG_TUD_CDC
     TUD_CDC_DESCRIPTOR(USB_ITF_CDC_COMM, STRID_CDC, USB_EP_CDC_NOTIF, 8, USB_EP_CDC_OUT,
                        USB_EP_CDC_IN, CFG_TUD_CDC_EP_BUFSIZE),
@@ -138,7 +137,7 @@ const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
             return NULL;
         }
         const char *text = string_table[index];
-        while (text[count] != '\0' && count < STRING_MAX_CHARS) {
+        while (count < STRING_MAX_CHARS && text[count] != '\0') {
             desc_string[1u + count] = (uint16_t)text[count];
             count++;
         }

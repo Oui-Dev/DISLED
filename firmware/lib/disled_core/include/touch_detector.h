@@ -40,17 +40,17 @@ typedef enum {
 } touch_state_t;
 
 typedef struct {
-    uint16_t window_samples;    /* raw samples averaged per window */
+    uint16_t window_samples;     /* raw samples averaged per window */
     uint8_t calibration_windows; /* windows averaged into the first baseline */
-    uint8_t baseline_shift;     /* baseline time constant: 2^shift windows */
-    uint16_t press_permille;    /* drop that starts a touch */
-    uint16_t release_permille;  /* drop under which the touch ends */
-    uint16_t debounce_ms;       /* a change must hold this long */
-    uint16_t long_press_ms;     /* contact time of a long press */
-    uint16_t object_ms;         /* contact time that means "object" */
-    uint16_t inverted_permille; /* rise above baseline that means "recalibrate" */
-    uint16_t inverted_ms;       /* how long the rise must hold */
-    bool rising_touch;          /* set if a touch raises the reading */
+    uint8_t baseline_shift;      /* baseline time constant: 2^shift windows */
+    uint16_t press_permille;     /* drop that starts a touch */
+    uint16_t release_permille;   /* drop under which the touch ends */
+    uint16_t debounce_ms;        /* a change must hold this long */
+    uint16_t long_press_ms;      /* contact time of a long press */
+    uint16_t object_ms;          /* contact time that means "object" */
+    uint16_t inverted_permille;  /* rise above baseline that means "recalibrate" */
+    uint16_t inverted_ms;        /* how long the rise must hold */
+    bool rising_touch;           /* set if a touch raises the reading */
 } touch_config_t;
 
 typedef struct {
@@ -67,8 +67,8 @@ typedef struct {
     uint8_t calibration_count;
     int16_t delta_permille; /* positive while touched */
     /* Debounced contact tracking. */
-    bool contact;           /* debounced contact */
-    bool pending;           /* raw contact differs from `contact` */
+    bool contact; /* debounced contact */
+    bool pending; /* raw contact differs from `contact` */
     uint32_t pending_since_ms;
     uint32_t press_start_ms;
     bool long_fired;

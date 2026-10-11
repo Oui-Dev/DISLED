@@ -11,9 +11,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define BSP_UID_BYTES      12u
+#define BSP_UID_BYTES 12u
 /* 24 hexadecimal digits, without terminator. */
-#define BSP_UID_HEX_CHARS  (2u * BSP_UID_BYTES)
+#define BSP_UID_HEX_CHARS (2u * BSP_UID_BYTES)
 
 /* Copies the unique ID, most significant byte first. */
 void bsp_uid_read(uint8_t uid[BSP_UID_BYTES]);

@@ -64,9 +64,8 @@ static void hold(uint16_t raw, uint32_t duration_ms)
 static void hold_with_hum(uint16_t raw, int16_t amplitude, uint32_t duration_ms)
 {
     /* sin(2*pi*k/20) * 1000, one 50 Hz period at 1 kHz. */
-    static const int16_t sine[20] = { 0,    309,  588,  809,  951,  1000,  951,
-                                      809,  588,  309,  0,    -309, -588,  -809,
-                                      -951, -1000, -951, -809, -588, -309 };
+    static const int16_t sine[20] = { 0, 309,  588,  809,  951,  1000,  951,  809,  588,  309,
+                                      0, -309, -588, -809, -951, -1000, -951, -809, -588, -309 };
     for (uint32_t i = 0; i < duration_ms; i++) {
         now_ms++;
         const int32_t hum = (amplitude * sine[now_ms % 20u]) / 1000;
@@ -178,7 +177,7 @@ static void test_baseline_follows_slow_drift(void)
 static void test_finger_at_power_up_recalibrates(void)
 {
     touch_detector_init(&td, &config);
-    hold(TOUCHED, 200); /* calibrated with the finger on the lid */
+    hold(TOUCHED, 200);   /* calibrated with the finger on the lid */
     hold(BASELINE, 1500); /* finger lifted: reading above the baseline */
     TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
     TEST_ASSERT_UINT16_WITHIN(2, BASELINE, touch_detector_baseline(&td));

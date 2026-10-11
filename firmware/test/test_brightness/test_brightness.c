@@ -10,11 +10,7 @@
 #define LUX(x) ((uint32_t)(x) * 100u)
 
 static const brightness_point_t curve[] = {
-    { LUX(1), 20 },
-    { LUX(10), 80 },
-    { LUX(100), 300 },
-    { LUX(1000), 800 },
-    { LUX(3000), 1000 },
+    { LUX(1), 20 }, { LUX(10), 80 }, { LUX(100), 300 }, { LUX(1000), 800 }, { LUX(3000), 1000 },
 };
 
 static const brightness_config_t config = {

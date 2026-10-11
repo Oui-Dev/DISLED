@@ -211,7 +211,8 @@ static void send_telemetry(uint32_t now_ms)
         .touch_state = (uint8_t)touch_detector_state(&app.touch),
         .lux_centi = app.als.lux_centi,
         .als_raw = app.als.raw,
-        .duty = { app.duty[LED_CHANNEL_RED], app.duty[LED_CHANNEL_GREEN], app.duty[LED_CHANNEL_BLUE] },
+        .duty = { app.duty[LED_CHANNEL_RED], app.duty[LED_CHANNEL_GREEN],
+                  app.duty[LED_CHANNEL_BLUE] },
         .led_current_ma_x10 = (uint16_t)led_output_estimate_ma_x10(&app.output),
         .cap_ma = led_output_cap_ma(&app.output),
         .link = app.link,
@@ -240,8 +241,8 @@ void app_host_task(uint32_t now_ms)
     observe_changes();
     if (notification_pending() && app.link == USB_LINK_CONFIGURED) {
         const bool level_only = only_level_pending();
-        const bool throttled =
-            level_only && time_elapsed_ms(now_ms, s_last_level_notify_ms) < APP_AUTO_LEVEL_NOTIFY_MS;
+        const bool throttled = level_only && time_elapsed_ms(now_ms, s_last_level_notify_ms) <
+                                                 APP_AUTO_LEVEL_NOTIFY_MS;
         if (!throttled && send_state(0) && level_only) {
             s_last_level_notify_ms = now_ms;
         }

@@ -10,13 +10,14 @@
 #define PERIOD 7200u
 
 static const color_config_t colors = {
-    .palette = {
-        [LAMP_COLOR_GREEN] = { 0, 65535, 0 },
-        [LAMP_COLOR_ORANGE] = { 65535, 16384, 0 },
-        [LAMP_COLOR_RED] = { 65535, 0, 0 },
-        [LAMP_COLOR_WARM_WHITE] = { 65535, 65535, 65535 },
-    },
-    .balance = { 65535, 65535, 65535 },
+    .palette =
+        {
+            [LAMP_COLOR_GREEN] = {0, 65535, 0},
+            [LAMP_COLOR_ORANGE] = {65535, 16384, 0},
+            [LAMP_COLOR_RED] = {65535, 0, 0},
+            [LAMP_COLOR_WARM_WHITE] = {65535, 65535, 65535},
+        },
+    .balance = {65535, 65535, 65535},
 };
 
 static const power_config_t power = {

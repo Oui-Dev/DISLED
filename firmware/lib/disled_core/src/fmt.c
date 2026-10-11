@@ -22,8 +22,8 @@ static void emit(sink_t *sink, char c)
     sink->length++;
 }
 
-static void emit_padded(sink_t *sink, const char *text, size_t text_length, size_t width,
-                        bool left, char pad)
+static void emit_padded(sink_t *sink, const char *text, size_t text_length, size_t width, bool left,
+                        char pad)
 {
     size_t padding = (width > text_length) ? width - text_length : 0u;
     if (!left) {

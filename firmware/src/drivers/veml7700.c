@@ -80,8 +80,8 @@ bool veml7700_init(const veml7700_config_t *config)
         return false;
     }
     /* Persistence 1, interrupt off, shutdown bit cleared (powered on). */
-    const uint16_t conf = (uint16_t)(((uint16_t)config->gain << 11) |
-                                     ((uint16_t)config->integration << 6));
+    const uint16_t conf =
+        (uint16_t)(((uint16_t)config->gain << 11) | ((uint16_t)config->integration << 6));
     return write_register(REG_ALS_CONF, conf);
 }
 

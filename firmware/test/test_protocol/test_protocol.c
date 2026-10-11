@@ -118,14 +118,18 @@ static void test_encode_state_bytes(void)
 {
     const proto_state_t state = {
         .state_seq = 0x1234,
-        .lamp = { .on = true, .color = LAMP_COLOR_ORANGE, .brightness_mode = BRIGHTNESS_MODE_MANUAL,
+        .lamp = { .on = true,
+                  .color = LAMP_COLOR_ORANGE,
+                  .brightness_mode = BRIGHTNESS_MODE_MANUAL,
                   .manual_level = 30 },
         .applied_percent = 30,
         .link = USB_LINK_CONFIGURED,
         .source = CHANGE_SOURCE_TOUCH,
     };
     proto_encode_state(payload, 5, &state);
-    const uint8_t expected[] = { PROTO_MSG_STATE, 5, PROTO_STATE_SIZE, 0x34, 0x12, 1, 1, 1, 30, 30, 1, 1 };
+    const uint8_t expected[] = {
+        PROTO_MSG_STATE, 5, PROTO_STATE_SIZE, 0x34, 0x12, 1, 1, 1, 30, 30, 1, 1
+    };
     TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, payload, sizeof expected);
     for (size_t i = sizeof expected; i < PROTO_REPORT_SIZE; i++) {
         TEST_ASSERT_EQUAL_HEX8(0, payload[i]);
@@ -230,8 +234,8 @@ static void test_command_vectors(void)
             }
         }
         if (v->has_period) {
-            TEST_ASSERT_EQUAL_UINT16_MESSAGE(v->telemetry_period_ms, command.body.telemetry_period_ms,
-                                             v->name);
+            TEST_ASSERT_EQUAL_UINT16_MESSAGE(v->telemetry_period_ms,
+                                             command.body.telemetry_period_ms, v->name);
         }
     }
 }

@@ -66,7 +66,8 @@ void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_
         }
     }
 
-    out->cap_ma = (in->cap_override_ma != 0u) ? in->cap_override_ma : power_cap_ma(cfg->power, in->link);
+    out->cap_ma =
+        (in->cap_override_ma != 0u) ? in->cap_override_ma : power_cap_ma(cfg->power, in->link);
     if (in->link == USB_LINK_SUSPENDED) {
         out->cap_ma = 0;
     }

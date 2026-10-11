@@ -137,8 +137,7 @@ void proto_encode_info(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq, const pr
     end_message(&w);
 }
 
-void proto_encode_state(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq,
-                        const proto_state_t *state)
+void proto_encode_state(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq, const proto_state_t *state)
 {
     writer_t w = begin_message(payload, PROTO_MSG_STATE, seq);
     put_u16(&w, state->state_seq);
@@ -152,8 +151,7 @@ void proto_encode_state(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq,
     end_message(&w);
 }
 
-void proto_encode_telemetry(uint8_t payload[PROTO_REPORT_SIZE],
-                            const proto_telemetry_t *telemetry)
+void proto_encode_telemetry(uint8_t payload[PROTO_REPORT_SIZE], const proto_telemetry_t *telemetry)
 {
     writer_t w = begin_message(payload, PROTO_MSG_TELEMETRY, 0u);
     put_u32(&w, telemetry->uptime_ms);

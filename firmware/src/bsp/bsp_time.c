@@ -49,17 +49,23 @@ uint32_t bsp_time_ms(void)
     return s_ms;
 }
 
+/* Current SysTick count (lower word; the counter never exceeds CMP). */
+static uint32_t systick_count(void)
+{
+    return (uint32_t)SysTick->CNT;
+}
+
 void bsp_time_delay_us(uint32_t us)
 {
     /* The counter reloads every millisecond, so measure elapsed ticks
      * modulo one period. */
     const uint32_t period = (uint32_t)SysTick->CMP + 1u;
     const uint32_t ticks = us * (SystemCoreClock / 1000000u);
-    const uint32_t start = (uint32_t)SysTick->CNT;
+    const uint32_t start = systick_count();
     uint32_t elapsed = 0;
 
     while (elapsed < ticks) {
-        const uint32_t now = (uint32_t)SysTick->CNT;
+        const uint32_t now = systick_count();
         elapsed = (now >= start) ? (now - start) : (period - start + now);
     }
 }

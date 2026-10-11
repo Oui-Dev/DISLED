@@ -17,10 +17,10 @@
 #error "DISLED_DEBUG must be defined by the build (0 or 1)"
 #endif
 
-#define CFG_TUSB_OS          OPT_OS_NONE
-#define CFG_TUSB_DEBUG       0
+#define CFG_TUSB_OS    OPT_OS_NONE
+#define CFG_TUSB_DEBUG 0
 #define CFG_TUSB_MEM_SECTION
-#define CFG_TUSB_MEM_ALIGN   __attribute__((aligned(4)))
+#define CFG_TUSB_MEM_ALIGN __attribute__((aligned(4)))
 
 /* Device stack on root port 0, full speed. */
 #define CFG_TUD_ENABLED        1

@@ -8,13 +8,14 @@
 #include "color.h"
 
 static const color_config_t config = {
-    .palette = {
-        [LAMP_COLOR_GREEN] = { 0, 65535, 0 },
-        [LAMP_COLOR_ORANGE] = { 65535, 16384, 0 },
-        [LAMP_COLOR_RED] = { 65535, 0, 0 },
-        [LAMP_COLOR_WARM_WHITE] = { 65535, 36000, 9000 },
-    },
-    .balance = { 65535, 32768, 65535 },
+    .palette =
+        {
+            [LAMP_COLOR_GREEN] = {0, 65535, 0},
+            [LAMP_COLOR_ORANGE] = {65535, 16384, 0},
+            [LAMP_COLOR_RED] = {65535, 0, 0},
+            [LAMP_COLOR_WARM_WHITE] = {65535, 36000, 9000},
+        },
+    .balance = {65535, 32768, 65535},
 };
 
 void setUp(void)

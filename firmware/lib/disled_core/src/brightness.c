@@ -19,7 +19,8 @@ static int32_t log2_q8(uint32_t x)
     while ((x >> (msb + 1u)) != 0u) {
         msb++;
     }
-    const uint32_t fraction = (msb >= 8u) ? ((x >> (msb - 8u)) & 0xFFu) : ((x << (8u - msb)) & 0xFFu);
+    const uint32_t fraction =
+        (msb >= 8u) ? ((x >> (msb - 8u)) & 0xFFu) : ((x << (8u - msb)) & 0xFFu);
     return (int32_t)((msb << 8) | fraction);
 }
 

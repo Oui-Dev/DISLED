@@ -94,8 +94,8 @@ static void task_touch(uint32_t now_ms)
         if (changed) {
             app.source = CHANGE_SOURCE_TOUCH;
             LOG_INFO("touch: %s press, lamp %s, color %u",
-                     event == TOUCH_EVENT_SHORT_PRESS ? "short" : "long", app.lamp.on ? "on" : "off",
-                     (unsigned)app.lamp.color);
+                     event == TOUCH_EVENT_SHORT_PRESS ? "short" : "long",
+                     app.lamp.on ? "on" : "off", (unsigned)app.lamp.color);
         }
     }
 }

@@ -129,8 +129,7 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
 void proto_encode_info(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq, const proto_info_t *info);
 void proto_encode_state(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq,
                         const proto_state_t *state);
-void proto_encode_telemetry(uint8_t payload[PROTO_REPORT_SIZE],
-                            const proto_telemetry_t *telemetry);
+void proto_encode_telemetry(uint8_t payload[PROTO_REPORT_SIZE], const proto_telemetry_t *telemetry);
 void proto_encode_ack(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq, uint8_t command_type);
 void proto_encode_error(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq, uint8_t command_type,
                         proto_status_t error);
