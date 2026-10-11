@@ -32,14 +32,14 @@ reconnects when it is plugged back in. No driver is needed.
 
 ## Layout
 
-| Path | Content |
-|---|---|
-| `src-tauri/src/protocol.rs` | Protocol codec, tested against `protocol/vectors/v1.json` |
-| `src-tauri/src/device.rs` | USB worker thread: discovery, reconnection, reads and writes |
-| `src-tauri/src/lib.rs` | Tauri commands (`device_connection`, `device_send`, `save_csv`) |
-| `src/lib/protocol.ts` | TypeScript mirror of the Rust message types |
-| `src/lib/device.ts` | Device store shared by the components, CSV recorder |
-| `src/components/` | Header, lamp panel, telemetry panel, canvas line chart |
+| Path                        | Content                                                         |
+| --------------------------- | --------------------------------------------------------------- |
+| `src-tauri/src/protocol.rs` | Protocol codec, tested against `protocol/vectors/v1.json`       |
+| `src-tauri/src/device.rs`   | USB worker thread: discovery, reconnection, reads and writes    |
+| `src-tauri/src/lib.rs`      | Tauri commands (`device_connection`, `device_send`, `save_csv`) |
+| `src/lib/protocol.ts`       | TypeScript mirror of the Rust message types                     |
+| `src/lib/device.ts`         | Device store shared by the components, CSV recorder             |
+| `src/components/`           | Header, lamp panel, telemetry panel, canvas line chart          |
 
 The USB access stays in Rust: the macOS web view has no WebHID, and a
 backend-owned connection keeps working once the app runs in the background.
