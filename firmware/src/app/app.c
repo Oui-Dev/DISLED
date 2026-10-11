@@ -100,19 +100,30 @@ static void task_touch(uint32_t now_ms)
     }
 }
 
+/* Probes the sensor. The first readings after power-on are not valid
+ * until an integration completes, so they are skipped. */
+static void als_probe(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
+{
+    als->present = veml7700_init(&app_veml7700_config);
+    als->errors = 0;
+    als->retry_ms = now_ms + retry_delay_ms;
+    als->settle_ms = now_ms + 2u * veml7700_integration_ms();
+}
+
 static void task_als(uint32_t now_ms)
 {
     app_als_t *als = &app.als;
 
     if (!als->present) {
         if (time_reached(now_ms, als->retry_ms)) {
-            als->present = veml7700_init(&app_veml7700_config);
-            als->errors = 0;
-            als->retry_ms = now_ms + APP_ALS_RETRY_MS;
+            als_probe(als, now_ms, APP_ALS_RETRY_MS);
             if (als->present) {
                 LOG_INFO("als: sensor found");
             }
         }
+        return;
+    }
+    if (!time_reached(now_ms, als->settle_ms)) {
         return;
     }
 
@@ -195,8 +206,8 @@ void app_init(const fault_record_t *fault)
     brightness_init(&app.brightness, &app_brightness_config);
 
     i2c_bus_init(APP_I2C_SPEED_HZ);
-    app.als.present = veml7700_init(&app_veml7700_config);
-    app.als.retry_ms = bsp_time_ms() + APP_ALS_RETRY_MS;
+    /* The sensor may still be powering up: retry soon if it is silent. */
+    als_probe(&app.als, bsp_time_ms(), APP_ALS_FIRST_RETRY_MS);
 
     touch_detector_init(&app.touch, &app_touch_config);
     tkey_init(&app_tkey_config);

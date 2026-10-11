@@ -24,10 +24,11 @@
 #define APP_OUTPUT_PERIOD_MS 10u
 
 /* Light sensor: one reading per integration time. */
-#define APP_ALS_PERIOD_MS  100u
-#define APP_ALS_MAX_ERRORS 5u    /* consecutive failures before giving up */
-#define APP_ALS_RETRY_MS   5000u /* then retry the sensor this often */
-#define APP_I2C_SPEED_HZ   100000u
+#define APP_ALS_PERIOD_MS      100u
+#define APP_ALS_MAX_ERRORS     5u    /* consecutive failures before giving up */
+#define APP_ALS_RETRY_MS       5000u /* then retry the sensor this often */
+#define APP_ALS_FIRST_RETRY_MS 200u  /* sooner at start-up, in case it was still booting */
+#define APP_I2C_SPEED_HZ       100000u
 
 /* Host notifications caused by automatic brightness: at most this often. */
 #define APP_AUTO_LEVEL_NOTIFY_MS 500u

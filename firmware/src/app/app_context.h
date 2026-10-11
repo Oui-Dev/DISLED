@@ -21,8 +21,9 @@
 
 typedef struct {
     bool present;
-    uint8_t errors;    /* consecutive read failures */
-    uint32_t retry_ms; /* next detection attempt while absent */
+    uint8_t errors;     /* consecutive read failures */
+    uint32_t retry_ms;  /* next detection attempt while absent */
+    uint32_t settle_ms; /* first valid reading after (re)initialization */
     uint16_t raw;
     uint32_t lux_centi;
 } app_als_t;
