@@ -1,0 +1,20 @@
+# Text files use LF in the repository and in working trees.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files are never converted or diffed as text.
+*.epro2 binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.step binary
+*.stp binary
+*.bin binary
+*.elf binary

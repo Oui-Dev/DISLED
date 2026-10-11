@@ -1,0 +1,26 @@
+# Local tooling, not part of the project
+/.claude/
+/easyeda-api-skill/
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+__pycache__/
+
+# Hardware: large generated 3D exports (regenerate them from EasyEDA)
+*.step
+*.stp
+
+# Firmware (PlatformIO)
+firmware/.pio/
+firmware/.vscode/*
+!firmware/.vscode/extensions.json
+
+# Desktop app (Tauri + Vue)
+app/node_modules/
+app/dist/
+app/src-tauri/target/
+app/src-tauri/gen/schemas/
