@@ -46,4 +46,20 @@ Baseline with the USB stack only:
 | release (HID) | 10.1 KB / 32 KB | 3.0 KB / 10 KB |
 
 About 20 KB of flash remain for the application. `scripts/size_budget.py`
-reports usage after every build and fails it above 100 %.
+reports usage after every build, warns above 90 % and fails above 100 %.
+
+Update after the first complete MVP build (same day):
+
+| Build | Flash | RAM (stack included) |
+|---|---|---|
+| debug, no LTO | 28.3 KB | 4.9 KB |
+| debug, LTO | 24.2 KB | 4.9 KB |
+| release, LTO | 17.7 KB | 4.1 KB |
+
+- **Link-time optimization is on** (`board_build.use_lto = yes`). The
+  disassembly checks that interrupt handlers keep no software prologue for
+  caller-saved registers, restore what they use and end with `mret`, and
+  that vector aliases survive.
+- **No 64-bit division:** libgcc's `__divdi3` and `__udivdi3` cost 2 KB.
+  The fixed-point code keeps every intermediate within 32 bits, with
+  static assertions on the bounds.

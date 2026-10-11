@@ -1,0 +1,242 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 The DISLED contributors
+ * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
+ */
+#include "app_host.h"
+
+#include <stdbool.h>
+#include <string.h>
+
+#include "app_config.h"
+#include "app_context.h"
+#include "bsp/board.h"
+#include "bsp/bsp.h"
+#include "bsp/bsp_uid.h"
+#include "diag/log.h"
+#include "protocol.h"
+#include "time_utils.h"
+#include "usb/usb_device.h"
+
+/* What a STATE message describes, without its sequence number. */
+typedef struct {
+    lamp_state_t lamp;
+    uint8_t applied_percent;
+    usb_link_t link;
+} state_content_t;
+
+static state_content_t s_content; /* latest observed state */
+static uint16_t s_state_seq;
+static change_source_t s_source;
+static bool s_notify_pending;
+static bool s_pending_level_only; /* only the automatic level changed */
+static uint32_t s_last_level_notify_ms;
+
+static uint16_t s_telemetry_period_ms;
+static uint32_t s_telemetry_next_ms;
+
+static bool s_reset_pending;
+static uint32_t s_reset_at_ms;
+
+static state_content_t observe(void)
+{
+    const state_content_t content = {
+        .lamp = app.lamp,
+        .applied_percent = brightness_level_percent(&app.brightness),
+        .link = app.link,
+    };
+    return content;
+}
+
+static bool same_lamp(const lamp_state_t *a, const lamp_state_t *b)
+{
+    return a->on == b->on && a->color == b->color && a->brightness_mode == b->brightness_mode &&
+           a->manual_level == b->manual_level;
+}
+
+/* Bumps the sequence number when the state differs from the last one seen,
+ * and records why. */
+static void track_changes(void)
+{
+    const state_content_t now = observe();
+    const bool lamp_changed = !same_lamp(&now.lamp, &s_content.lamp);
+    const bool link_changed = now.link != s_content.link;
+    const bool level_changed = now.applied_percent != s_content.applied_percent;
+    if (!lamp_changed && !link_changed && !level_changed) {
+        return;
+    }
+
+    if (lamp_changed) {
+        s_source = app.source;
+    } else if (link_changed) {
+        s_source = CHANGE_SOURCE_USB;
+    } else {
+        s_source = CHANGE_SOURCE_AUTO_BRIGHTNESS;
+    }
+    const bool level_only = !lamp_changed && !link_changed;
+    s_pending_level_only = s_notify_pending ? (s_pending_level_only && level_only) : level_only;
+    s_notify_pending = true;
+    s_content = now;
+    s_state_seq++;
+
+    if (link_changed && now.link != USB_LINK_CONFIGURED) {
+        s_telemetry_period_ms = 0; /* the host left: stop streaming */
+    }
+}
+
+static bool send_state(uint8_t seq)
+{
+    const proto_state_t state = {
+        .state_seq = s_state_seq,
+        .lamp = s_content.lamp,
+        .applied_percent = s_content.applied_percent,
+        .link = s_content.link,
+        .source = s_source,
+    };
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_state(payload, seq, &state);
+    if (!usb_hid_send(payload)) {
+        return false;
+    }
+    s_notify_pending = false;
+    return true;
+}
+
+static void send_info(uint8_t seq)
+{
+    proto_info_t info = {
+        .fw_major = DISLED_FW_VERSION_MAJOR,
+        .fw_minor = DISLED_FW_VERSION_MINOR,
+        .fw_patch = DISLED_FW_VERSION_PATCH,
+        .board_revision = BOARD_REVISION,
+        .capabilities = PROTO_CAP_TELEMETRY | (DISLED_DEBUG ? PROTO_CAP_DEBUG_CONSOLE : 0u),
+        .reset_cause = app.reset_cause,
+        .flags = (uint8_t)((DISLED_DEBUG ? PROTO_INFO_FLAG_DEBUG_BUILD : 0u) |
+                           (app.fault.valid ? PROTO_INFO_FLAG_FAULT : 0u)),
+        .fault_mcause = app.fault.mcause,
+        .fault_mepc = app.fault.mepc,
+        .fw_version = DISLED_FW_VERSION_STRING,
+    };
+    bsp_uid_read(info.uid);
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_info(payload, seq, &info);
+    (void)usb_hid_send(payload);
+}
+
+static void send_ack(uint8_t seq, uint8_t command_type)
+{
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_ack(payload, seq, command_type);
+    (void)usb_hid_send(payload);
+}
+
+static void send_error(uint8_t seq, uint8_t command_type, proto_status_t error)
+{
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_error(payload, seq, command_type, error);
+    (void)usb_hid_send(payload);
+}
+
+static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t now_ms)
+{
+    proto_command_t command;
+    const proto_status_t status = proto_decode_command(payload, &command);
+    if (status != PROTO_OK) {
+        LOG_WARN("host: command 0x%02x rejected (%u)", command.type, (unsigned)status);
+        send_error(command.seq, command.type, status);
+        return;
+    }
+
+    switch (command.type) {
+        case PROTO_CMD_GET_INFO:
+            send_info(command.seq);
+            break;
+        case PROTO_CMD_GET_STATE:
+            track_changes();
+            (void)send_state(command.seq);
+            break;
+        case PROTO_CMD_SET_STATE:
+            if (app_apply_request(&command.body.set_state)) {
+                LOG_INFO("host: lamp %s, color %u, %s %u%%", app.lamp.on ? "on" : "off",
+                         (unsigned)app.lamp.color,
+                         app.lamp.brightness_mode == BRIGHTNESS_MODE_AUTO ? "auto" : "manual",
+                         (unsigned)app.lamp.manual_level);
+            }
+            /* The answer is the new state; it also serves as the
+             * notification of the change. */
+            track_changes();
+            (void)send_state(command.seq);
+            break;
+        case PROTO_CMD_SET_TELEMETRY:
+            s_telemetry_period_ms = command.body.telemetry_period_ms;
+            s_telemetry_next_ms = now_ms;
+            send_ack(command.seq, command.type);
+            break;
+        case PROTO_CMD_RESET:
+            send_ack(command.seq, command.type);
+            s_reset_pending = true;
+            s_reset_at_ms = now_ms + APP_RESET_DELAY_MS;
+            break;
+        default:
+            break;
+    }
+}
+
+static void send_telemetry(uint32_t now_ms)
+{
+    if (s_telemetry_period_ms == 0u || !time_reached(now_ms, s_telemetry_next_ms)) {
+        return;
+    }
+    s_telemetry_next_ms = now_ms + s_telemetry_period_ms;
+
+    const proto_telemetry_t telemetry = {
+        .uptime_ms = now_ms,
+        .touch_raw = touch_detector_raw(&app.touch),
+        .touch_value = touch_detector_value(&app.touch),
+        .touch_baseline = touch_detector_baseline(&app.touch),
+        .touch_delta_permille = touch_detector_delta_permille(&app.touch),
+        .touch_state = (uint8_t)touch_detector_state(&app.touch),
+        .lux_centi = app.als.lux_centi,
+        .als_raw = app.als.raw,
+        .duty = { app.duty[LED_CHANNEL_RED], app.duty[LED_CHANNEL_GREEN], app.duty[LED_CHANNEL_BLUE] },
+        .led_current_ma_x10 = (uint16_t)led_output_estimate_ma_x10(&app.output),
+        .cap_ma = led_output_cap_ma(&app.output),
+        .link = app.link,
+        .level_permille = brightness_level_permille(&app.brightness),
+    };
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_telemetry(payload, &telemetry);
+    (void)usb_hid_send(payload);
+}
+
+void app_host_init(void)
+{
+    s_content = observe();
+    s_state_seq = 0;
+    s_source = CHANGE_SOURCE_BOOT;
+    s_notify_pending = false;
+}
+
+void app_host_task(uint32_t now_ms)
+{
+    uint8_t payload[PROTO_REPORT_SIZE];
+    while (usb_hid_receive(payload)) {
+        handle_command(payload, now_ms);
+    }
+
+    track_changes();
+    if (s_notify_pending && app.link == USB_LINK_CONFIGURED) {
+        const bool throttled = s_pending_level_only &&
+                               time_elapsed_ms(now_ms, s_last_level_notify_ms) < APP_AUTO_LEVEL_NOTIFY_MS;
+        if (!throttled && send_state(0) && s_pending_level_only) {
+            s_last_level_notify_ms = now_ms;
+        }
+    }
+
+    send_telemetry(now_ms);
+
+    if (s_reset_pending && time_reached(now_ms, s_reset_at_ms)) {
+        LOG_WARN("host: reset requested");
+        bsp_system_reset();
+    }
+}

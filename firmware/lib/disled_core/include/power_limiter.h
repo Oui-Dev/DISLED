@@ -18,8 +18,11 @@
 
 #include "disled_types.h"
 
+/* Upper bound of every current in this module (keeps the math 32-bit). */
+#define POWER_MAX_MA 1000u
+
 typedef struct {
-    uint16_t full_scale_ma[LED_CHANNEL_COUNT]; /* current at 100 % duty */
+    uint16_t full_scale_ma[LED_CHANNEL_COUNT]; /* current at 100 % duty, <= POWER_MAX_MA */
     uint16_t unconfigured_cap_ma; /* no host: USB allows 100 mA in total */
     uint16_t configured_cap_ma;   /* thermal limit of the closed cube */
 } power_config_t;

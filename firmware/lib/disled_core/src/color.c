@@ -52,10 +52,12 @@ rgb16_t color_compose(const color_config_t *config, lamp_color_t color, uint16_t
 
 static uint16_t mix_channel(uint16_t from, uint16_t to, uint16_t t)
 {
-    /* 64-bit product: span * t reaches 65535 * 65535. */
-    const int64_t span = (int64_t)to - (int64_t)from;
-    const int64_t offset = (span * (int64_t)t + (span >= 0 ? 32767 : -32767)) / 65535;
-    return (uint16_t)((int64_t)from + offset);
+    /* t on 15 bits keeps span * t within 32 bits (65535 * 32767 < 2^31),
+     * avoiding a 64-bit division from libgcc. */
+    const int32_t span = (int32_t)to - (int32_t)from;
+    const int32_t t15 = (int32_t)(t >> 1);
+    const int32_t offset = (span * t15 + (span >= 0 ? 16383 : -16383)) / 32767;
+    return (uint16_t)((int32_t)from + offset);
 }
 
 rgb16_t color_mix(rgb16_t from, rgb16_t to, uint16_t t)

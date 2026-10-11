@@ -90,10 +90,14 @@ bool veml7700_read(uint16_t *als_raw)
     return read_register(REG_ALS, als_raw);
 }
 
+/* lux x 100 = raw * resolution(uLx) * (16 / eighths) * (800 / it) / 10^4
+ *           = raw * SCALE / (eighths * it), SCALE = resolution * 1.28. */
+#define LUX_CENTI_SCALE ((RESOLUTION_ULX_X2_800MS * 16u * 800u) / 10000u)
+_Static_assert((RESOLUTION_ULX_X2_800MS * 16u * 800u) % 10000u == 0u, "exact scale");
+_Static_assert(65535ull * LUX_CENTI_SCALE < (1ull << 32), "32-bit product");
+
 uint32_t veml7700_lux_centi(uint16_t als_raw)
 {
-    /* lux x 100 = raw * resolution(uLx) * (16 / eighths) * (800 / it) / 10^4 */
-    const uint64_t numerator = (uint64_t)als_raw * RESOLUTION_ULX_X2_800MS * 16u * 800u;
-    const uint64_t denominator = (uint64_t)gain_eighths(s_config.gain) * veml7700_integration_ms() * 10000u;
-    return (uint32_t)((numerator + denominator / 2u) / denominator);
+    const uint32_t denominator = (uint32_t)gain_eighths(s_config.gain) * veml7700_integration_ms();
+    return ((uint32_t)als_raw * LUX_CENTI_SCALE + denominator / 2u) / denominator;
 }
