@@ -7,6 +7,7 @@
 #include <unity.h>
 
 #include "protocol.h"
+#include "protocol_vectors.h"
 
 static uint8_t payload[PROTO_REPORT_SIZE];
 static proto_command_t command;
@@ -194,6 +195,73 @@ static void test_encode_ack_and_error(void)
     TEST_ASSERT_EQUAL_HEX8_ARRAY(error, payload, sizeof error);
 }
 
+static void test_vectors_match_the_protocol_version(void)
+{
+    TEST_ASSERT_EQUAL_UINT(PROTO_VERSION_MAJOR, VECTORS_PROTOCOL_MAJOR);
+    TEST_ASSERT_EQUAL_UINT(PROTO_VERSION_MINOR, VECTORS_PROTOCOL_MINOR);
+}
+
+static void test_command_vectors(void)
+{
+    for (size_t i = 0; i < sizeof command_vectors / sizeof command_vectors[0]; i++) {
+        const command_vector_t *v = &command_vectors[i];
+        memset(&command, 0, sizeof command);
+        TEST_ASSERT_EQUAL_MESSAGE(v->status, proto_decode_command(v->payload, &command), v->name);
+        TEST_ASSERT_EQUAL_HEX8_MESSAGE(v->type, command.type, v->name);
+        TEST_ASSERT_EQUAL_UINT8_MESSAGE(v->seq, command.seq, v->name);
+        if (v->status != PROTO_OK) {
+            continue;
+        }
+        if (v->has_set_state) {
+            const lamp_request_t *got = &command.body.set_state;
+            const lamp_request_t *want = &v->set_state;
+            TEST_ASSERT_EQUAL_HEX8_MESSAGE(want->fields, got->fields, v->name);
+            if (want->fields & LAMP_FIELD_POWER) {
+                TEST_ASSERT_EQUAL_MESSAGE(want->on, got->on, v->name);
+            }
+            if (want->fields & LAMP_FIELD_COLOR) {
+                TEST_ASSERT_EQUAL_MESSAGE(want->color, got->color, v->name);
+            }
+            if (want->fields & LAMP_FIELD_BRIGHTNESS_MODE) {
+                TEST_ASSERT_EQUAL_MESSAGE(want->brightness_mode, got->brightness_mode, v->name);
+            }
+            if (want->fields & LAMP_FIELD_MANUAL_LEVEL) {
+                TEST_ASSERT_EQUAL_UINT8_MESSAGE(want->manual_level, got->manual_level, v->name);
+            }
+        }
+        if (v->has_period) {
+            TEST_ASSERT_EQUAL_UINT16_MESSAGE(v->telemetry_period_ms, command.body.telemetry_period_ms,
+                                             v->name);
+        }
+    }
+}
+
+static void test_message_vectors(void)
+{
+    for (size_t i = 0; i < sizeof message_vectors / sizeof message_vectors[0]; i++) {
+        const message_vector_t *v = &message_vectors[i];
+        switch (v->kind) {
+            case MSG_STATE:
+                proto_encode_state(payload, v->seq, &v->state);
+                break;
+            case MSG_INFO:
+                proto_encode_info(payload, v->seq, &v->info);
+                break;
+            case MSG_TELEMETRY:
+                proto_encode_telemetry(payload, &v->telemetry);
+                break;
+            case MSG_ACK:
+                proto_encode_ack(payload, v->seq, v->command);
+                break;
+            case MSG_ERROR:
+            default:
+                proto_encode_error(payload, v->seq, v->command, v->error);
+                break;
+        }
+        TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(v->payload, payload, PROTO_REPORT_SIZE, v->name);
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -210,5 +278,8 @@ int main(void)
     RUN_TEST(test_encode_info_truncates_a_long_version);
     RUN_TEST(test_encode_telemetry_size_and_signed_delta);
     RUN_TEST(test_encode_ack_and_error);
+    RUN_TEST(test_vectors_match_the_protocol_version);
+    RUN_TEST(test_command_vectors);
+    RUN_TEST(test_message_vectors);
     return UNITY_END();
 }
