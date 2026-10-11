@@ -26,6 +26,17 @@ desktop app gives full control.
 - Capacitive touch electrode on the lid (CH32V203 TouchKey)
 - USB-C for power, flashing (WCH ROM bootloader) and communication
 
+## Getting started
+
+| I want to… | Read |
+|---|---|
+| Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
+| Run the desktop app | [app/README.md](app/README.md) |
+| Understand the design | [docs/architecture.md](docs/architecture.md), [decision records](docs/decisions/) |
+| Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
+| Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |
+| Bring up a new board | [docs/bringup.md](docs/bringup.md) |
+
 ## Licensing
 
 Software is GPL-3.0-or-later with an additional permission for the WCH SDK.
