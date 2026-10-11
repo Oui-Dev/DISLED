@@ -1,0 +1,37 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 The DISLED contributors
+ * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
+ *
+ * LED current budget (review N2).
+ *
+ * Each channel draws a fixed current while its MOSFET conducts, so the
+ * average current is duty x full-scale current. The model uses worst-case
+ * full-scale currents (5.25 V bus, lowest forward voltage). When a color
+ * would exceed the cap of the current USB state, all three channels are
+ * scaled by the same factor, which keeps the hue.
+ */
+#ifndef DISLED_POWER_LIMITER_H
+#define DISLED_POWER_LIMITER_H
+
+#include <stdint.h>
+
+#include "disled_types.h"
+
+typedef struct {
+    uint16_t full_scale_ma[LED_CHANNEL_COUNT]; /* current at 100 % duty */
+    uint16_t unconfigured_cap_ma; /* no host: USB allows 100 mA in total */
+    uint16_t configured_cap_ma;   /* thermal limit of the closed cube */
+} power_config_t;
+
+/* LED current allowed in a USB state; zero while suspended. */
+uint16_t power_cap_ma(const power_config_t *config, usb_link_t link);
+
+/* Estimated LED current of a linear light output, in tenths of mA. */
+uint32_t power_estimate_ma_x10(const power_config_t *config, rgb16_t light);
+
+/* Scales `light` down, all channels alike, so that its estimated current
+ * does not exceed `cap_ma`. */
+rgb16_t power_limit(const power_config_t *config, rgb16_t light, uint16_t cap_ma);
+
+#endif /* DISLED_POWER_LIMITER_H */

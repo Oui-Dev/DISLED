@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 The DISLED contributors
+# Code style of the firmware sources (lib/disled_core, src, test).
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+BreakBeforeBraces: Linux
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+PointerAlignment: Right
+IncludeBlocks: Preserve
+SortIncludes: Never
+IndentCaseLabels: true
+SpaceBeforeParens: ControlStatements
