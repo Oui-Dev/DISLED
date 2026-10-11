@@ -5,6 +5,8 @@
  */
 #include "bsp_time.h"
 
+#include <stddef.h>
+
 #include "ch32.h"
 
 /* SysTick control bits (QingKe V4 core). */
@@ -14,12 +16,22 @@
 #define STK_CTLR_STRE  (1u << 3) /* auto-reload on compare match */
 
 static volatile uint32_t s_ms;
+static volatile bsp_tick_hook_t s_tick_hook;
 
 void SysTick_Handler(void) BSP_ISR;
 void SysTick_Handler(void)
 {
     SysTick->SR = 0;
     s_ms++;
+    const bsp_tick_hook_t hook = s_tick_hook;
+    if (hook != NULL) {
+        hook();
+    }
+}
+
+void bsp_time_set_tick_hook(bsp_tick_hook_t hook)
+{
+    s_tick_hook = hook;
 }
 
 void bsp_time_init(void)

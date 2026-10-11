@@ -19,4 +19,9 @@ uint32_t bsp_time_ms(void);
 /* Busy-waits at least the given number of microseconds (up to 1000). */
 void bsp_time_delay_us(uint32_t us);
 
+/* Function called from the SysTick interrupt every millisecond, after the
+ * time base is updated. One hook at most; NULL removes it. Keep it short. */
+typedef void (*bsp_tick_hook_t)(void);
+void bsp_time_set_tick_hook(bsp_tick_hook_t hook);
+
 #endif /* DISLED_BSP_TIME_H */
