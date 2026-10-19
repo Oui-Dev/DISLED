@@ -205,7 +205,8 @@ static void diag_blink(uint16_t count)
 {
     uint16_t duty[LED_CHANNEL_COUNT] = { 0, 0, 0 };
     for (uint16_t i = 0; i < 2u * count; i++) {
-        duty[LED_CHANNEL_RED] = (i % 2u == 0u) ? (uint16_t)(led_pwm_period() / 8u) : 0u;
+        /* 1/8 of full scale, in sub-ticks. */
+        duty[LED_CHANNEL_RED] = (i % 2u == 0u) ? (uint16_t)(led_pwm_period() * 2u) : 0u;
         led_pwm_set(duty);
         const uint32_t start = bsp_time_ms();
         while (time_elapsed_ms(bsp_time_ms(), start) < 400u) {
@@ -253,7 +254,7 @@ void app_init(const fault_record_t *fault)
     const uint32_t timer_mhz = bsp_apb1_timer_clock_hz() / 1000000u;
     for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
         app.output_config.pulse_loss[i] =
-            (uint16_t)((app_led_pulse_loss_ns[i] * timer_mhz + 500u) / 1000u);
+            (uint16_t)((app_led_pulse_loss_ns[i] * timer_mhz * LED_DUTY_SUBTICKS + 500u) / 1000u);
     }
     led_output_init(&app.output, &app.output_config);
 #ifdef DISLED_BOOT_DIAG

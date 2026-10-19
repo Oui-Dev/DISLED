@@ -5,6 +5,10 @@
  *
  * RGB LED PWM on TIM3 (channels 1..3, active high, edge aligned).
  *
+ * Duties are given in sub-ticks (1/16 of a tick, see pwm_dither.h): the
+ * update interrupt of every period dithers them into whole ticks. The
+ * period is kept within PWM_DITHER_PERIOD_MAX so that 100 % fits 16 bits.
+ *
  * The driver also offers a "sample point": TIM3 channel 4 compare, used as
  * an internal event only (its output, which would land on the touch pin
  * PB1, is never enabled). The touch driver arms it to measure at a fixed
@@ -23,7 +27,8 @@ void led_pwm_init(uint32_t frequency_hz);
 /* Timer ticks for 100 % duty. */
 uint16_t led_pwm_period(void);
 
-/* New duties in ticks (led_channel_t order), applied at the next period. */
+/* New duties in sub-ticks (led_channel_t order), applied from the next
+ * period. */
 void led_pwm_set(const uint16_t duty[LED_CHANNEL_COUNT]);
 
 /* Sample point: `callback` runs in interrupt context once per arming, when

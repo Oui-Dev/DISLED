@@ -37,14 +37,17 @@ static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in
     return color_compose(out->config->color, in->color, in->level_permille);
 }
 
+/* Linear light to sub-ticks. linear * period * 16 stays within 32 bits as
+ * long as period <= PWM_DITHER_PERIOD_MAX. */
 static uint16_t to_duty(uint16_t linear, uint16_t period, uint16_t pulse_loss)
 {
     if (linear == 0u) {
         return 0;
     }
+    const uint32_t full = (uint32_t)period * LED_DUTY_SUBTICKS;
     const uint32_t duty =
-        (((uint32_t)linear * period + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX) + pulse_loss;
-    return (duty > period) ? period : (uint16_t)duty;
+        (((uint32_t)linear * full + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX) + pulse_loss;
+    return (uint16_t)((duty > full) ? full : duty);
 }
 
 void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_t now_ms,

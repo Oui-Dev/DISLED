@@ -43,6 +43,11 @@ static uint32_t s_telemetry_next_ms;
 static bool s_reset_pending;
 static uint32_t s_reset_at_ms;
 
+static uint16_t subticks_to_ticks(uint16_t subticks)
+{
+    return (uint16_t)((subticks + LED_DUTY_SUBTICKS / 2u) / LED_DUTY_SUBTICKS);
+}
+
 static state_content_t observe(void)
 {
     const state_content_t content = {
@@ -211,8 +216,10 @@ static void send_telemetry(uint32_t now_ms)
         .touch_state = (uint8_t)touch_detector_state(&app.touch),
         .lux_centi = app.als.lux_centi,
         .als_raw = app.als.raw,
-        .duty = { app.duty[LED_CHANNEL_RED], app.duty[LED_CHANNEL_GREEN],
-                  app.duty[LED_CHANNEL_BLUE] },
+        /* The protocol reports whole ticks. */
+        .duty = { subticks_to_ticks(app.duty[LED_CHANNEL_RED]),
+                  subticks_to_ticks(app.duty[LED_CHANNEL_GREEN]),
+                  subticks_to_ticks(app.duty[LED_CHANNEL_BLUE]) },
         .led_current_ma_x10 = (uint16_t)led_output_estimate_ma_x10(&app.output),
         .cap_ma = led_output_cap_ma(&app.output),
         .link = app.link,

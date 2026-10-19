@@ -65,6 +65,13 @@ static void cmd_info(int argc, char **argv)
                    app.als.present ? "present" : "ABSENT");
 }
 
+/* Prints sub-ticks as ticks with two decimals. */
+static void print_subticks(uint16_t subticks)
+{
+    console_printf("%u.%02u", (unsigned)(subticks / LED_DUTY_SUBTICKS),
+                   (unsigned)(((subticks % LED_DUTY_SUBTICKS) * 100u) / LED_DUTY_SUBTICKS));
+}
+
 static void cmd_state(int argc, char **argv)
 {
     (void)argc;
@@ -75,11 +82,14 @@ static void cmd_state(int argc, char **argv)
                    (unsigned)app.lamp.manual_level,
                    (unsigned)brightness_level_permille(&app.brightness));
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
-    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty %u/%u/%u of %u\r\n", link_names[app.link],
+    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty ", link_names[app.link],
                    (unsigned long)(estimate / 10u), (unsigned long)(estimate % 10u),
-                   (unsigned)led_output_cap_ma(&app.output), (unsigned)app.duty[LED_CHANNEL_RED],
-                   (unsigned)app.duty[LED_CHANNEL_GREEN], (unsigned)app.duty[LED_CHANNEL_BLUE],
-                   (unsigned)led_pwm_period());
+                   (unsigned)led_output_cap_ma(&app.output));
+    for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
+        print_subticks(app.duty[i]);
+        console_printf(i + 1u < LED_CHANNEL_COUNT ? "/" : "");
+    }
+    console_printf(" of %u\r\n", (unsigned)led_pwm_period());
 }
 
 static void cmd_set(int argc, char **argv)
@@ -188,19 +198,22 @@ static void cmd_palette(int argc, char **argv)
 static void cmd_pulse(int argc, char **argv)
 {
     uint32_t loss[LED_CHANNEL_COUNT] = { 0 };
-    if (argc == 1 + LED_CHANNEL_COUNT && parse_u32(argv[1], &loss[0]) && loss[0] <= 100u &&
-        parse_u32(argv[2], &loss[1]) && loss[1] <= 100u && parse_u32(argv[3], &loss[2]) &&
-        loss[2] <= 100u) {
+    if (argc == 1 + LED_CHANNEL_COUNT && parse_u32(argv[1], &loss[0]) && loss[0] <= 1600u &&
+        parse_u32(argv[2], &loss[1]) && loss[1] <= 1600u && parse_u32(argv[3], &loss[2]) &&
+        loss[2] <= 1600u) {
         for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
             app.output_config.pulse_loss[i] = (uint16_t)loss[i];
         }
     } else if (argc != 1) {
-        console_printf("usage: pulse [<r> <g> <b>] (0-100 ticks, RAM only)\r\n");
+        console_printf("usage: pulse [<r> <g> <b>] (0-1600 sixteenths of a tick, RAM only)\r\n");
         return;
     }
-    const uint16_t *p = app.output_config.pulse_loss;
-    console_printf("pulse loss r/g/b: %u/%u/%u ticks\r\n", (unsigned)p[0], (unsigned)p[1],
-                   (unsigned)p[2]);
+    console_printf("pulse loss r/g/b, ticks:");
+    for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
+        console_printf(" ");
+        print_subticks(app.output_config.pulse_loss[i]);
+    }
+    console_printf("\r\n");
 }
 
 static void cmd_cap(int argc, char **argv)

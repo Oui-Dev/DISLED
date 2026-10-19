@@ -7,7 +7,9 @@
 
 #include "led_output.h"
 
-#define PERIOD 7200u
+#define PERIOD 3600u
+/* 100 % in sub-ticks. */
+#define FULL (PERIOD * LED_DUTY_SUBTICKS)
 
 static const color_config_t colors = {
     .palette =
@@ -56,8 +58,8 @@ static void test_pulse_loss_is_added_to_lit_channels_only(void)
     static led_output_config_t lossy;
     lossy = config;
     lossy.fade_ms = 0;
-    lossy.pulse_loss[LED_CHANNEL_GREEN] = 5;
-    lossy.pulse_loss[LED_CHANNEL_BLUE] = 5;
+    lossy.pulse_loss[LED_CHANNEL_GREEN] = 80;
+    lossy.pulse_loss[LED_CHANNEL_BLUE] = 80;
     led_output_init(&out, &lossy);
 
     /* Green at a low level gains the loss; blue stays dark. */
@@ -69,14 +71,14 @@ static void test_pulse_loss_is_added_to_lit_channels_only(void)
     led_output_init(&out, &config);
     led_output_update(&out, &in, 0, duty);
     led_output_update(&out, &in, 400, duty);
-    TEST_ASSERT_EQUAL_UINT16(duty[LED_CHANNEL_GREEN] + 5u, low);
+    TEST_ASSERT_EQUAL_UINT16(duty[LED_CHANNEL_GREEN] + 80u, low);
 
     /* Full scale never exceeds the period. */
     led_output_init(&out, &lossy);
     in.level_permille = 1000;
     led_output_update(&out, &in, 0, duty);
     led_output_update(&out, &in, 10, duty);
-    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_GREEN]);
+    TEST_ASSERT_EQUAL_UINT16(FULL, duty[LED_CHANNEL_GREEN]);
 }
 
 static void test_fade_in_from_dark(void)
@@ -85,10 +87,10 @@ static void test_fade_in_from_dark(void)
     TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_GREEN]);
 
     led_output_update(&out, &in, 1150, duty);
-    TEST_ASSERT_UINT16_WITHIN(30, PERIOD / 2u, duty[LED_CHANNEL_GREEN]);
+    TEST_ASSERT_UINT16_WITHIN(30u * LED_DUTY_SUBTICKS, FULL / 2u, duty[LED_CHANNEL_GREEN]);
 
     led_output_update(&out, &in, 1300, duty);
-    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_GREEN]);
+    TEST_ASSERT_EQUAL_UINT16(FULL, duty[LED_CHANNEL_GREEN]);
     TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_RED]);
     TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_BLUE]);
 }
@@ -99,7 +101,7 @@ static void test_turning_off_fades_out(void)
     led_output_update(&out, &in, 400, duty);
     in.on = false;
     led_output_update(&out, &in, 1000, duty);
-    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_GREEN]);
+    TEST_ASSERT_EQUAL_UINT16(FULL, duty[LED_CHANNEL_GREEN]);
     led_output_update(&out, &in, 1300, duty);
     TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_GREEN]);
 }
@@ -112,10 +114,10 @@ static void test_retarget_during_a_fade_does_not_jump(void)
 
     in.color = LAMP_COLOR_RED;
     led_output_update(&out, &in, 151, duty);
-    TEST_ASSERT_UINT16_WITHIN(60, halfway, duty[LED_CHANNEL_GREEN]);
+    TEST_ASSERT_UINT16_WITHIN(60u * LED_DUTY_SUBTICKS, halfway, duty[LED_CHANNEL_GREEN]);
     led_output_update(&out, &in, 451, duty);
     TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_GREEN]);
-    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_RED]);
+    TEST_ASSERT_EQUAL_UINT16(FULL, duty[LED_CHANNEL_RED]);
 }
 
 static void test_suspend_turns_off_immediately(void)
@@ -147,7 +149,7 @@ static void test_cap_override_for_the_thermal_test(void)
     in.cap_override_ma = 300;
     led_output_update(&out, &in, 0, duty);
     led_output_update(&out, &in, 400, duty);
-    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_BLUE]);
+    TEST_ASSERT_EQUAL_UINT16(FULL, duty[LED_CHANNEL_BLUE]);
     TEST_ASSERT_UINT32_WITHIN(1, 2740, led_output_estimate_ma_x10(&out));
 }
 

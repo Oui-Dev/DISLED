@@ -10,10 +10,16 @@
 #include "bsp/board.h"
 #include "bsp/bsp.h"
 #include "bsp/ch32.h"
+#include "pwm_dither.h"
 
 static uint16_t s_period;
 static uint16_t s_sample_phase;
 static volatile led_pwm_sample_callback_t s_sample_callback;
+
+/* Duties in sub-ticks, written by the main loop and read by the update
+ * interrupt (16-bit stores are atomic). */
+static volatile uint16_t s_duty[LED_CHANNEL_COUNT];
+static uint8_t s_dither[LED_CHANNEL_COUNT]; /* interrupt only */
 
 static void init_channel(void (*oc_init)(TIM_TypeDef *, TIM_OCInitTypeDef *),
                          void (*preload)(TIM_TypeDef *, uint16_t), uint16_t mode,
@@ -33,9 +39,10 @@ void led_pwm_init(uint32_t frequency_hz)
 {
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
-    /* Largest resolution that fits 16 bits: prescaler only if needed. */
+    /* Largest resolution within PWM_DITHER_PERIOD_MAX: prescaler only if
+     * needed (72 MHz / 20 kHz = 3600 ticks needs none). */
     const uint32_t ticks = bsp_apb1_timer_clock_hz() / frequency_hz;
-    const uint32_t prescaler = (ticks - 1u) / 65536u;
+    const uint32_t prescaler = (ticks - 1u) / PWM_DITHER_PERIOD_MAX;
     s_period = (uint16_t)(ticks / (prescaler + 1u));
 
     TIM_TimeBaseInitTypeDef base = {
@@ -65,6 +72,8 @@ void led_pwm_init(uint32_t frequency_hz)
     pins.GPIO_Pin = BOARD_LED_BLUE_PIN;
     GPIO_Init(BOARD_LED_BLUE_PORT, &pins);
 
+    TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
+    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 
@@ -75,13 +84,21 @@ uint16_t led_pwm_period(void)
 
 void led_pwm_set(const uint16_t duty[LED_CHANNEL_COUNT])
 {
-    uint16_t clamped[LED_CHANNEL_COUNT];
+    const uint16_t full = (uint16_t)(s_period * PWM_DITHER_SUBTICKS);
     for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
-        clamped[i] = (duty[i] > s_period) ? s_period : duty[i];
+        s_duty[i] = (duty[i] > full) ? full : duty[i];
     }
-    TIM_SetCompare1(BOARD_LED_TIMER, clamped[LED_CHANNEL_RED]);
-    TIM_SetCompare2(BOARD_LED_TIMER, clamped[LED_CHANNEL_GREEN]);
-    TIM_SetCompare3(BOARD_LED_TIMER, clamped[LED_CHANNEL_BLUE]);
+}
+
+/* Start of a period: the compare registers are preloaded, so the values
+ * written now apply to the next period. */
+static void dither_period(void)
+{
+    BOARD_LED_TIMER->CH1CVR = pwm_dither_next(&s_dither[LED_CHANNEL_RED], s_duty[LED_CHANNEL_RED]);
+    BOARD_LED_TIMER->CH2CVR =
+        pwm_dither_next(&s_dither[LED_CHANNEL_GREEN], s_duty[LED_CHANNEL_GREEN]);
+    BOARD_LED_TIMER->CH3CVR =
+        pwm_dither_next(&s_dither[LED_CHANNEL_BLUE], s_duty[LED_CHANNEL_BLUE]);
 }
 
 void led_pwm_set_sample_callback(led_pwm_sample_callback_t callback)
@@ -109,6 +126,11 @@ void led_pwm_arm_sample(void)
 void TIM3_IRQHandler(void) BSP_ISR;
 void TIM3_IRQHandler(void)
 {
+    const uint16_t flags = BOARD_LED_TIMER->INTFR;
+    if ((flags & TIM_IT_Update) != 0u) {
+        BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_Update;
+        dither_period();
+    }
     if (TIM_GetITStatus(BOARD_LED_TIMER, TIM_IT_CC4) != RESET) {
         /* One shot: disarm before running the callback. */
         TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_CC4, DISABLE);
