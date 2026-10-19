@@ -89,10 +89,11 @@ const color_config_t app_color_config = {
 };
 /* clang-format on */
 
-/* Pulse loss, tuned by eye at bring-up: warm white at 10 % (blue pulse of
- * 1 tick, 14 ns) turned yellow; a blue pulse 5 ticks (70 ns) longer gave
- * back the hue seen at 100 %. Red and green not measured yet. */
-const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT] = { 0, 0, 70 };
+/* Pulse loss, tuned by eye on warm white at bring-up (72 MHz ticks of
+ * 14 ns): at 10 % its blue was a 1-tick pulse and the color turned yellow.
+ * 5 ticks on blue, then 2 on red and 3 on green, matched the 100 % hue
+ * down to 3 %, where a single tick already shifts the hue visibly. */
+const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT] = { 28, 42, 70 };
 
 /* Worst-case LED currents at 100 % duty (review N2: 5.25 V, lowest
  * forward voltage). Caps: 70 mA + about 25 mA for the MCU stays within the
