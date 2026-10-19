@@ -42,11 +42,15 @@ TIM3 CC4 interrupt (1 kHz, fixed PWM phase) ─> TouchKey sample ─> queue
 main loop ── touch task ─> touch_detector ─> short/long press ─> lamp_fsm
           ── ALS task (100 ms) ─> VEML7700 ─> lux ─> brightness
           ── output task (10 ms) ─> led_output: palette, level, fade,
-                                     power cap ─> led_pwm duties
+                                     power cap, pulse loss ─> duties in
+                                     1/16 tick ─> led_pwm
           ── usb task ─> TinyUSB, link state (unconfigured/configured/suspended)
           ── host task ─> commands, STATE notifications, telemetry
           ── console task (debug) ─> text commands, watch
-          └─ watchdog feed, then WFI until the next interrupt
+          └─ watchdog feed, then the next round at once (no WFI, ADR 0009)
+
+TIM3 update interrupt (20 kHz, every PWM period) ─> dithers the duties
+                                     into whole ticks for the next period
 ```
 
 ### Concurrency
@@ -57,6 +61,7 @@ Bare metal, one cooperative loop driven by a table-based scheduler
 | Interrupt | Work |
 |---|---|
 | SysTick, 1 kHz | millisecond counter, arms the next TouchKey sample |
+| TIM3 update, 20 kHz | dithers the three LED duties into whole ticks for the next period |
 | TIM3 channel 4 | one TouchKey measurement (about 5 µs), pushed to a lock-free queue |
 | USB (three vectors, one handler) | TinyUSB event capture |
 | HardFault, NMI | saves `mcause`, `mepc`, `mtval` in backup registers, resets |
@@ -91,21 +96,44 @@ build, warns above 90 % and fails above 100 %. Link-time optimization is on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 24.3 KB | 4.9 KB |
-| release (HID) | 17.8 KB | 4.1 KB |
+| debug (HID + CDC console) | 26.7 KB | 5.0 KB |
+| release (HID) | 18.2 KB | 4.2 KB |
 
 ### Configuration
 
 Every tunable lives in `src/app/app_config.c`, with the reason for its
 value. Values marked "tune" are first guesses that the bring-up campaigns
-replace ([bringup.md](bringup.md)).
+replace ([bringup.md](bringup.md)); the others were measured or tuned on
+the first board ([ADR 0009](decisions/0009-bring-up-corrections.md)).
+
+### LED output
+
+The PWM runs at 20 kHz with 3600 ticks of 14 ns. Duties are computed in
+sixteenths of a tick: at the bottom of the range a channel lasts only a
+few ticks, so whole ticks would make dim fades step and the color drift.
+The TIM3 update interrupt spreads the fraction over 16 periods
+(`pwm_dither`). Each lit channel also gets a fixed pulse loss added, the
+part of every pulse that the driver edges turn into no light; without it,
+the 1-tick blue of warm white at 10 % vanished and the white turned yellow.
+
+### Touch detection
+
+`touch_detector` averages the TouchKey samples over 20 ms (one mains
+period) and measures the drop below a slow baseline, in per mille. A press
+must reach an absolute threshold **and** rise above the floor, the lowest
+value of the last 320 ms; it ends halfway back down, or under the absolute
+release threshold. A hand resting near the lid lifts the signal to the
+level of a light touch, and only this rise separates the taps on top of
+it. The baseline freezes while a hand is near (until it stays for the
+object time), so it cannot drift under the hand and blunt the next touch.
 
 ### Testing
 
 - `pio test -e native` runs the core on the build machine (Unity): lamp
   rules, touch detection on synthetic signals (mains hum, drift, objects,
-  finger at power-up), brightness, color, power cap, output fades,
-  scheduler, formatter and the protocol codec.
+  finger at power-up, hand resting near the lid), brightness, color, power
+  cap, output fades and pulse loss, PWM dithering, scheduler, formatter
+  and the protocol codec.
 - The protocol codec is checked byte for byte against
   `protocol/vectors/v1.json`, the same file the app tests use.
 - `pio check` runs cppcheck on `src/` and the core at every severity.

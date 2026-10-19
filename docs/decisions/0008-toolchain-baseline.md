@@ -1,6 +1,6 @@
 # 0008 — Toolchain baseline from the spike
 
-- Status: Accepted
+- Status: Accepted, clock tree amended by [0009](0009-bring-up-corrections.md)
 - Date: 2026-10-12
 
 ## Context

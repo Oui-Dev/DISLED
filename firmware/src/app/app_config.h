@@ -17,8 +17,9 @@
 #include "power_limiter.h"
 #include "touch_detector.h"
 
-/* LED PWM: above 20 kHz no audible capacitor whine, and 7200 steps at
- * 144 MHz leave enough resolution for very dim evening levels. */
+/* LED PWM: above 20 kHz no audible capacitor whine. TIM3 runs at 72 MHz
+ * (ADR 0009), so a period has 3600 ticks; the dithering splits each into
+ * sixteenths for the very dim evening levels. */
 #define APP_PWM_FREQUENCY_HZ 20000u
 #define APP_LED_FADE_MS      300u
 #define APP_OUTPUT_PERIOD_MS 10u

@@ -118,7 +118,7 @@ and should send `GET_STATE`.
 | 12 | 1 | touch state: 0 calibrating, 1 idle, 2 pressed |
 | 13 | 4 | ambient light, lux x 100 |
 | 17 | 2 | ambient light sensor raw count |
-| 19 | 6 | PWM duty red, green, blue, in timer ticks (7200 = 100 % at 144 MHz) |
+| 19 | 6 | PWM duty red, green, blue, in whole timer ticks (3600 = 100 %; the firmware dithers to 1/16 tick and reports the rounded value) |
 | 25 | 2 | estimated LED current, mA x 10 |
 | 27 | 2 | LED current cap in force, mA |
 | 29 | 1 | USB link |

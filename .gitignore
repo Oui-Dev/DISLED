@@ -18,6 +18,8 @@ __pycache__/
 firmware/.pio/
 firmware/.vscode/*
 !firmware/.vscode/extensions.json
+firmware/tools/*/touch_replay
+firmware/tools/*/touch_replay.exe
 
 # Desktop app (Tauri + Vue)
 app/node_modules/

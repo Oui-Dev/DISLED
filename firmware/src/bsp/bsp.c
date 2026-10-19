@@ -36,8 +36,9 @@ static void capture_reset_cause(void)
 static void init_clocks(void)
 {
     /* The startup code ran SystemInit(): 8 MHz crystal x 18 = 144 MHz,
-     * HCLK = PCLK2 = 144 MHz, PCLK1 = 72 MHz. If the crystal failed, the
-     * chip stayed on the internal oscillator; recompute the real clock. */
+     * HCLK = PCLK2 = 144 MHz, PCLK1 = 72 MHz (both lowered below). If the
+     * crystal failed, the chip stayed on the internal oscillator; recompute
+     * the real clock. */
     s_crystal_ok = (RCC->CFGR0 & RCC_SWS) == RCC_SWS_PLL;
     SystemCoreClockUpdate();
 

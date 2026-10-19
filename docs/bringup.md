@@ -1,7 +1,9 @@
 # Board bring-up and tuning campaigns
 
 Run these steps on each new board, in order: each one relies on the ones
-before. Write the results in `docs/measurements/` (one file per board,
+before. The first board's results and the lessons drawn from them are in
+[measurements](measurements/F1B9ABCD5A9BBD15E339E339.md) and
+[ADR 0009](decisions/0009-bring-up-corrections.md). Write the results in `docs/measurements/` (one file per board,
 named after its serial number). The measurements of the tuning campaigns
 (V1, V2, V4, named after the design review) set the values marked "tune" in
 `firmware/src/app/app_config.c` for phase 2.
@@ -24,7 +26,7 @@ with a light-meter app, a flashlight.
 - [ ] Plug in through the current meter: the blank chip draws a few mA, no
       heat anywhere.
 - [ ] Enter the bootloader ([flashing.md](flashing.md)); the WCH device
-      appears. Record its USB ID: `____:____`.
+      appears as `4348:55E0` (first board).
 - [ ] Windows only, once: WinUSB driver with Zadig.
 
 ## 3. Debug firmware
@@ -33,15 +35,22 @@ with a light-meter app, a flashlight.
 - [ ] The lamp fades in green.
 - [ ] Device Manager or System Information shows `1209:0002` with a HID
       interface and a serial port.
-- [ ] Console `info`: crystal **ok**, a 24-digit UID, reset cause 2 (pin),
-      light sensor **present**, 0 touch timeouts.
+- [ ] Console `info`: crystal **ok**, a 24-digit UID, reset cause 2 (pin)
+      after RESET or 3 (software) right after a flash, light sensor
+      **present**, 0 touch timeouts.
 - [ ] Desktop app (`npm run tauri dev` in `app/`): connected, firmware
       version shown.
 
 ## 4. LED
 
 - [ ] `set color 0..3`: green, orange, red and warm white look right; no
-      flicker, smooth 300 ms fades.
+      flicker, smooth 300 ms fades. Judge the colors through the closed
+      enclosure: the PLA shifts them. `palette <i> <r> <g> <b>` tunes a
+      color live (RAM only); copy the result into `app_config.c`.
+- [ ] Warm white at 3, 10, 30 and 100 % (`set level`): the same hue at
+      every level. If the low levels drift (yellow: blue missing; pink:
+      green missing), tune the pulse loss live with
+      `pulse <r> <g> <b>` (sixteenths of a tick), at 3 % first.
 - [ ] `set level 1`: still visible in a dark room. `set level 100`: bright.
 - [ ] `state` shows sensible duties and the estimated current.
 - [ ] Plugged into a **phone charger** (no host): it works, and the measured
@@ -72,14 +81,23 @@ situation.
 ## 6. Touch (V4)
 
 The firmware samples the touch at a fixed phase of the LED PWM. Record
-with the desktop app (telemetry 50 ms, **Record**, then **Export CSV**) and
-note the drop below the baseline in per mille.
+with the desktop app (telemetry 50 ms, **Record**, then **Export CSV**) or
+with `watch 20` on the console (every 20 ms window), and note the drop
+below the baseline in per mille.
+
+Test with the enclosure **closed** and one hand only: holding the board,
+the enclosure or the USB plug with the other hand ties the body to the
+board ground and doubles the drop (first board: 45 → 90 per mille), which
+hides a weak signal.
 
 - [ ] Idle: baseline stable, noise under a few per mille.
-- [ ] Finger on the lid: drop of ____ ‰. Hand 1 cm above: ____ ‰.
-      Finger on a side wall near the wire: ____ ‰.
+- [ ] Finger on the lid, on the electrode ring: ____ ‰; in its center:
+      ____ ‰. Hand 1 cm above: ____ ‰. Hand resting near the lid between
+      taps: ____ ‰. Finger on a side wall near the wire: ____ ‰.
 - [ ] Short press cycles the colors, a 2 s press turns the lamp off then on,
       a phone left on the lid fires once and is then ignored.
+- [ ] Twenty light, quick taps with the hand resting near the lid: one
+      color step per tap, no skipped color, no long press.
 
 Matrix, for each setup with the LED at 0, 50 and 100 % (`set level`):
 
@@ -90,13 +108,16 @@ Matrix, for each setup with the LED at 0, 50 and 100 % (`set level`):
 | MacBook on battery, charger unplugged, direct (no earth) | 0 / 50 / 100 % | | | |
 
 Experiments on the PWM coupling (review N1), at 100 % LED:
-`touch phase <ticks>` (sample at another point of the 7200-tick PWM
+`touch phase <ticks>` (sample at another point of the 3600-tick PWM
 period) and `touch dither` (random phase: what unsynchronized sampling
 would give). Keep the phase with the lowest noise.
 
-Then set the thresholds: press at about 40 to 50 % of the smallest finger
-drop, release at about 60 % of the press threshold, and both well above
-the worst idle noise.
+Then check the thresholds in `app_config.c` against the matrix: the press
+threshold about halfway between the hand 1 cm above and the weakest
+finger drop, the rise above the floor below the weakest tap on top of a
+resting hand, and the release threshold above the idle noise. Recorded
+taps can be replayed through `touch_detector` on the build machine before
+flashing (see the first board's measurements).
 
 ## 7. USB power states
 

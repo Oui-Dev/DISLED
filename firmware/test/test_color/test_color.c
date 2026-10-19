@@ -51,9 +51,10 @@ static void test_perceived_scale_is_strictly_increasing(void)
 
 static void test_dimmest_manual_level_stays_visible(void)
 {
-    /* 1 % must still give a few PWM ticks out of 7200. */
-    const uint32_t ticks = (uint32_t)color_perceived_to_linear(10) * 7200u / 65535u;
-    TEST_ASSERT_TRUE(ticks >= 5);
+    /* 1 % must still give a few PWM ticks out of 3600 (14 ns each), which
+     * the dithering then splits into sixteenths. */
+    const uint32_t ticks = (uint32_t)color_perceived_to_linear(10) * 3600u / 65535u;
+    TEST_ASSERT_TRUE(ticks >= 3);
 }
 
 static void test_compose_applies_balance_and_level(void)
