@@ -148,6 +148,27 @@ static void cmd_touch(int argc, char **argv)
     console_printf("sample phase %u ticks\r\n", (unsigned)led_pwm_sample_phase());
 }
 
+static void cmd_palette(int argc, char **argv)
+{
+    uint32_t index = 0;
+    uint32_t r = 0;
+    uint32_t g = 0;
+    uint32_t b = 0;
+    if (argc == 5 && parse_u32(argv[1], &index) && index < LAMP_COLOR_COUNT &&
+        parse_u32(argv[2], &r) && parse_u32(argv[3], &g) && parse_u32(argv[4], &b) &&
+        r <= 65535u && g <= 65535u && b <= 65535u) {
+        app.colors.palette[index] = (rgb16_t){ (uint16_t)r, (uint16_t)g, (uint16_t)b };
+    } else if (argc != 1) {
+        console_printf("usage: palette [<0-3> <r> <g> <b>] (0-65535, linear light, RAM only)\r\n");
+        return;
+    }
+    for (size_t i = 0; i < LAMP_COLOR_COUNT; i++) {
+        const rgb16_t c = app.colors.palette[i];
+        console_printf("%u %-10s %5u %5u %5u\r\n", (unsigned)i, color_names[i], (unsigned)c.r,
+                       (unsigned)c.g, (unsigned)c.b);
+    }
+}
+
 static void cmd_cap(int argc, char **argv)
 {
     uint32_t cap = 0;
@@ -252,6 +273,7 @@ static const console_command_t commands[] = {
     { "set", "<what> [value]", "change the lamp like the host does", cmd_set },
     { "watch", "<ms>|off", "print touch, light and current periodically", cmd_watch },
     { "touch", "phase|dither|recal", "touch sampling experiments (V4)", cmd_touch },
+    { "palette", "[<i> <r> <g> <b>]", "show or tune the colors (RAM only)", cmd_palette },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
     { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
     { "log", "<0-3>", "log level", cmd_log },

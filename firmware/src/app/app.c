@@ -236,8 +236,9 @@ void app_init(const fault_record_t *fault)
 
     /* LED first, dark: from here on only led_output drives it. */
     led_pwm_init(APP_PWM_FREQUENCY_HZ);
+    app.colors = app_color_config;
     app.output_config = (led_output_config_t){
-        .color = &app_color_config,
+        .color = &app.colors,
         .power = &app_power_config,
         .fade_ms = APP_LED_FADE_MS,
         .pwm_period = led_pwm_period(),

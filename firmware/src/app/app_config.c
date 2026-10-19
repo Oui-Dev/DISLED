@@ -38,8 +38,8 @@ const veml7700_config_t app_veml7700_config = {
  * during the day and 2-20 % in the evening. */
 /* clang-format off */
 static const brightness_point_t brightness_curve[] = {
-    {    LUX(1),   20 },
-    {   LUX(10),   80 },
+    {    LUX(1),   30 }, /* raised x1.5 at bring-up: too dim through the PLA */
+    {   LUX(10),  120 },
     {  LUX(100),  300 },
     { LUX(1000),  800 },
     { LUX(3000), 1000 },
@@ -62,7 +62,7 @@ const color_config_t app_color_config = {
         [LAMP_COLOR_GREEN]      = {     0, 65535,    0 },
         [LAMP_COLOR_ORANGE]     = { 65535, 16384,    0 },
         [LAMP_COLOR_RED]        = { 65535,     0,    0 },
-        [LAMP_COLOR_WARM_WHITE] = { 65535, 36000, 9000 },
+        [LAMP_COLOR_WARM_WHITE] = { 63000, 58000, 1600 }, /* tuned by eye through the PLA */
     },
     .balance = { 65535, 65535, 65535 },
 };

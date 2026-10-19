@@ -33,6 +33,7 @@ typedef struct {
     change_source_t source; /* cause of the latest lamp change */
     brightness_t brightness;
     touch_detector_t touch;
+    color_config_t colors; /* RAM copy of the palette, tunable from the console */
     led_output_config_t output_config;
     led_output_t output;
     uint16_t duty[LED_CHANNEL_COUNT];
