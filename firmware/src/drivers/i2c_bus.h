@@ -30,6 +30,19 @@ i2c_bus_status_t i2c_bus_write(uint8_t address, const uint8_t *data, size_t leng
  * VEML7700). */
 i2c_bus_status_t i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2]);
 
+/* Last failure, for bring-up diagnostics. Steps: 1 bus busy, 2 START,
+ * 3 address (write), 4 data byte, 5 repeated START, 6 address (read),
+ * 7 and 8 received bytes. */
+typedef struct {
+    uint8_t step;
+    i2c_bus_status_t status;
+    uint16_t star1;
+    uint16_t star2;
+    uint16_t ctlr1;
+} i2c_bus_failure_t;
+
+i2c_bus_failure_t i2c_bus_last_failure(void);
+
 /* Clocks SCL until a stuck slave releases SDA, then re-initializes. */
 void i2c_bus_recover(void);
 

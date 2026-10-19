@@ -17,6 +17,7 @@
 #include "diag/console.h"
 #include "diag/log.h"
 #include "drivers/led_pwm.h"
+#include "drivers/i2c_bus.h"
 #include "drivers/tkey.h"
 #include "time_utils.h"
 
@@ -163,6 +164,71 @@ static void cmd_cap(int argc, char **argv)
     cmd_state(0, NULL);
 }
 
+static const char *const i2c_status_names[] = { "ok", "timeout", "nack", "bus error" };
+
+/* Parses a hexadecimal byte ("10" or "0x10"). */
+static bool parse_hex8(const char *text, uint8_t *value)
+{
+    if (text[0] == '0' && (text[1] == 'x' || text[1] == 'X')) {
+        text += 2;
+    }
+    uint32_t result = 0;
+    if (*text == '\0') {
+        return false;
+    }
+    for (; *text != '\0'; text++) {
+        const char c = *text;
+        uint32_t digit;
+        if (c >= '0' && c <= '9') {
+            digit = (uint32_t)(c - '0');
+        } else if (c >= 'a' && c <= 'f') {
+            digit = (uint32_t)(c - 'a' + 10);
+        } else if (c >= 'A' && c <= 'F') {
+            digit = (uint32_t)(c - 'A' + 10);
+        } else {
+            return false;
+        }
+        result = result * 16u + digit;
+        if (result > 0xFFu) {
+            return false;
+        }
+    }
+    *value = (uint8_t)result;
+    return true;
+}
+
+static void cmd_i2c(int argc, char **argv)
+{
+    uint8_t address = 0;
+    uint8_t reg = 0;
+    if (argc == 2 && strcmp(argv[1], "scan") == 0) {
+        for (uint8_t a = 0x08; a < 0x78; a++) {
+            const i2c_bus_status_t status = i2c_bus_write(a, NULL, 0);
+            if (status == I2C_BUS_OK) {
+                console_printf("0x%02x answers\r\n", (unsigned)a);
+            } else if (status != I2C_BUS_NACK) {
+                console_printf("0x%02x: %s\r\n", (unsigned)a, i2c_status_names[status]);
+            }
+        }
+        console_printf("scan done\r\n");
+    } else if (argc == 3 && parse_hex8(argv[1], &address) && parse_hex8(argv[2], &reg)) {
+        uint8_t bytes[2] = { 0, 0 };
+        const i2c_bus_status_t status = i2c_bus_read_word(address, reg, bytes);
+        console_printf("0x%02x reg 0x%02x: %s, 0x%02x%02x\r\n", (unsigned)address, (unsigned)reg,
+                       i2c_status_names[status], (unsigned)bytes[1], (unsigned)bytes[0]);
+        if (status != I2C_BUS_OK) {
+            const i2c_bus_failure_t f = i2c_bus_last_failure();
+            console_printf("failed at step %u: STAR1 0x%04x STAR2 0x%04x CTLR1 0x%04x\r\n",
+                           (unsigned)f.step, (unsigned)f.star1, (unsigned)f.star2, (unsigned)f.ctlr1);
+        }
+    } else if (argc == 2 && strcmp(argv[1], "recover") == 0) {
+        i2c_bus_recover();
+        console_printf("bus recovered\r\n");
+    } else {
+        console_printf("usage: i2c scan|recover|<addr hex> <reg hex>\r\n");
+    }
+}
+
 static void cmd_log(int argc, char **argv)
 {
     uint32_t level = 0;
@@ -187,6 +253,7 @@ static const console_command_t commands[] = {
     { "watch", "<ms>|off", "print touch, light and current periodically", cmd_watch },
     { "touch", "phase|dither|recal", "touch sampling experiments (V4)", cmd_touch },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
+    { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
     { "log", "<0-3>", "log level", cmd_log },
     { "reset", "", "restart the firmware", cmd_reset },
 };

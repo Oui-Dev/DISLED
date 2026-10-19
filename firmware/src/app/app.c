@@ -116,6 +116,7 @@ static void task_als(uint32_t now_ms)
 
     if (!als->present) {
         if (time_reached(now_ms, als->retry_ms)) {
+            i2c_bus_recover(); /* start each attempt from a clean bus */
             als_probe(als, now_ms, APP_ALS_RETRY_MS);
             if (als->present) {
                 LOG_INFO("als: sensor found");
@@ -154,7 +155,15 @@ static void task_output(uint32_t now_ms)
         .link = app.link,
         .cap_override_ma = app.cap_override_ma,
     };
+#ifdef DISLED_BOOT_DIAG
+    /* Heartbeat: the level breathes while the loop runs. */
+    led_output_inputs_t breathing = inputs;
+    const uint32_t phase = now_ms % 2000u;
+    breathing.level_permille = (uint16_t)(200u + (4u * ((phase < 1000u) ? phase : 2000u - phase)) / 5u);
+    led_output_update(&app.output, &breathing, now_ms, app.duty);
+#else
     led_output_update(&app.output, &inputs, now_ms, app.duty);
+#endif
     led_pwm_set(app.duty);
 }
 
@@ -170,14 +179,48 @@ static void task_console(uint32_t now_ms)
 }
 #endif
 
-static scheduler_task_t tasks[] = {
-    { "usb", 0, task_usb, 0 },
-    { "touch", 0, task_touch, 0 },
-    { "als", APP_ALS_PERIOD_MS, task_als, 0 },
-    { "output", APP_OUTPUT_PERIOD_MS, task_output, 0 },
-    { "host", 0, task_host, 0 },
+#ifdef DISLED_BOOT_DIAG
+/* Bring-up diagnostic: the running task is noted in a backup register, so
+ * that a watchdog reset can tell which one hung. */
+#define DIAG_MARK(n) (BKP->DATAR8 = (uint16_t)(n))
+#define DIAG_TASK(id, fn)                                                                              static void diag_##fn(uint32_t now_ms)                                                             {                                                                                                      DIAG_MARK(id);                                                                                     fn(now_ms);                                                                                        DIAG_MARK(0);                                                                                  }
+DIAG_TASK(1, task_usb)
+DIAG_TASK(2, task_touch)
+DIAG_TASK(3, task_als)
+DIAG_TASK(4, task_output)
+DIAG_TASK(5, task_host)
 #if DISLED_DEBUG
-    { "console", 0, task_console, 0 },
+DIAG_TASK(6, task_console)
+#endif
+#define TASK_FN(fn) diag_##fn
+
+static void diag_blink(uint16_t count)
+{
+    uint16_t duty[LED_CHANNEL_COUNT] = { 0, 0, 0 };
+    for (uint16_t i = 0; i < 2u * count; i++) {
+        duty[LED_CHANNEL_RED] = (i % 2u == 0u) ? (uint16_t)(led_pwm_period() / 8u) : 0u;
+        led_pwm_set(duty);
+        const uint32_t start = bsp_time_ms();
+        while (time_elapsed_ms(bsp_time_ms(), start) < 400u) {
+        }
+    }
+    const uint32_t start = bsp_time_ms();
+    while (time_elapsed_ms(bsp_time_ms(), start) < 1500u) {
+    }
+}
+#else
+#define DIAG_MARK(n) ((void)0)
+#define TASK_FN(fn)  fn
+#endif
+
+static scheduler_task_t tasks[] = {
+    { "usb", 0, TASK_FN(task_usb), 0 },
+    { "touch", 0, TASK_FN(task_touch), 0 },
+    { "als", APP_ALS_PERIOD_MS, TASK_FN(task_als), 0 },
+    { "output", APP_OUTPUT_PERIOD_MS, TASK_FN(task_output), 0 },
+    { "host", 0, TASK_FN(task_host), 0 },
+#if DISLED_DEBUG
+    { "console", 0, TASK_FN(task_console), 0 },
 #endif
 };
 
@@ -200,8 +243,25 @@ void app_init(const fault_record_t *fault)
         .pwm_period = led_pwm_period(),
     };
     led_output_init(&app.output, &app.output_config);
+#ifdef DISLED_BOOT_DIAG
+    const uint16_t hung_task = BKP->DATAR8;
+    DIAG_MARK(0);
+    if (app.reset_cause == RESET_CAUSE_WATCHDOG && hung_task != 0u) {
+        diag_blink(hung_task);
+    }
+#endif
 
     lamp_fsm_init(&app.lamp);
+#ifdef DISLED_BOOT_DIAG
+    /* Bring-up diagnostic: the start-up color tells why the chip last reset. */
+    if (app.fault.valid) {
+        app.lamp.color = LAMP_COLOR_RED;
+    } else if (app.reset_cause == RESET_CAUSE_WATCHDOG) {
+        app.lamp.color = LAMP_COLOR_WARM_WHITE;
+    } else if (!app.crystal_ok) {
+        app.lamp.color = LAMP_COLOR_ORANGE;
+    }
+#endif
     app.source = CHANGE_SOURCE_BOOT;
     brightness_init(&app.brightness, &app_brightness_config);
 
@@ -220,7 +280,9 @@ void app_init(const fault_record_t *fault)
     app_console_init();
 #endif
 
+#ifndef DISLED_NO_WATCHDOG
     bsp_watchdog_start(APP_WATCHDOG_MS);
+#endif
 
     LOG_INFO("DISLED firmware %s, reset cause %u%s", DISLED_FW_VERSION_STRING,
              (unsigned)app.reset_cause, app.fault.valid ? ", after a FAULT" : "");
@@ -239,7 +301,8 @@ void app_run(void)
         (void)scheduler_run(tasks, TASK_COUNT, bsp_time_ms());
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
-        /* Sleep until the next interrupt (1 ms tick at the latest). */
-        __WFI();
+        /* No WFI here: on this QingKe core the CPU never woke from it (not
+         * even on the 1 ms tick), which starved USB and tripped the
+         * watchdog. Low-power idle comes back in phase 2, tested on a board. */
     }
 }

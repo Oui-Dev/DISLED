@@ -41,6 +41,12 @@ static void init_clocks(void)
     s_crystal_ok = (RCC->CFGR0 & RCC_SWS) == RCC_SWS_PLL;
     SystemCoreClockUpdate();
 
+    /* I2C needs PCLK1 <= 60 MHz: the SDK writes PCLK1 in MHz into a 6-bit
+     * field and only clamps it to 60 afterwards, so 72 MHz silently became
+     * 8 MHz and broke every byte transfer (found at bring-up). 144 / 4 =
+     * 36 MHz; the APB1 timers then run at 72 MHz. */
+    RCC_PCLK1Config(RCC_HCLK_Div4);
+
     /* ADC clock = PCLK2 / 8 must stay within 14 MHz: 72 MHz / 8 = 9 MHz. */
     RCC_PCLK2Config(RCC_HCLK_Div2);
     RCC_ADCCLKConfig(RCC_PCLK2_Div8);
