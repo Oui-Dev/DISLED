@@ -27,7 +27,8 @@ typedef struct {
     uint32_t time_ms;
 } sample_t;
 
-static const tkey_config_t *s_config;
+static volatile uint8_t s_charge_time;
+static volatile uint8_t s_discharge_time;
 static sample_t s_queue[QUEUE_SIZE];
 static volatile uint32_t s_head; /* written by the interrupt */
 static volatile uint32_t s_tail; /* written by the main loop */
@@ -38,7 +39,8 @@ static uint32_t s_lfsr = 0xACE1u;
 
 void tkey_init(const tkey_config_t *config)
 {
-    s_config = config;
+    s_charge_time = config->charge_time;
+    s_discharge_time = config->discharge_time;
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
     GPIO_InitTypeDef pin = {
@@ -57,7 +59,7 @@ void tkey_init(const tkey_config_t *config)
         .ADC_NbrOfChannel = 1,
     };
     ADC_Init(ADC1, &adc);
-    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, ADC_SampleTime_7Cycles5);
+    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, config->adc_sample_time);
     ADC_Cmd(ADC1, ENABLE);
     TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
 }
@@ -67,8 +69,8 @@ static void measure(void)
 {
     /* Writing the charge then the discharge time starts the measurement;
      * it lasts a few microseconds. */
-    TKey1->IDATAR1 = s_config->charge_time;
-    TKey1->RDATAR = s_config->discharge_time;
+    TKey1->IDATAR1 = s_charge_time;
+    TKey1->RDATAR = s_discharge_time;
     uint32_t polls = 0;
     while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET) {
         if (++polls >= MEASURE_MAX_POLLS) {
@@ -142,4 +144,11 @@ void tkey_set_phase(uint16_t phase_ticks)
 void tkey_set_dither(bool enabled)
 {
     s_dither = enabled;
+}
+
+void tkey_set_timing(uint8_t charge_time, uint8_t discharge_time, uint8_t adc_sample_time)
+{
+    s_charge_time = charge_time;
+    s_discharge_time = discharge_time;
+    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, adc_sample_time);
 }

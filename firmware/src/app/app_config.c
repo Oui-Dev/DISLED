@@ -5,13 +5,19 @@
  */
 #include "app_config.h"
 
+#include "bsp/ch32.h"
+
 #define LUX(x) ((uint32_t)(x) * 100u)
 
-/* TouchKey charge/discharge times from the WCH example. Tune: longer
- * charge raises the reading and the sensitivity. */
+/* TouchKey timing, measured on the first board (bring-up): the ADC sample
+ * time sets the range, the charge time the position in it. With 1.5 cycles
+ * and charge 3 the reading sits mid-scale (about 2600 of 4095, noise about
+ * +-6 per mille) and a finger on the bare electrode lowers it by about
+ * 100 per mille. The WCH example values (charge 16, 7.5 cycles) saturate. */
 const tkey_config_t app_tkey_config = {
-    .charge_time = 0x10,
-    .discharge_time = 0x08,
+    .charge_time = 3,
+    .discharge_time = 8,
+    .adc_sample_time = ADC_SampleTime_1Cycles5,
 };
 
 const touch_config_t app_touch_config = {

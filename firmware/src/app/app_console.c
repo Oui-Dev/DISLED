@@ -140,8 +140,23 @@ static void cmd_touch(int argc, char **argv)
         tkey_set_phase((uint16_t)phase);
     } else if (argc == 2 && strcmp(argv[1], "recal") == 0) {
         touch_detector_recalibrate(&app.touch);
+    } else if ((argc == 4 || argc == 5) && strcmp(argv[1], "charge") == 0) {
+        static const uint8_t sample_times[] = { ADC_SampleTime_1Cycles5,  ADC_SampleTime_7Cycles5,
+                                                ADC_SampleTime_13Cycles5, ADC_SampleTime_28Cycles5,
+                                                ADC_SampleTime_41Cycles5, ADC_SampleTime_55Cycles5,
+                                                ADC_SampleTime_71Cycles5, ADC_SampleTime_239Cycles5 };
+        uint32_t charge = 0;
+        uint32_t discharge = 0;
+        uint32_t sample = 1;
+        if (!parse_u32(argv[2], &charge) || !parse_u32(argv[3], &discharge) || charge > 255u ||
+            discharge > 255u || (argc == 5 && (!parse_u32(argv[4], &sample) || sample > 7u))) {
+            console_printf("usage: touch charge <0-255> <0-255> [adc sample time 0-7]\r\n");
+            return;
+        }
+        tkey_set_timing((uint8_t)charge, (uint8_t)discharge, sample_times[sample]);
+        touch_detector_recalibrate(&app.touch);
     } else {
-        console_printf("usage: touch phase <0-%u>|dither|recal\r\n",
+        console_printf("usage: touch phase <0-%u>|dither|recal|charge <c> <d> [s]\r\n",
                        (unsigned)(led_pwm_period() - 1u));
         return;
     }

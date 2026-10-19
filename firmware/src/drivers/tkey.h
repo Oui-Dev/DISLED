@@ -18,6 +18,7 @@
 typedef struct {
     uint8_t charge_time;    /* electrode charge time, ADC clock cycles */
     uint8_t discharge_time; /* discharge time, ADC clock cycles */
+    uint8_t adc_sample_time; /* ADC_SampleTime_* of the SDK: sets the reading range */
 } tkey_config_t;
 
 /* Sets up the ADC in touch mode. Requires led_pwm_init() first. */
@@ -42,5 +43,9 @@ uint32_t tkey_timeouts(void);
  * unsynchronized sampling during the touch noise tests (V4). */
 void tkey_set_phase(uint16_t phase_ticks);
 void tkey_set_dither(bool enabled);
+
+/* Debug: measurement timing, tuned live at bring-up. `adc_sample_time` is
+ * an ADC_SampleTime_* value of the SDK. */
+void tkey_set_timing(uint8_t charge_time, uint8_t discharge_time, uint8_t adc_sample_time);
 
 #endif /* DISLED_TKEY_H */
