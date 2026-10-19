@@ -18,7 +18,13 @@
  * lid lowers the reading by 44-57 per mille; a hand approaching the lid by
  * up to 11; holding the USB plug with the other hand doubles the drop (64-91),
  * as the body then shares the board ground. The thresholds sit between the
- * hand approaching and a one-hand touch. */
+ * hand approaching and a one-hand touch.
+ *
+ * A hand resting near the lid between light taps holds the signal at
+ * 20-30 per mille, with the taps peaking at 40-80 on top: the rise above
+ * the floor separates them. Replayed on a 33 s recording of such taps
+ * (20 ms windows), it found 22 taps where the fixed thresholds merged them
+ * into 17, without any false long press. */
 const tkey_config_t app_tkey_config = {
     .charge_time = 3,
     .discharge_time = 8,
@@ -31,7 +37,10 @@ const touch_config_t app_touch_config = {
     .baseline_shift = 8,      /* about 5 s time constant */
     .press_permille = 28,     /* see the TouchKey note; recheck on the Mac (V4) */
     .release_permille = 16,
+    .press_rise_permille = 18, /* a hand resting near the lid reads 20-30 */
+    .proximity_permille = 10,  /* rest noise and the LED on/off shift stay below */
     .debounce_ms = 60,
+    .rearm_ms = 100, /* fast taps came 260 ms apart */
     .long_press_ms = 2000,
     .object_ms = 10000,
     .inverted_permille = 30,

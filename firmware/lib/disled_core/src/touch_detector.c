@@ -14,8 +14,15 @@ static void reset_contact(touch_detector_t *td)
     td->contact = false;
     td->pending = false;
     td->long_fired = false;
+    td->rearming = false;
     td->inverted = false;
+    td->near = false;
     td->delta_permille = 0;
+    for (size_t i = 0; i < TOUCH_FLOOR_WINDOWS; i++) {
+        td->recent[i] = 0;
+    }
+    td->recent_next = 0;
+    td->press_floor = 0;
 }
 
 void touch_detector_init(touch_detector_t *td, const touch_config_t *config)
@@ -28,7 +35,9 @@ void touch_detector_init(touch_detector_t *td, const touch_config_t *config)
     td->baseline_q8 = 0;
     td->press_start_ms = 0;
     td->pending_since_ms = 0;
+    td->release_ms = 0;
     td->inverted_since_ms = 0;
+    td->near_since_ms = 0;
     touch_detector_recalibrate(td);
 }
 
@@ -70,6 +79,21 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
 
+    /* Hand near the lid: hold the baseline, unless the drop lasts as long
+     * as an object would (something left close to the lid). */
+    if (td->delta_permille >= (int32_t)cfg->proximity_permille) {
+        td->inverted = false;
+        if (!td->near) {
+            td->near = true;
+            td->near_since_ms = now_ms;
+        } else if (time_elapsed_ms(now_ms, td->near_since_ms) >= cfg->object_ms) {
+            td->baseline_q8 = (uint32_t)td->value << 8;
+            td->near = false;
+        }
+        return;
+    }
+    td->near = false;
+
     if (td->delta_permille <= -(int32_t)cfg->inverted_permille) {
         if (!td->inverted) {
             td->inverted = true;
@@ -90,12 +114,40 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
     td->baseline_q8 = (uint32_t)((int32_t)td->baseline_q8 + (error / divisor));
 }
 
+/* Lowest drop of the last TOUCH_FLOOR_WINDOWS windows. */
+static int16_t recent_floor(const touch_detector_t *td)
+{
+    int16_t floor = td->recent[0];
+    for (size_t i = 1; i < TOUCH_FLOOR_WINDOWS; i++) {
+        if (td->recent[i] < floor) {
+            floor = td->recent[i];
+        }
+    }
+    return floor;
+}
+
+static int32_t max_i32(int32_t a, int32_t b)
+{
+    return a > b ? a : b;
+}
+
 /* Hysteresis and debounce. Returns true when the debounced contact flips. */
 static bool update_contact(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
-    const bool raw_contact = td->contact ? (td->delta_permille > (int32_t)cfg->release_permille)
-                                         : (td->delta_permille >= (int32_t)cfg->press_permille);
+    const int32_t rise = (int32_t)cfg->press_rise_permille;
+    const int32_t press = max_i32((int32_t)cfg->press_permille, (int32_t)recent_floor(td) + rise);
+    const int32_t release =
+        max_i32((int32_t)cfg->release_permille, (int32_t)td->press_floor + rise / 2);
+    bool raw_contact = td->contact ? (td->delta_permille > release) : (td->delta_permille >= press);
+
+    if (td->rearming) {
+        if (time_elapsed_ms(now_ms, td->release_ms) < cfg->rearm_ms) {
+            raw_contact = false; /* too soon after the last release */
+        } else {
+            td->rearming = false;
+        }
+    }
 
     if (raw_contact == td->contact) {
         td->pending = false;
@@ -111,6 +163,10 @@ static bool update_contact(touch_detector_t *td, uint32_t now_ms)
     }
     td->contact = raw_contact;
     td->pending = false;
+    if (!raw_contact) {
+        td->rearming = true;
+        td->release_ms = now_ms;
+    }
     return true;
 }
 
@@ -130,6 +186,8 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
     }
 
     td->delta_permille = compute_delta_permille(td);
+    td->recent[td->recent_next] = td->delta_permille;
+    td->recent_next = (uint8_t)((td->recent_next + 1u) % TOUCH_FLOOR_WINDOWS);
     const uint32_t contact_start_ms = td->pending_since_ms;
     const bool flipped = update_contact(td, now_ms);
 
@@ -140,6 +198,8 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
             td->state = TOUCH_STATE_PRESSED;
             td->press_start_ms = contact_start_ms;
             td->long_fired = false;
+            td->near = false;
+            td->press_floor = recent_floor(td);
         } else if (!td->contact && !td->pending) {
             track_baseline(td, now_ms);
         }

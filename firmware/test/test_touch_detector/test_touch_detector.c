@@ -19,7 +19,10 @@ static const touch_config_t config = {
     .baseline_shift = 6,
     .press_permille = 40,
     .release_permille = 25,
+    .press_rise_permille = 18,
+    .proximity_permille = 10,
     .debounce_ms = 60,
+    .rearm_ms = 100,
     .long_press_ms = 2000,
     .object_ms = 10000,
     .inverted_permille = 30,
@@ -197,6 +200,60 @@ static void test_hysteresis_keeps_the_press_between_thresholds(void)
     TEST_ASSERT_EQUAL_UINT(1, short_presses);
 }
 
+static void test_hand_near_the_lid_freezes_the_baseline(void)
+{
+    /* 2 % drop for 5 s: a hand close to the lid, no touch. */
+    hold((uint16_t)(BASELINE - 40u), 5000);
+    TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
+    TEST_ASSERT_EQUAL_UINT16(BASELINE, touch_detector_baseline(&td));
+
+    /* The baseline was not pulled down: the touch keeps its full drop. */
+    hold(BASELINE, 300);
+    hold(TOUCHED, 300);
+    TEST_ASSERT_EQUAL_INT16(50, touch_detector_delta_permille(&td));
+    hold(BASELINE, 300);
+    TEST_ASSERT_EQUAL_UINT(1, short_presses);
+}
+
+static void test_object_near_the_lid_is_absorbed(void)
+{
+    hold((uint16_t)(BASELINE - 40u), 12000);
+    TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
+    TEST_ASSERT_UINT16_WITHIN(1, BASELINE - 40u, touch_detector_baseline(&td));
+}
+
+static void test_taps_with_the_hand_resting_near_the_lid(void)
+{
+    /* The resting hand (30 per mille) sits above the release threshold:
+     * without the floor, the taps would merge into one long press. */
+    hold((uint16_t)(BASELINE - 60u), 500);
+    for (int i = 0; i < 5; i++) {
+        hold((uint16_t)(BASELINE - 110u), 150); /* tap: 55 per mille */
+        hold((uint16_t)(BASELINE - 60u), 400);
+    }
+    TEST_ASSERT_EQUAL_UINT(5, short_presses);
+    TEST_ASSERT_EQUAL_UINT(0, long_presses);
+}
+
+static void test_long_press_with_the_hand_resting_near_the_lid(void)
+{
+    hold((uint16_t)(BASELINE - 60u), 500);
+    hold((uint16_t)(BASELINE - 110u), 2100);
+    TEST_ASSERT_EQUAL_UINT(1, long_presses);
+    hold((uint16_t)(BASELINE - 60u), 400);
+    TEST_ASSERT_EQUAL_UINT(0, short_presses);
+}
+
+static void test_blip_right_after_a_release_is_ignored(void)
+{
+    hold(TOUCHED, 300);
+    hold(BASELINE, 80); /* released after the debounce */
+    TEST_ASSERT_EQUAL_UINT(1, short_presses);
+    hold(TOUCHED, 80); /* within the re-arm delay */
+    hold(BASELINE, 300);
+    TEST_ASSERT_EQUAL_UINT(1, short_presses);
+}
+
 static void test_rising_touch_polarity(void)
 {
     static touch_config_t rising;
@@ -223,6 +280,11 @@ int main(void)
     RUN_TEST(test_baseline_follows_slow_drift);
     RUN_TEST(test_finger_at_power_up_recalibrates);
     RUN_TEST(test_hysteresis_keeps_the_press_between_thresholds);
+    RUN_TEST(test_hand_near_the_lid_freezes_the_baseline);
+    RUN_TEST(test_object_near_the_lid_is_absorbed);
+    RUN_TEST(test_taps_with_the_hand_resting_near_the_lid);
+    RUN_TEST(test_long_press_with_the_hand_resting_near_the_lid);
+    RUN_TEST(test_blip_right_after_a_release_is_ignored);
     RUN_TEST(test_rising_touch_polarity);
     return UNITY_END();
 }
