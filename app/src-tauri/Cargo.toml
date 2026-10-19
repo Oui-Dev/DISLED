@@ -1,6 +1,7 @@
 [package]
 name = "disled-app"
-version = "0.1.0"
+# No version here: the app version lives in package.json, where release-please
+# bumps it, and tauri.conf.json reads it from there.
 description = "Desktop app for the DISLED USB status light"
 authors = ["The DISLED contributors"]
 license = "GPL-3.0-or-later"

@@ -38,6 +38,15 @@ pio run -e debug -t upload     # development firmware: HID + CDC console
 pio run -e release -t upload   # production firmware: HID only
 ```
 
+To flash a published build instead, download `disled-fw-X.Y.Z.hex` (or
+`-debug.hex`) from the [releases page](https://github.com/Oui-Dev/DISLED/releases)
+and use [wchisp](https://github.com/ch32-rs/wchisp) directly (PlatformIO
+installs it in `~/.platformio/packages/tool-wchisp`):
+
+```sh
+wchisp flash disled-fw-X.Y.Z.hex
+```
+
 After flashing, press **RESET** (or unplug and plug back in). The lamp
 starts green and shows up as:
 
