@@ -17,13 +17,15 @@ version, tag and changelog:
    `feat` adds a feature, `fix` fixes a bug, `feat!` or a
    `BREAKING CHANGE:` footer breaks compatibility. `docs`, `chore`, `ci`,
    `test` and `refactor` do not trigger a release.
-2. On each push to `main`, the `release` workflow opens or updates one
-   release pull request per component that has releasable commits. It
-   holds the next version (computed from the commits) and the changelog
-   entries. Commits are assigned to a component by the files they change.
+2. On each push to `main`, the `release` workflow opens or updates a
+   single release pull request. It bumps only the components that have
+   releasable commits, with their next version (computed from the
+   commits) and their changelog entries. Commits are assigned to a
+   component by the files they change.
 3. Merge the release pull request when you want to release. The workflow
-   then tags the merge commit, publishes the GitHub release with the
-   changelog, and attaches the binaries:
+   then tags the merge commit for each bumped component, publishes one
+   GitHub release per component with its changelog, and attaches the
+   binaries:
    - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
      with `SHA256SUMS`;
    - **app:** Windows installer (`.exe`), macOS disk image for Apple
@@ -45,9 +47,10 @@ breaking change does too; `fix` raises the patch version.
   and approve pull requests**. The default token permissions can stay
   read-only: the release workflow asks for write access itself, and the
   other workflows only need to read.
-- Pull requests and tags created by the workflow do not trigger the other
-  workflows (a GitHub rule for its built-in token): the release pull
-  request shows no checks, which is expected since it only changes
-  versions and changelogs.
 - To force a version, add `Release-As: X.Y.Z` to the body of a commit that
   touches the component.
+- One release pull request for both components: with one per component,
+  both edited `.release-please-manifest.json`, so merging one left the
+  other in conflict, and release-please does not rebuild a pull request
+  whose content did not change. The cost: when both components have
+  pending changes, they are released together.
