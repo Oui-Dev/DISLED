@@ -41,8 +41,10 @@ breaking change does too; `fix` raises the patch version.
   Actions minutes 10 and 2 times faster; an app release costs about 150 to
   200 minutes. Public repositories have no such limit.
 - The repository must allow the workflow to open pull requests: Settings,
-  Actions, General, Workflow permissions: **Read and write permissions**
-  and **Allow GitHub Actions to create and approve pull requests**.
+  Actions, General, Workflow permissions: **Allow GitHub Actions to create
+  and approve pull requests**. The default token permissions can stay
+  read-only: the release workflow asks for write access itself, and the
+  other workflows only need to read.
 - Pull requests and tags created by the workflow do not trigger the other
   workflows (a GitHub rule for its built-in token): the release pull
   request shows no checks, which is expected since it only changes

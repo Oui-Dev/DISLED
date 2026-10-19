@@ -16,8 +16,8 @@
 #include <stdint.h>
 
 typedef struct {
-    uint8_t charge_time;    /* electrode charge time, ADC clock cycles */
-    uint8_t discharge_time; /* discharge time, ADC clock cycles */
+    uint8_t charge_time;     /* electrode charge time, ADC clock cycles */
+    uint8_t discharge_time;  /* discharge time, ADC clock cycles */
     uint8_t adc_sample_time; /* ADC_SampleTime_* of the SDK: sets the reading range */
 } tkey_config_t;
 
