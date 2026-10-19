@@ -51,6 +51,34 @@ void tearDown(void)
 {
 }
 
+static void test_pulse_loss_is_added_to_lit_channels_only(void)
+{
+    static led_output_config_t lossy;
+    lossy = config;
+    lossy.fade_ms = 0;
+    lossy.pulse_loss[LED_CHANNEL_GREEN] = 5;
+    lossy.pulse_loss[LED_CHANNEL_BLUE] = 5;
+    led_output_init(&out, &lossy);
+
+    /* Green at a low level gains the loss; blue stays dark. */
+    in.level_permille = 100;
+    led_output_update(&out, &in, 0, duty);
+    led_output_update(&out, &in, 10, duty);
+    const uint16_t low = duty[LED_CHANNEL_GREEN];
+    TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_BLUE]);
+    led_output_init(&out, &config);
+    led_output_update(&out, &in, 0, duty);
+    led_output_update(&out, &in, 400, duty);
+    TEST_ASSERT_EQUAL_UINT16(duty[LED_CHANNEL_GREEN] + 5u, low);
+
+    /* Full scale never exceeds the period. */
+    led_output_init(&out, &lossy);
+    in.level_permille = 1000;
+    led_output_update(&out, &in, 0, duty);
+    led_output_update(&out, &in, 10, duty);
+    TEST_ASSERT_EQUAL_UINT16(PERIOD, duty[LED_CHANNEL_GREEN]);
+}
+
 static void test_fade_in_from_dark(void)
 {
     led_output_update(&out, &in, 1000, duty);
@@ -126,6 +154,7 @@ static void test_cap_override_for_the_thermal_test(void)
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_pulse_loss_is_added_to_lit_channels_only);
     RUN_TEST(test_fade_in_from_dark);
     RUN_TEST(test_turning_off_fades_out);
     RUN_TEST(test_retarget_during_a_fade_does_not_jump);

@@ -26,6 +26,11 @@ typedef struct {
     const power_config_t *power;
     uint16_t fade_ms;
     uint16_t pwm_period; /* timer ticks for 100 % duty */
+    /* Ticks of each pulse that give no light (driver edges), per channel.
+     * They are added to any lit channel, so that very short pulses keep
+     * their share of the color: at low levels the blue of warm white is a
+     * few ticks long and would otherwise vanish (seen at bring-up). */
+    uint16_t pulse_loss[LED_CHANNEL_COUNT];
 } led_output_config_t;
 
 typedef struct {

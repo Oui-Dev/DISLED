@@ -141,10 +141,11 @@ static void cmd_touch(int argc, char **argv)
     } else if (argc == 2 && strcmp(argv[1], "recal") == 0) {
         touch_detector_recalibrate(&app.touch);
     } else if ((argc == 4 || argc == 5) && strcmp(argv[1], "charge") == 0) {
-        static const uint8_t sample_times[] = { ADC_SampleTime_1Cycles5,  ADC_SampleTime_7Cycles5,
-                                                ADC_SampleTime_13Cycles5, ADC_SampleTime_28Cycles5,
-                                                ADC_SampleTime_41Cycles5, ADC_SampleTime_55Cycles5,
-                                                ADC_SampleTime_71Cycles5, ADC_SampleTime_239Cycles5 };
+        static const uint8_t sample_times[] = {
+            ADC_SampleTime_1Cycles5,  ADC_SampleTime_7Cycles5,  ADC_SampleTime_13Cycles5,
+            ADC_SampleTime_28Cycles5, ADC_SampleTime_41Cycles5, ADC_SampleTime_55Cycles5,
+            ADC_SampleTime_71Cycles5, ADC_SampleTime_239Cycles5
+        };
         uint32_t charge = 0;
         uint32_t discharge = 0;
         uint32_t sample = 1;
@@ -170,8 +171,8 @@ static void cmd_palette(int argc, char **argv)
     uint32_t g = 0;
     uint32_t b = 0;
     if (argc == 5 && parse_u32(argv[1], &index) && index < LAMP_COLOR_COUNT &&
-        parse_u32(argv[2], &r) && parse_u32(argv[3], &g) && parse_u32(argv[4], &b) &&
-        r <= 65535u && g <= 65535u && b <= 65535u) {
+        parse_u32(argv[2], &r) && parse_u32(argv[3], &g) && parse_u32(argv[4], &b) && r <= 65535u &&
+        g <= 65535u && b <= 65535u) {
         app.colors.palette[index] = (rgb16_t){ (uint16_t)r, (uint16_t)g, (uint16_t)b };
     } else if (argc != 1) {
         console_printf("usage: palette [<0-3> <r> <g> <b>] (0-65535, linear light, RAM only)\r\n");
@@ -182,6 +183,24 @@ static void cmd_palette(int argc, char **argv)
         console_printf("%u %-10s %5u %5u %5u\r\n", (unsigned)i, color_names[i], (unsigned)c.r,
                        (unsigned)c.g, (unsigned)c.b);
     }
+}
+
+static void cmd_pulse(int argc, char **argv)
+{
+    uint32_t loss[LED_CHANNEL_COUNT] = { 0 };
+    if (argc == 1 + LED_CHANNEL_COUNT && parse_u32(argv[1], &loss[0]) && loss[0] <= 100u &&
+        parse_u32(argv[2], &loss[1]) && loss[1] <= 100u && parse_u32(argv[3], &loss[2]) &&
+        loss[2] <= 100u) {
+        for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
+            app.output_config.pulse_loss[i] = (uint16_t)loss[i];
+        }
+    } else if (argc != 1) {
+        console_printf("usage: pulse [<r> <g> <b>] (0-100 ticks, RAM only)\r\n");
+        return;
+    }
+    const uint16_t *p = app.output_config.pulse_loss;
+    console_printf("pulse loss r/g/b: %u/%u/%u ticks\r\n", (unsigned)p[0], (unsigned)p[1],
+                   (unsigned)p[2]);
 }
 
 static void cmd_cap(int argc, char **argv)
@@ -255,7 +274,8 @@ static void cmd_i2c(int argc, char **argv)
         if (status != I2C_BUS_OK) {
             const i2c_bus_failure_t f = i2c_bus_last_failure();
             console_printf("failed at step %u: STAR1 0x%04x STAR2 0x%04x CTLR1 0x%04x\r\n",
-                           (unsigned)f.step, (unsigned)f.star1, (unsigned)f.star2, (unsigned)f.ctlr1);
+                           (unsigned)f.step, (unsigned)f.star1, (unsigned)f.star2,
+                           (unsigned)f.ctlr1);
         }
     } else if (argc == 2 && strcmp(argv[1], "recover") == 0) {
         i2c_bus_recover();
@@ -289,6 +309,7 @@ static const console_command_t commands[] = {
     { "watch", "<ms>|off", "print touch, light and current periodically", cmd_watch },
     { "touch", "phase|dither|recal", "touch sampling experiments (V4)", cmd_touch },
     { "palette", "[<i> <r> <g> <b>]", "show or tune the colors (RAM only)", cmd_palette },
+    { "pulse", "[<r> <g> <b>]", "show or tune the PWM pulse loss (RAM only)", cmd_pulse },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
     { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
     { "log", "<0-3>", "log level", cmd_log },

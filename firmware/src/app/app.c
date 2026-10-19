@@ -159,7 +159,8 @@ static void task_output(uint32_t now_ms)
     /* Heartbeat: the level breathes while the loop runs. */
     led_output_inputs_t breathing = inputs;
     const uint32_t phase = now_ms % 2000u;
-    breathing.level_permille = (uint16_t)(200u + (4u * ((phase < 1000u) ? phase : 2000u - phase)) / 5u);
+    breathing.level_permille =
+        (uint16_t)(200u + (4u * ((phase < 1000u) ? phase : 2000u - phase)) / 5u);
     led_output_update(&app.output, &breathing, now_ms, app.duty);
 #else
     led_output_update(&app.output, &inputs, now_ms, app.duty);
@@ -183,7 +184,13 @@ static void task_console(uint32_t now_ms)
 /* Bring-up diagnostic: the running task is noted in a backup register, so
  * that a watchdog reset can tell which one hung. */
 #define DIAG_MARK(n) (BKP->DATAR8 = (uint16_t)(n))
-#define DIAG_TASK(id, fn)                                                                              static void diag_##fn(uint32_t now_ms)                                                             {                                                                                                      DIAG_MARK(id);                                                                                     fn(now_ms);                                                                                        DIAG_MARK(0);                                                                                  }
+#define DIAG_TASK(id, fn)                  \
+    static void diag_##fn(uint32_t now_ms) \
+    {                                      \
+        DIAG_MARK(id);                     \
+        fn(now_ms);                        \
+        DIAG_MARK(0);                      \
+    }
 DIAG_TASK(1, task_usb)
 DIAG_TASK(2, task_touch)
 DIAG_TASK(3, task_als)
@@ -243,6 +250,11 @@ void app_init(const fault_record_t *fault)
         .fade_ms = APP_LED_FADE_MS,
         .pwm_period = led_pwm_period(),
     };
+    const uint32_t timer_mhz = bsp_apb1_timer_clock_hz() / 1000000u;
+    for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
+        app.output_config.pulse_loss[i] =
+            (uint16_t)((app_led_pulse_loss_ns[i] * timer_mhz + 500u) / 1000u);
+    }
     led_output_init(&app.output, &app.output_config);
 #ifdef DISLED_BOOT_DIAG
     const uint16_t hung_task = BKP->DATAR8;

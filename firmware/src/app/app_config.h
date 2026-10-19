@@ -44,5 +44,7 @@ extern const veml7700_config_t app_veml7700_config;
 extern const brightness_config_t app_brightness_config;
 extern const color_config_t app_color_config;
 extern const power_config_t app_power_config;
+/* Light lost per PWM pulse, per channel (see led_output_config_t). */
+extern const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT];
 
 #endif /* DISLED_APP_CONFIG_H */

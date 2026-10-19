@@ -37,9 +37,14 @@ static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in
     return color_compose(out->config->color, in->color, in->level_permille);
 }
 
-static uint16_t to_duty(uint16_t linear, uint16_t period)
+static uint16_t to_duty(uint16_t linear, uint16_t period, uint16_t pulse_loss)
 {
-    return (uint16_t)(((uint32_t)linear * period + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX);
+    if (linear == 0u) {
+        return 0;
+    }
+    const uint32_t duty =
+        (((uint32_t)linear * period + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX) + pulse_loss;
+    return (duty > period) ? period : (uint16_t)duty;
 }
 
 void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_t now_ms,
@@ -74,9 +79,12 @@ void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_
     const rgb16_t limited = power_limit(cfg->power, out->shown, out->cap_ma);
     out->estimate_ma_x10 = power_estimate_ma_x10(cfg->power, limited);
 
-    out->duty[LED_CHANNEL_RED] = to_duty(limited.r, cfg->pwm_period);
-    out->duty[LED_CHANNEL_GREEN] = to_duty(limited.g, cfg->pwm_period);
-    out->duty[LED_CHANNEL_BLUE] = to_duty(limited.b, cfg->pwm_period);
+    out->duty[LED_CHANNEL_RED] =
+        to_duty(limited.r, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_RED]);
+    out->duty[LED_CHANNEL_GREEN] =
+        to_duty(limited.g, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_GREEN]);
+    out->duty[LED_CHANNEL_BLUE] =
+        to_duty(limited.b, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_BLUE]);
     for (unsigned i = 0; i < LED_CHANNEL_COUNT; i++) {
         duty[i] = out->duty[i];
     }
