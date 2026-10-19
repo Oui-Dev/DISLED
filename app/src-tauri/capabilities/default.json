@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window: events and commands of the app, save dialog for recordings",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:allow-save"
+  ]
+}

@@ -1,0 +1,57 @@
+# DISLED desktop app
+
+Tauri 2 app that drives the lamp over USB and records measurements for
+tuning. Phase 1 scope: test and tuning tool. Phase 2 turns it into the
+product app (menu bar or tray icon, start at login, installers).
+
+## Run it
+
+Prerequisites: Node.js 20 or later, the Rust toolchain (`rustup`) and, on
+Windows, the Visual Studio Build Tools with the C++ workload (macOS: Xcode
+command line tools).
+
+```sh
+npm install
+npm run tauri dev
+```
+
+The app finds the lamp by itself (USB IDs `1209:0001` and `1209:0002`) and
+reconnects when it is plugged back in. No driver is needed.
+
+## Features
+
+- Connection status, firmware version, serial number, last reset cause and
+  fault report.
+- Lamp controls: power, the four colors, automatic or manual brightness.
+  The lamp owns the state; the controls follow its notifications, including
+  touches on the lid.
+- Telemetry at 50 ms to 1 s: touch reading, baseline and signal, ambient
+  light, LED current and cap, PWM duties, with live charts.
+- Recording of the telemetry to CSV, for the tuning campaigns described in
+  [`docs/bringup.md`](../docs/bringup.md).
+
+## Layout
+
+| Path                        | Content                                                         |
+| --------------------------- | --------------------------------------------------------------- |
+| `src-tauri/src/protocol.rs` | Protocol codec, tested against `protocol/vectors/v1.json`       |
+| `src-tauri/src/device.rs`   | USB worker thread: discovery, reconnection, reads and writes    |
+| `src-tauri/src/lib.rs`      | Tauri commands (`device_connection`, `device_send`, `save_csv`) |
+| `src/lib/protocol.ts`       | TypeScript mirror of the Rust message types                     |
+| `src/lib/device.ts`         | Device store shared by the components, CSV recorder             |
+| `src/components/`           | Header, lamp panel, telemetry panel, canvas line chart          |
+
+The USB access stays in Rust: the macOS web view has no WebHID, and a
+backend-owned connection keeps working once the app runs in the background.
+
+## Checks
+
+```sh
+npm run typecheck      # vue-tsc
+npm run lint           # ESLint
+npm run format:check   # Prettier
+cd src-tauri
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test             # protocol codec against the shared vectors
+```

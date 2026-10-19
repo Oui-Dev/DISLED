@@ -5,8 +5,9 @@ green, orange or red to tell colleagues whether you are available. A touch
 on the lid cycles the colors, the brightness follows the room light, and a
 desktop app gives full control.
 
-> **Status:** phase 1 (bring-up and MVP) in progress. The v4 boards are
-> being manufactured.
+> **Status:** phase 1 (bring-up and MVP) complete on the first v4 board;
+> the Mac, current and thermal tests wait for the enclosure V2. Binaries
+> are on the [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout
 
@@ -25,6 +26,18 @@ desktop app gives full control.
 - Vishay VEML7700 ambient light sensor (I²C)
 - Capacitive touch electrode on the lid (CH32V203 TouchKey)
 - USB-C for power, flashing (WCH ROM bootloader) and communication
+
+## Getting started
+
+| I want to… | Read |
+|---|---|
+| Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
+| Run the desktop app | [app/README.md](app/README.md) |
+| Understand the design | [docs/architecture.md](docs/architecture.md), [decision records](docs/decisions/) |
+| Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
+| Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |
+| Bring up a new board | [docs/bringup.md](docs/bringup.md) |
+| Publish a release | [docs/releasing.md](docs/releasing.md) |
 
 ## Licensing
 

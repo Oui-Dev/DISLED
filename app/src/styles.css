@@ -1,0 +1,79 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 The DISLED contributors
+ */
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --text: #1d2025;
+  --muted: #6b7280;
+  --grid: rgba(107, 114, 128, 0.25);
+  --border: #dfe2e7;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.15);
+  --on-accent: #ffffff;
+  --warning: #c2410c;
+
+  color-scheme: light dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b;
+    --panel: #1e2126;
+    --text: #e6e8eb;
+    --muted: #9aa1ab;
+    --grid: rgba(154, 161, 171, 0.2);
+    --border: #2c3036;
+    --accent: #3b82f6;
+    --accent-soft: rgba(59, 130, 246, 0.25);
+    --warning: #fb923c;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.panel h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+button,
+select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

@@ -1,0 +1,4 @@
+[submodule "firmware/lib/tinyusb/upstream"]
+	path = firmware/lib/tinyusb/upstream
+	url = https://github.com/hathach/tinyusb.git
+	shallow = true
