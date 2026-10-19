@@ -12,8 +12,13 @@
 /* TouchKey timing, measured on the first board (bring-up): the ADC sample
  * time sets the range, the charge time the position in it. With 1.5 cycles
  * and charge 3 the reading sits mid-scale (about 2600 of 4095, noise about
- * +-6 per mille) and a finger on the bare electrode lowers it by about
- * 100 per mille. The WCH example values (charge 16, 7.5 cycles) saturate. */
+ * +-6 per mille). The WCH example values (charge 16, 7.5 cycles) saturate.
+ *
+ * Closed enclosure, Windows PC on an earthed monitor hub: a finger on the
+ * lid lowers the reading by 44-57 per mille; a hand approaching the lid by
+ * up to 11; holding the USB plug with the other hand doubles the drop (64-91),
+ * as the body then shares the board ground. The thresholds sit between the
+ * hand approaching and a one-hand touch. */
 const tkey_config_t app_tkey_config = {
     .charge_time = 3,
     .discharge_time = 8,
@@ -24,8 +29,8 @@ const touch_config_t app_touch_config = {
     .window_samples = 20,     /* 20 ms at 1 kHz: one 50 Hz mains period */
     .calibration_windows = 8, /* 160 ms */
     .baseline_shift = 8,      /* about 5 s time constant */
-    .press_permille = 40,     /* tune (V4) */
-    .release_permille = 25,   /* tune (V4) */
+    .press_permille = 28,     /* see the TouchKey note; recheck on the Mac (V4) */
+    .release_permille = 16,
     .debounce_ms = 60,
     .long_press_ms = 2000,
     .object_ms = 10000,
