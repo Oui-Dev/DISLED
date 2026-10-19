@@ -60,13 +60,14 @@ const brightness_config_t app_brightness_config = {
     .fallback_permille = 500,
 };
 
-/* Colors at full brightness, linear light. Tune the orange and the warm
- * white by eye through the PLA, then the per-channel balance. */
+/* Colors at full brightness, linear light. The orange and the warm white
+ * were tuned by eye through the PLA at bring-up (the first orange, green at
+ * 16384, was hard to tell from the red). */
 /* clang-format off: keep the table readable */
 const color_config_t app_color_config = {
     .palette = {
         [LAMP_COLOR_GREEN]      = {     0, 65535,    0 },
-        [LAMP_COLOR_ORANGE]     = { 65535, 16384,    0 },
+        [LAMP_COLOR_ORANGE]     = { 65535, 29000,    0 }, /* tuned by eye through the PLA */
         [LAMP_COLOR_RED]        = { 65535,     0,    0 },
         [LAMP_COLOR_WARM_WHITE] = { 63000, 58000, 1600 }, /* tuned by eye through the PLA */
     },
