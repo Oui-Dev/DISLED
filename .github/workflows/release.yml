@@ -2,9 +2,10 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
 # Releases (docs/releasing.md). On every push to main, release-please keeps
-# one release pull request per component up to date. Merging it tags
-# fw-vX.Y.Z or app-vX.Y.Z and publishes the GitHub release; the jobs below
-# then build that tag and attach the binaries.
+# the release pull request up to date. Merging it tags fw-vX.Y.Z and/or
+# app-vX.Y.Z and publishes the GitHub releases; the jobs below then build
+# those tags and attach the binaries. The app release stays the "latest"
+# one: the app updater reads releases/latest/download/latest.json.
 name: release
 
 on:
@@ -79,6 +80,13 @@ jobs:
           (cd dist && sha256sum * > SHA256SUMS)
           gh release upload "$TAG" dist/* --clobber
 
+      - name: Keep the app release as the latest
+        run: |
+          app_tag=$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 \
+            --json tagName,createdAt \
+            --jq 'map(select(.tagName | startswith("app-v"))) | sort_by(.createdAt) | last | .tagName')
+          gh release edit "$app_tag" --latest
+
   app:
     needs: release-please
     if: needs.release-please.outputs.app-released == 'true'
@@ -89,7 +97,7 @@ jobs:
           - os: windows-2022
             bundles: nsis
           - os: macos-14 # Apple Silicon
-            bundles: dmg
+            bundles: app,dmg # the updater archive is made from the app bundle
           - os: ubuntu-22.04 # oldest supported glibc: the .deb installs on older systems too
             bundles: deb
     runs-on: ${{ matrix.os }}
@@ -123,12 +131,55 @@ jobs:
       - uses: Swatinem/rust-cache@v2 # Rust workspace at the repository root
 
       - name: Build the installer
+        env:
+          # Signs the installers for the app updater (docs/releasing.md).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm ci
-          npm run tauri build -- --bundles ${{ matrix.bundles }}
+          npm run tauri build -- --bundles ${{ matrix.bundles }} \
+            --config src-tauri/tauri.updater.conf.json
 
       - name: Attach to the release
+        working-directory: target/release/bundle
         run: |
-          find ../target/release/bundle -type f \
-            \( -name '*.exe' -o -name '*.dmg' -o -name '*.deb' \) \
+          # The macOS updater archive has neither version nor architecture
+          # in its name.
+          if [ -f macos/DISLED.app.tar.gz ]; then
+            for ext in "" .sig; do
+              mv "macos/DISLED.app.tar.gz$ext" "macos/DISLED_${TAG#app-v}_aarch64.app.tar.gz$ext"
+            done
+          fi
+          find . -type f \
+            \( -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.app.tar.gz' -o -name '*.sig' \) \
             -print0 | xargs -0 gh release upload "$TAG" --clobber
+
+  updater:
+    # After the installers, even when one of them failed: the other
+    # platforms still get the update.
+    needs: [release-please, app]
+    if: always() && needs.release-please.outputs.app-released == 'true' && needs.app.result != 'cancelled'
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ needs.release-please.outputs.app-tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Publish latest.json
+        run: |
+          mkdir signatures
+          gh release download "$TAG" --pattern '*.sig' --dir signatures
+          gh release view "$TAG" --json body --jq .body > notes.md
+          node app/scripts/updater-manifest.mjs "${TAG#app-v}" \
+            "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG" \
+            signatures notes.md > latest.json
+          cat latest.json
+          gh release upload "$TAG" latest.json --clobber
+          gh release edit "$TAG" --latest
