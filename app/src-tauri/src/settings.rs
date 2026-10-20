@@ -26,6 +26,8 @@ pub struct Settings {
     pub auto_bias: i8,
     /// Start at login was turned on once, at the first launch.
     pub autostart_initialized: bool,
+    /// Look for a new version of the app at start-up and once a day.
+    pub check_updates: bool,
 }
 
 impl Default for Settings {
@@ -35,6 +37,7 @@ impl Default for Settings {
             manual_level: 50,
             auto_bias: 0,
             autostart_initialized: false,
+            check_updates: true,
         }
     }
 }
@@ -45,6 +48,7 @@ pub struct SettingsPatch {
     pub brightness_mode: Option<BrightnessMode>,
     pub manual_level: Option<u8>,
     pub auto_bias: Option<i8>,
+    pub check_updates: Option<bool>,
 }
 
 impl Settings {
@@ -58,6 +62,9 @@ impl Settings {
         }
         if let Some(bias) = patch.auto_bias {
             self.auto_bias = bias.clamp(AUTO_BIAS_MIN, AUTO_BIAS_MAX);
+        }
+        if let Some(check) = patch.check_updates {
+            self.check_updates = check;
         }
     }
 
@@ -135,6 +142,7 @@ mod tests {
             manual_level: 30,
             auto_bias: 20,
             autostart_initialized: true,
+            check_updates: true,
         };
         assert_eq!(settings.commands(false).len(), 1);
         let commands = settings.commands(true);
@@ -159,5 +167,6 @@ mod tests {
         assert_eq!(settings.manual_level, 40);
         assert_eq!(settings.auto_bias, 0);
         assert!(!settings.autostart_initialized);
+        assert!(settings.check_updates);
     }
 }

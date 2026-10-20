@@ -8,7 +8,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { getVersion } from "@tauri-apps/api/app";
-import { device, getAutostart, openDiagnostics, quitApp, setAutostart, setLamp } from "../lib/device";
+import {
+  device,
+  getAutostart,
+  openDiagnostics,
+  quitApp,
+  setAutostart,
+  setLamp,
+  updateSettings,
+} from "../lib/device";
+import { checkForUpdates, installUpdate, updates } from "../lib/updates";
 import BrightnessControl from "./BrightnessControl.vue";
 import ColorSwatches from "./ColorSwatches.vue";
 
@@ -29,6 +38,30 @@ const status = computed(() => {
 });
 const firmware = computed(() => device.info?.firmware_version ?? "–");
 
+const installing = computed(() => updates.progress !== null);
+const updateLine = computed(() => {
+  if (installing.value) {
+    return `Downloading ${updates.available}… ${updates.progress} %`;
+  }
+  if (updates.checking) {
+    return "Checking for updates…";
+  }
+  if (updates.error) {
+    return `Update error: ${updates.error}`;
+  }
+  if (updates.available) {
+    return `DISLED ${updates.available} is available.`;
+  }
+  if (updates.checked_at) {
+    const at = new Date(updates.checked_at * 1000).toLocaleString([], {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+    return `Up to date (checked ${at}).`;
+  }
+  return "";
+});
+
 onMounted(async () => {
   appVersion.value = await getVersion();
   autostart.value = await getAutostart();
@@ -36,6 +69,10 @@ onMounted(async () => {
 
 async function toggleAutostart(event: Event): Promise<void> {
   autostart.value = await setAutostart((event.target as HTMLInputElement).checked);
+}
+
+function toggleUpdateChecks(event: Event): Promise<void> {
+  return updateSettings({ check_updates: (event.target as HTMLInputElement).checked });
 }
 </script>
 
@@ -71,8 +108,32 @@ async function toggleAutostart(event: Event): Promise<void> {
         <input type="checkbox" :checked="autostart" @change="toggleAutostart" />
         Start DISLED when I log in
       </label>
+      <label class="option">
+        <input
+          type="checkbox"
+          :checked="device.settings?.check_updates ?? true"
+          :disabled="!device.settings"
+          @change="toggleUpdateChecks"
+        />
+        Check for updates every day
+      </label>
+      <div class="updates">
+        <button
+          v-if="updates.available"
+          type="button"
+          class="install"
+          :disabled="installing"
+          @click="installUpdate"
+        >
+          Install {{ updates.available }} and restart
+        </button>
+        <button v-else type="button" :disabled="updates.checking" @click="checkForUpdates">
+          Check for updates
+        </button>
+        <p v-if="updateLine" class="muted small">{{ updateLine }}</p>
+      </div>
       <button type="button" @click="openDiagnostics">Open diagnostics…</button>
-      <p class="muted versions">App {{ appVersion }} · lamp firmware {{ firmware }}</p>
+      <p class="muted small">App {{ appVersion }} · lamp firmware {{ firmware }}</p>
     </section>
 
     <p v-if="device.lastError" class="warning">{{ device.lastError }}</p>
@@ -80,6 +141,14 @@ async function toggleAutostart(event: Event): Promise<void> {
     <footer class="foot">
       <button type="button" class="link" @click="page = page === 'lamp' ? 'settings' : 'lamp'">
         {{ page === "lamp" ? "Settings" : "Back" }}
+      </button>
+      <button
+        v-if="updates.available && page === 'lamp'"
+        type="button"
+        class="link update"
+        @click="page = 'settings'"
+      >
+        Update to {{ updates.available }}
       </button>
       <button type="button" class="link" @click="quitApp">Quit</button>
     </footer>
@@ -137,9 +206,21 @@ async function toggleAutostart(event: Event): Promise<void> {
   align-items: center;
   gap: 8px;
 }
-.versions {
+.updates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.install {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.small {
   margin: 0;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .warning {
   margin: 0;
@@ -156,5 +237,8 @@ async function toggleAutostart(event: Event): Promise<void> {
   background: none;
   padding: 4px 0;
   color: var(--accent);
+}
+.link.update {
+  font-weight: 600;
 }
 </style>

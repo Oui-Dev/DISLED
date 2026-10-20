@@ -30,9 +30,13 @@ export interface Settings {
   /** Automatic brightness bias, percent (-50 to +50). */
   auto_bias: number;
   autostart_initialized: boolean;
+  /** Look for a new version of the app at start-up and once a day. */
+  check_updates: boolean;
 }
 
-export type SettingsPatch = Partial<Pick<Settings, "brightness_mode" | "manual_level" | "auto_bias">>;
+export type SettingsPatch = Partial<
+  Pick<Settings, "brightness_mode" | "manual_level" | "auto_bias" | "check_updates">
+>;
 
 /** Telemetry samples kept for the charts. */
 const HISTORY_LENGTH = 600;
@@ -176,7 +180,7 @@ export function setLamp(changes: Pick<SetState, "on" | "color">): Promise<void> 
   return send({ kind: "set_state", ...changes });
 }
 
-/** Brightness mode, manual level, bias: saved, then applied to the lamp. */
+/** Saved on this computer; the brightness settings are also applied to the lamp. */
 export async function updateSettings(patch: SettingsPatch): Promise<void> {
   try {
     device.settings = await invoke<Settings>("settings_set", { patch });

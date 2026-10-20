@@ -2,11 +2,13 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 //! DISLED desktop app: a tray icon with a popup for daily use, a
-//! Diagnostics window for tuning, and the USB worker behind both.
+//! Diagnostics window for tuning, the USB worker behind both, and the app
+//! updates.
 
 mod device;
 mod settings;
 mod tray;
+mod updates;
 mod windows;
 
 use device::{Connection, DeviceHandle};
@@ -14,6 +16,7 @@ use disled_protocol::{Command, SetState};
 use settings::{Settings, SettingsPatch, SettingsState};
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WindowEvent};
 use tauri_plugin_autostart::ManagerExt;
+use updates::{UpdateState, UpdateStatus};
 
 /// Argument of the login item: started at login, the app stays in the tray.
 const AUTOSTART_ARG: &str = "--autostart";
@@ -92,6 +95,22 @@ fn autostart_set(app: AppHandle, enabled: bool) -> Result<bool, String> {
     Ok(launcher.is_enabled().unwrap_or(enabled))
 }
 
+#[tauri::command]
+fn update_status(updates: State<'_, UpdateState>) -> UpdateStatus {
+    updates.status()
+}
+
+#[tauri::command]
+async fn update_check(app: AppHandle) -> UpdateStatus {
+    updates::check(&app).await
+}
+
+/// Returns only on failure: on success the app restarts.
+#[tauri::command]
+async fn update_install(app: AppHandle) -> Result<(), String> {
+    updates::install(&app).await
+}
+
 /// Async on purpose: a synchronous command that creates a window deadlocks
 /// on Windows (WebView2), leaving a blank window and a frozen app.
 #[tauri::command]
@@ -132,8 +151,10 @@ pub fn run() {
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(SettingsState::default())
         .manage(windows::PopupState::default())
+        .manage(UpdateState::default())
         .setup(move |app| {
             // No Dock icon: the app lives in the menu bar.
             #[cfg(target_os = "macos")]
@@ -151,6 +172,7 @@ pub fn run() {
                 });
             }
             app.manage(DeviceHandle::spawn(handle.clone()));
+            updates::spawn_automatic_checks(handle.clone());
             if !started_at_login {
                 windows::show_popup(&handle);
             }
@@ -164,6 +186,9 @@ pub fn run() {
             settings_set,
             autostart_get,
             autostart_set,
+            update_status,
+            update_check,
+            update_install,
             open_diagnostics,
             quit
         ])

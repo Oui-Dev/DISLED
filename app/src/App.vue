@@ -10,11 +10,15 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import DiagnosticsView from "./components/DiagnosticsView.vue";
 import PopupView from "./components/PopupView.vue";
 import { startDevice } from "./lib/device";
+import { startUpdates } from "./lib/updates";
 
 const isPopup = getCurrentWebviewWindow().label === "popup";
 
 onMounted(() => {
   void startDevice();
+  if (isPopup) {
+    void startUpdates();
+  }
 });
 </script>
 
