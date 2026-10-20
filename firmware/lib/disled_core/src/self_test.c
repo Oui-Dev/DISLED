@@ -110,9 +110,7 @@ rgb16_t self_test_color(const self_test_t *t, uint32_t now_ms)
                 color.b = on;
                 break;
             default:
-                color.r = on;
-                color.g = on;
-                color.b = on;
+                color = cfg->white;
                 break;
         }
     }

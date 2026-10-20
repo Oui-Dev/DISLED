@@ -106,12 +106,15 @@ const power_config_t app_power_config = {
 };
 
 /* Self-test: colors at 50 % and the blue glow at 20 % perceived, in linear
- * light (the CIE table of color.c). Idle TouchKey reading: about 2600
- * counts on the first board, 4095 when saturated. */
+ * light (the CIE table of color.c). The white step is the palette's warm
+ * white at 50 % (63000/58000/1600 x 12071/65535): equal channels looked
+ * pink. Idle TouchKey reading: about 2600 counts on the first board, 4095
+ * when saturated. */
 const self_test_config_t app_self_test_config = {
     .color_ms = 1500,
     .touch_wait_ms = 10000,
     .color_linear = 12071,
+    .white = { 11604, 10683, 295 },
     .wait_linear = 1959,
     .touch_idle_min = 1000,
     .touch_idle_max = 3800,

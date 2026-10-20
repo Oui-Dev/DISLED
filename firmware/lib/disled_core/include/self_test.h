@@ -4,7 +4,7 @@
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
  * Production self-test (protocol SELF_TEST): shows red, green, blue and
- * white for a person to check, checks the light sensor and the idle touch
+ * the warm white for a person to check, checks the light sensor and the idle touch
  * reading, then waits for a touch on the lid while the lamp glows blue.
  * Pure logic: the application feeds the measurements and shows the color.
  */
@@ -27,7 +27,8 @@
 typedef struct {
     uint16_t color_ms;       /* each color step */
     uint16_t touch_wait_ms;  /* time allowed for the touch */
-    uint16_t color_linear;   /* light of the color steps, linear 0..65535 */
+    uint16_t color_linear;   /* light of the red, green and blue steps, linear 0..65535 */
+    rgb16_t white;           /* last step: the lamp's warm white (linear) */
     uint16_t wait_linear;    /* light of the blue glow while waiting */
     uint16_t touch_idle_min; /* plausible idle TouchKey baseline, counts */
     uint16_t touch_idle_max;

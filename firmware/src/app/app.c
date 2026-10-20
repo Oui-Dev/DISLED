@@ -209,6 +209,9 @@ static rgb16_t run_self_test(uint32_t now_ms)
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),
     };
     if (self_test_update(&app.self_test, now_ms, &measurements)) {
+        if ((app.self_test.results & SELF_TEST_TOUCH_PRESSED) != 0u) {
+            touch_detector_consume(&app.touch); /* the finger is still down */
+        }
         app.self_test_report = true;
         LOG_INFO("self-test: results 0x%02x", (unsigned)app.self_test.results);
     }

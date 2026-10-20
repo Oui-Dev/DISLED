@@ -11,6 +11,7 @@ static const self_test_config_t config = {
     .color_ms = 1500,
     .touch_wait_ms = 10000,
     .color_linear = 12000,
+    .white = { 11000, 10000, 300 },
     .wait_linear = 1000,
     .touch_idle_min = 1000,
     .touch_idle_max = 3800,
@@ -65,7 +66,7 @@ static void test_shows_red_green_blue_white_then_waits_in_blue(void)
     c = self_test_color(&t, 4100);
     TEST_ASSERT_TRUE(c.r == 0 && c.g == 0 && c.b == 12000);
     c = self_test_color(&t, 5600);
-    TEST_ASSERT_TRUE(c.r == 12000 && c.g == 12000 && c.b == 12000);
+    TEST_ASSERT_TRUE(c.r == 11000 && c.g == 10000 && c.b == 300);
 
     TEST_ASSERT_EQUAL_UINT32(0, run(1000, 7000)); /* colors done at 7000 */
     c = self_test_color(&t, 7010);
