@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/Oui-Dev/DISLED/compare/fw-v0.1.0...fw-v0.2.0) (2026-10-20)
+
+
+### Features
+
+* **firmware:** self-test, diagnostics, auto brightness bias, low-power idle ([02056ef](https://github.com/Oui-Dev/DISLED/commit/02056ef723f4658370e2ca886f660d4d2743c07a))
+* **protocol:** protocol 1.1 draft and a shared Rust codec ([fe8cd0b](https://github.com/Oui-Dev/DISLED/commit/fe8cd0befb2c218c26578ec54271b1fb7fae4e72))
+
+
+### Bug Fixes
+
+* **firmware:** no WFI in the main loop, wake-up line only in suspend ([ab86f4e](https://github.com/Oui-Dev/DISLED/commit/ab86f4e651cdbbe398194e74174ac5085f61c75a))
+* **firmware:** the self-test touch no longer changes the lamp, warm white step ([75a4799](https://github.com/Oui-Dev/DISLED/commit/75a4799ee4ee53e60360f2864b4735862c512c96))
+
 ## 0.1.0 (2026-10-19)
 
 
