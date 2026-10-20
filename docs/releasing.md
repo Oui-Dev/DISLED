@@ -114,6 +114,12 @@ update files.
   other workflows only need to read.
 - To force a version, add `Release-As: X.Y.Z` to the body of a commit that
   touches the component.
+- Dependabot opens weekly update pull requests (`.github/dependabot.yml`)
+  with Conventional Commit messages: `fix(deps)` for what the app ships
+  (npm production dependencies, Rust crates), which releases the app;
+  `chore(deps-dev)` (app tooling), `build(deps)` (firmware tools) and
+  `ci(deps)` (actions) release nothing. An update of the root `Cargo.lock`
+  alone belongs to no component: it goes out with the next app release.
 - `protocol/`, `crates/` and the root `Cargo.*` files belong to no
   component: a change there is released with the component that the same
   commit touches (a protocol change touches the firmware, the app or both).

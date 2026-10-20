@@ -1,0 +1,4 @@
+# Build and check tools of the firmware, installed by the CI and release
+# workflows and kept up to date by Dependabot.
+platformio==6.2.0
+clang-format==23.1.3

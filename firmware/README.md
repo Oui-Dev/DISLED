@@ -15,8 +15,8 @@ pio test -e native                   # unit tests on the build machine
 pio check -e debug                   # static analysis (cppcheck)
 ```
 
-The unit tests need a host C compiler (`gcc`). CI runs them on every
-push; on Windows, a MinGW-w64 build such as WinLibs works.
+The unit tests need a host C compiler (`gcc`). CI runs them on every pull
+request into `main`; on Windows, a MinGW-w64 build such as WinLibs works.
 
 See [docs/flashing.md](../docs/flashing.md) for the bootloader, the
 Windows driver and troubleshooting.
@@ -42,7 +42,8 @@ Windows driver and troubleshooting.
 | `lib/disled_core/` | hardware-independent logic, unit tested |
 | `lib/tinyusb/` | TinyUSB 0.21.0 (submodule `upstream/`) and its build description |
 | `test/` | Unity tests, one folder per core module |
-| `scripts/` | version from git, memory budget, protocol vectors to C |
+| `scripts/` | version from git, memory budget, Intel HEX, protocol vectors to C |
+| `requirements.txt` | CI tools (PlatformIO, clang-format), kept up to date by Dependabot |
 
 The design is explained in [docs/architecture.md](../docs/architecture.md);
 the lamp behavior in [docs/behavior.md](../docs/behavior.md).
