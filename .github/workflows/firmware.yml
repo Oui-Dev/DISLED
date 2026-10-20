@@ -2,13 +2,12 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 name: firmware
 
+# Checks of the pull requests into main that are ready for review (not
+# drafts). Release builds come from the release workflow.
 on:
-  push:
-    paths:
-      - "firmware/**"
-      - "protocol/**"
-      - ".github/workflows/firmware.yml"
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "firmware/**"
       - "protocol/**"
@@ -17,8 +16,14 @@ on:
 permissions:
   contents: read
 
+# A new push to the pull request cancels the checks of the previous one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   firmware:
+    if: ${{ !github.event.pull_request.draft }}
     # Linux runners only: their minutes are the cheapest on a private repo.
     runs-on: ubuntu-24.04
     defaults:

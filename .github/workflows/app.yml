@@ -2,16 +2,12 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 name: app
 
+# Checks of the pull requests into main that are ready for review (not
+# drafts). The installers are built by the release workflow.
 on:
-  push:
-    paths:
-      - "app/**"
-      - "crates/**"
-      - "protocol/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/app.yml"
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "app/**"
       - "crates/**"
@@ -23,9 +19,14 @@ on:
 permissions:
   contents: read
 
+# A new push to the pull request cancels the checks of the previous one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   app:
-    # Checks only. Installers (Windows and macOS runners) come in phase 2.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-24.04
     defaults:
       run:
