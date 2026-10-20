@@ -29,16 +29,61 @@ version, tag and changelog:
    - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
      with `SHA256SUMS`;
    - **app:** Windows installer (`.exe`), macOS disk image for Apple
-     Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives).
+     Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives); for
+     the updater, the macOS app archive (`.app.tar.gz`), one signature
+     (`.sig`) per installer and `latest.json`.
 
 While the versions are below 1.0.0, `feat` raises the minor version and a
 breaking change does too; `fix` raises the patch version.
 
+## App updates
+
+The installed apps update themselves from the latest GitHub release
+([ADR 0014](decisions/0014-app-updates.md)):
+
+- the `app` job signs the installers with the update key (the secrets
+  below) and attaches a `.sig` next to each one;
+- the `updater` job then writes `latest.json` from these signatures
+  (`app/scripts/updater-manifest.mjs`), attaches it to the app release and
+  marks that release as the latest;
+- the `firmware` job marks the newest app release as the latest again:
+  publishing a firmware release takes the flag, and the apps read
+  `releases/latest/download/latest.json`.
+
+If the build of one platform failed, re-run its job, then the `updater`
+job, so that `latest.json` lists it.
+
+Local builds (`npm run tauri build`) need no key: only the release
+workflow adds `src-tauri/tauri.updater.conf.json`, which asks for the
+update files.
+
+### Update key (once)
+
+1. Create the key pair outside the repository, with a password:
+
+   ```sh
+   cd app
+   npm run tauri signer generate -- -w ~/.tauri/disled-updater.key
+   ```
+
+   In PowerShell, write the path `$env:USERPROFILE\.tauri\disled-updater.key`.
+
+2. In the repository settings (Secrets and variables, Actions), add two
+   repository secrets: `TAURI_SIGNING_PRIVATE_KEY`, the content of
+   `disled-updater.key`, and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`, its
+   password.
+3. Put the content of `disled-updater.key.pub` in `plugins.updater.pubkey`
+   of `app/src-tauri/tauri.conf.json`.
+4. Keep a backup of the private key and its password, outside the
+   computer: the installed apps accept no other key, and a new key means
+   a manual reinstall for every user.
+
 ## Notes
 
-- The installers are not signed: Windows SmartScreen and macOS Gatekeeper
-  warn on first launch (right-click, then Open, on macOS). Signing is a
-  phase 2 decision ([ADR 0006](decisions/0006-desktop-app.md)).
+- The installers are not code-signed (the update signatures above only
+  serve the updater): Windows SmartScreen and macOS Gatekeeper warn on
+  first launch (right-click, then Open, on macOS). Code signing is a later
+  choice ([ADR 0006](decisions/0006-desktop-app.md)).
 - On a private repository the macOS and Windows runners consume the free
   Actions minutes 10 and 2 times faster; an app release costs about 150 to
   200 minutes. Public repositories have no such limit.

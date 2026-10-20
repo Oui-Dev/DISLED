@@ -173,6 +173,10 @@ object time), so it cannot drift under the hand and blunt the next touch.
   the store plugin; the USB worker applies them as soon as the lamp
   answers `INFO`, so they hold across lamp restarts. Changes are broadcast
   to every window (`settings-changed`).
+- **Updates** ([ADR 0014](decisions/0014-app-updates.md)). A thread checks
+  the `latest.json` of the latest GitHub release at start-up and once a
+  day (`updates.rs`, updater plugin); the popup shows the result
+  (`update-status`) and asks the backend to install it.
 - **Vue front end** (`app/src`). One reactive store per window
   (`lib/device.ts`) holds the connection, the lamp state, the settings and
   the telemetry history; the components only render it and send commands.

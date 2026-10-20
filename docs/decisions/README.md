@@ -19,3 +19,4 @@ one.
 | [0011](0011-low-power.md) | Low power without WFI: slow clock during USB suspend | Accepted |
 | [0012](0012-protocol-v1-frozen.md) | USB protocol version 1 frozen at 1.1, compatibility rules | Accepted |
 | [0013](0013-tray-app.md) | Desktop app in the tray with a popup; settings re-applied at every connection | Accepted |
+| [0014](0014-app-updates.md) | App updates through GitHub Releases, signed, version bound to the signature | Accepted |
