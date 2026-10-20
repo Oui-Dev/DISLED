@@ -27,7 +27,7 @@ change is notified. The behavior itself is specified in
 | USB | `src/usb/` | bsp, TinyUSB, core | descriptors, link state, HID queues, CDC stream |
 | Drivers | `src/drivers/` | bsp, SDK | LED PWM, TouchKey, I2C, VEML7700 |
 | Board support | `src/bsp/` | SDK | pin map, clocks, time base, watchdog, unique ID, faults |
-| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, brightness, color, power cap, protocol codec, scheduler, formatter |
+| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, brightness, color, power cap, PWM dithering, self-test, protocol codec, scheduler, formatter, assertions |
 
 Only `src/bsp/ch32.h` includes the vendor device header. Includes are
 relative to `src/` (`#include "drivers/led_pwm.h"`), so every include shows
@@ -47,7 +47,7 @@ main loop ── touch task ─> touch_detector ─> short/long press ─> lamp_
           ── usb task ─> TinyUSB, link state (unconfigured/configured/suspended)
           ── host task ─> commands, STATE notifications, telemetry
           ── console task (debug) ─> text commands, watch
-          └─ watchdog feed, then the next round at once (no WFI, ADR 0009)
+          └─ watchdog feed, then the next round at once (no WFI, ADR 0011)
 
 TIM3 update interrupt (20 kHz, every PWM period) ─> dithers the duties
                                      into whole ticks for the next period
@@ -63,7 +63,7 @@ Bare metal, one cooperative loop driven by a table-based scheduler
 | SysTick, 1 kHz | millisecond counter, arms the next TouchKey sample |
 | TIM3 update, 20 kHz | dithers the three LED duties into whole ticks for the next period |
 | TIM3 channel 4 | one TouchKey measurement (about 5 µs), pushed to a lock-free queue |
-| USB (three vectors, one handler) | TinyUSB event capture |
+| USB (three vectors, one handler) | TinyUSB event capture; during suspend, first restores the full-speed clock (EXTI line 18, USB wake-up) |
 | HardFault, NMI | saves `mcause`, `mepc`, `mtval` in backup registers, resets |
 
 All interrupts share one priority, so the QingKe hardware stack never
@@ -83,11 +83,25 @@ nests ([ADR 0008](decisions/0008-toolchain-baseline.md)).
   light sensor falls back to a fixed brightness and is probed again every
   5 s; a TouchKey conversion gives up after about 100 µs.
 - **Watchdog.** The loop feeds the independent watchdog (1 s) only after
-  every task ran.
-- **Faults are reported.** A crash leaves its cause in the backup
-  registers; the next boot reports it in `INFO` and on the console.
+  every task ran. The scheduler records the longest run of each task
+  (console `tasks`): 0.5 ms at most, 1.7 ms on the suspend clock.
+- **Faults are reported.** A crash or a failed `DISLED_ASSERT` leaves its
+  cause in the backup registers (an assertion: `mcause` 0x0A55 followed by
+  the line), then the chip resets; the next boot reports it in `INFO`, on
+  the console and in `DIAGNOSTICS`, which also counts boots, watchdog
+  resets and faults since power-up, the smallest stack margin (the stack is
+  filled with a pattern at boot) and error counters.
 - **Crystal failure.** The firmware detects it, keeps USB off (the clock
   would be out of tolerance) and still runs the lamp locally.
+
+### Power
+
+The core never sleeps: WFI in the main loop hangs on this chip
+([ADR 0011](decisions/0011-low-power.md)). While the host sleeps (USB
+suspend), the firmware stops the LED timer, the touch and the light
+sensor, and runs the core at 1 MHz from the internal oscillator, crystal
+and PLL off. The USB wake-up interrupt restores the full clock before
+TinyUSB handles the resume.
 
 ### Memory
 
@@ -96,8 +110,11 @@ build, warns above 90 % and fails above 100 %. Link-time optimization is on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 26.7 KB | 5.0 KB |
-| release (HID) | 18.2 KB | 4.2 KB |
+| debug (HID + CDC console) | 30.3 KB | 5.1 KB |
+| release (HID) | 20.8 KB | 4.3 KB |
+
+The debug build is above the 90 % warning: new debug-only features
+should replace bring-up console commands rather than add to them.
 
 ### Configuration
 
@@ -132,8 +149,8 @@ object time), so it cannot drift under the hand and blunt the next touch.
 - `pio test -e native` runs the core on the build machine (Unity): lamp
   rules, touch detection on synthetic signals (mains hum, drift, objects,
   finger at power-up, hand resting near the lid), brightness, color, power
-  cap, output fades and pulse loss, PWM dithering, scheduler, formatter
-  and the protocol codec.
+  cap, output fades and pulse loss, PWM dithering, self-test, scheduler
+  and its task timing, formatter and the protocol codec.
 - The protocol codec is checked byte for byte against
   `protocol/vectors/v1.json`, the same file the app tests use.
 - `pio check` runs cppcheck on `src/` and the core at every severity.

@@ -5,10 +5,11 @@ sends **commands**; the lamp answers with **messages** and also sends
 messages on its own (state changes, telemetry). The lamp owns the lamp
 state: the host reads it, changes it and follows its notifications.
 
-> Status: version 1.1, a draft until the firmware implements it (phase 2).
-> Version 1 is then frozen: only the compatible changes listed in
-> [Compatibility](#compatibility) remain allowed, and anything else needs a
-> new major version.
+> Status: version 1.1, **frozen** on 2026-10-21 ([ADR 0012](../docs/decisions/0012-protocol-v1-frozen.md)).
+> Only the compatible changes listed in [Compatibility](#compatibility)
+> remain allowed; anything else needs version 2. The v4 board announces
+> every capability of 1.1 except `ENTER_BOOTLOADER`, which the CH32V203
+> cannot implement ([ADR 0010](../docs/decisions/0010-firmware-updates-from-the-app.md)).
 
 ## Transport
 
