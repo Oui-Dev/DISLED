@@ -29,7 +29,7 @@ version, tag and changelog:
    - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
      with `SHA256SUMS`;
    - **app:** Windows installer (`.exe`), macOS disk image for Apple
-     Silicon (`.dmg`), Linux `.deb` and `.AppImage`.
+     Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives).
 
 While the versions are below 1.0.0, `feat` raises the minor version and a
 breaking change does too; `fix` raises the patch version.

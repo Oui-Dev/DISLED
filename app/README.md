@@ -4,9 +4,27 @@ Tauri 2 app that drives the lamp over USB and records measurements for
 tuning. Phase 1 scope: test and tuning tool. Phase 2 turns it into the
 product app (menu bar or tray icon, start at login, installers).
 
+## Install
+
+Installers are attached to each `app-vX.Y.Z` release on the
+[releases page](https://github.com/Oui-Dev/DISLED/releases): Windows
+(`.exe`), macOS on Apple Silicon (`.dmg`) and Debian or Ubuntu (`.deb`).
+They are not signed, so Windows and macOS warn on first launch.
+
+On Linux, only root may open a USB HID device by default. The `.deb`
+installs a udev rule, `/usr/lib/udev/rules.d/70-disled.rules`
+([source](src-tauri/linux/70-disled.rules)), that gives the logged-in user
+access to the lamp and to the WCH bootloader (for `wchisp`). To run the
+app from source on Linux, install the rule once by hand:
+
+```sh
+sudo cp src-tauri/linux/70-disled.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
 ## Run it
 
-Prerequisites: Node.js 20 or later, the Rust toolchain (`rustup`) and, on
+Prerequisites: Node.js 24 or later, the Rust toolchain (`rustup`) and, on
 Windows, the Visual Studio Build Tools with the C++ workload (macOS: Xcode
 command line tools).
 
