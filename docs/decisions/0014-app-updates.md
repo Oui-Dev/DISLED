@@ -18,8 +18,9 @@ of its own.
   manifest on the app release, built once all the installers are attached
   (`app/scripts/updater-manifest.mjs`). The app reads
   `releases/latest/download/latest.json`.
-- The app release stays the repository's "latest" release: the workflow
-  marks it again after every firmware release.
+- The app release is the repository's "latest" release: firmware
+  releases are published without that flag
+  ([ADR 0015](0015-releases-published-complete.md)).
 - Signatures carry the version they were made for, and the app refuses an
   update whose signature does not match the announced version
   (`requireSignedVersion`). A forged manifest cannot pair a new version
@@ -42,5 +43,5 @@ of its own.
   published unsigned.
 - The checks contact GitHub once a day (an anonymous download of
   `latest.json`); the setting turns them off.
-- Version 0.1.0 has no updater: its users install the next version by
-  hand once.
+- The first app release with the updater must be installed by hand once
+  (0.1.0 has no updater, 0.2.0 no binaries).

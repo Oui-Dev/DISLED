@@ -22,10 +22,12 @@ version, tag and changelog:
    releasable commits, with their next version (computed from the
    commits) and their changelog entries. Commits are assigned to a
    component by the files they change.
-3. Merge the release pull request when you want to release. The workflow
-   then tags the merge commit for each bumped component, publishes one
-   GitHub release per component with its changelog, and attaches the
-   binaries:
+3. Merge the release pull request when you want to release.
+   release-please then tags the merge commit for each bumped component and
+   creates one **draft** release per component with its changelog: drafts
+   are visible to the maintainers only. The workflow builds each tag,
+   attaches the binaries to its draft, and publishes the release only once
+   all of them are attached:
    - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
      with `SHA256SUMS`;
    - **app:** Windows installer (`.exe`), macOS disk image for Apple
@@ -33,8 +35,32 @@ version, tag and changelog:
      the updater, the macOS app archive (`.app.tar.gz`), one signature
      (`.sig`) per installer and `latest.json`.
 
+   Published releases are immutable (repository setting, Settings,
+   General, Releases): their files and tag can no longer change, only their
+   title and notes ([ADR 0015](decisions/0015-releases-published-complete.md)).
+
 While the versions are below 1.0.0, `feat` raises the minor version and a
 breaking change does too; `fix` raises the patch version.
+
+## When a release build fails
+
+The release stays a draft, with its tag: nothing is published.
+
+- If the cause is outside the code (runner, secret), re-run the failed
+  jobs; the publication follows.
+- If the code must change, fix it on `main`: the fix goes out with the
+  next version. Leave the unpublished draft as it is.
+- Never delete a release or a tag made by release-please: it finds the
+  previous release of each component through them (drafts included), and
+  without it the next changelog would take the whole history. The name of
+  a deleted published release cannot be used again either.
+
+## The "Latest" release
+
+GitHub marks one release per repository as "Latest", whatever the
+component. It is always the newest app release: the installed apps read
+`releases/latest/download/latest.json`. Firmware releases are published
+without the flag; the app finds the newest firmware by its `fw-v*` tag.
 
 ## App updates
 
@@ -43,15 +69,9 @@ The installed apps update themselves from the latest GitHub release
 
 - the `app` job signs the installers with the update key (the secrets
   below) and attaches a `.sig` next to each one;
-- the `updater` job then writes `latest.json` from these signatures
-  (`app/scripts/updater-manifest.mjs`), attaches it to the app release and
-  marks that release as the latest;
-- the `firmware` job marks the newest app release as the latest again:
-  publishing a firmware release takes the flag, and the apps read
-  `releases/latest/download/latest.json`.
-
-If the build of one platform failed, re-run its job, then the `updater`
-job, so that `latest.json` lists it.
+- once the three installers are attached, the `app-publish` job writes
+  `latest.json` from these signatures (`app/scripts/updater-manifest.mjs`),
+  attaches it, and publishes the release as the latest.
 
 Local builds (`npm run tauri build`) need no key: only the release
 workflow adds `src-tauri/tauri.updater.conf.json`, which asks for the

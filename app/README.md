@@ -11,7 +11,7 @@ Installers are attached to each `app-vX.Y.Z` release on the
 [releases page](https://github.com/Oui-Dev/DISLED/releases): Windows
 (`.exe`), macOS on Apple Silicon (`.dmg`) and Debian or Ubuntu (`.deb`).
 They are not signed, so Windows and macOS warn on first launch. Once
-installed, the app updates itself (version 0.1.0 excepted: install the next
+installed, the app updates itself (0.1.0 has no updater: install a newer
 version by hand once).
 
 On Linux, only root may open a USB HID device by default. The `.deb`
