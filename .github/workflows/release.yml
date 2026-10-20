@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Releases (docs/releasing.md). On every push to main, release-please keeps
-# the release pull request up to date. Merging it tags fw-vX.Y.Z and/or
-# app-vX.Y.Z and publishes the GitHub releases; the jobs below then build
-# those tags and attach the binaries. The app release stays the "latest"
-# one: the app updater reads releases/latest/download/latest.json.
+# Releases (docs/releasing.md, ADR 0015). On every push to main,
+# release-please keeps the release pull request up to date. Merging it
+# tags fw-vX.Y.Z and/or app-vX.Y.Z and creates draft releases, visible to
+# the maintainers only. The jobs below build those tags, attach the
+# binaries, and publish each release only once it is complete: published
+# releases are immutable (repository setting). The app release is
+# published as the "latest" one and a firmware release never is: the app
+# updater reads releases/latest/download/latest.json.
 name: release
 
 on:
@@ -66,7 +69,7 @@ jobs:
           pio test -e native
           pio run -e debug -e release
 
-      - name: Attach to the release
+      - name: Attach to the draft release
         working-directory: firmware
         run: |
           version="${TAG#fw-v}"
@@ -80,12 +83,9 @@ jobs:
           (cd dist && sha256sum * > SHA256SUMS)
           gh release upload "$TAG" dist/* --clobber
 
-      - name: Keep the app release as the latest
-        run: |
-          app_tag=$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 \
-            --json tagName,createdAt \
-            --jq 'map(select(.tagName | startswith("app-v"))) | sort_by(.createdAt) | last | .tagName')
-          gh release edit "$app_tag" --latest
+      - name: Publish the release
+        # Never as the "latest" release: that one is the app's.
+        run: gh release edit "$TAG" --draft=false --latest=false
 
   app:
     needs: release-please
@@ -140,7 +140,7 @@ jobs:
           npm run tauri build -- --bundles ${{ matrix.bundles }} \
             --config src-tauri/tauri.updater.conf.json
 
-      - name: Attach to the release
+      - name: Attach to the draft release
         working-directory: target/release/bundle
         run: |
           # The macOS updater archive has neither version nor architecture
@@ -154,11 +154,11 @@ jobs:
             \( -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.app.tar.gz' -o -name '*.sig' \) \
             -print0 | xargs -0 gh release upload "$TAG" --clobber
 
-  updater:
-    # After the installers, even when one of them failed: the other
-    # platforms still get the update.
+  app-publish:
+    # Only once every installer is attached: a published release can no
+    # longer change. If one platform failed, re-run it: this job follows.
     needs: [release-please, app]
-    if: always() && needs.release-please.outputs.app-released == 'true' && needs.app.result != 'cancelled'
+    if: needs.release-please.outputs.app-released == 'true'
     runs-on: ubuntu-24.04
     env:
       TAG: ${{ needs.release-please.outputs.app-tag }}
@@ -172,7 +172,7 @@ jobs:
         with:
           node-version: 24
 
-      - name: Publish latest.json
+      - name: Attach latest.json
         run: |
           mkdir signatures
           gh release download "$TAG" --pattern '*.sig' --dir signatures
@@ -182,4 +182,6 @@ jobs:
             signatures notes.md > latest.json
           cat latest.json
           gh release upload "$TAG" latest.json --clobber
-          gh release edit "$TAG" --latest
+
+      - name: Publish the release
+        run: gh release edit "$TAG" --draft=false --latest

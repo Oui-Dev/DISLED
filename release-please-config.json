@@ -4,6 +4,8 @@
   "tag-separator": "-",
   "separate-pull-requests": false,
   "bump-minor-pre-major": true,
+  "draft": true,
+  "force-tag-creation": true,
   "packages": {
     "firmware": {
       "release-type": "simple",
