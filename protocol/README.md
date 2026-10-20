@@ -1,12 +1,14 @@
-# DISLED USB protocol, version 1.0
+# DISLED USB protocol, version 1.1
 
 The lamp is a USB HID device with one vendor-defined interface. The host
 sends **commands**; the lamp answers with **messages** and also sends
 messages on its own (state changes, telemetry). The lamp owns the lamp
 state: the host reads it, changes it and follows its notifications.
 
-> Status: draft for phase 1. It may change until it is frozen in phase 2;
-> the major version changes on any incompatible change.
+> Status: version 1.1, a draft until the firmware implements it (phase 2).
+> Version 1 is then frozen: only the compatible changes listed in
+> [Compatibility](#compatibility) remain allowed, and anything else needs a
+> new major version.
 
 ## Transport
 
@@ -34,7 +36,8 @@ Every payload (the 63 bytes after the report ID) has the same layout:
 | 3 | `length` | body |
 | 3 + `length` | rest | zero |
 
-Multi-byte numbers are little-endian. Booleans are `0` or `1`.
+Multi-byte numbers are little-endian; signed numbers are two's complement.
+Booleans are `0` or `1`.
 
 ## Commands (host to lamp)
 
@@ -45,9 +48,15 @@ Multi-byte numbers are little-endian. Booleans are `0` or `1`.
 | `0x03` | `SET_STATE` | 5 bytes, see below | `STATE` (the new state) |
 | `0x04` | `SET_TELEMETRY` | `u16 period_ms`: 0 stops, otherwise 20 or more | `ACK` |
 | `0x05` | `RESET` | none | `ACK`, then the lamp restarts after 50 ms |
+| `0x06` | `SET_AUTO_BIAS` | `i8 bias`, see below | `ACK` |
+| `0x07` | `GET_DIAGNOSTICS` | none | `DIAGNOSTICS` |
+| `0x08` | `SELF_TEST` | none | `ACK`, then `SELF_TEST_RESULT` when the test ends |
+| `0x09` | `ENTER_BOOTLOADER` | none | `ACK`, then the lamp restarts in its ROM bootloader after 50 ms |
 
 A command that cannot be decoded gets an `ERROR` reply and changes
-nothing.
+nothing. Commands `0x06` to `0x09` (version 1.1) are optional: each is
+announced by a capability bit in `INFO`, and a lamp without it answers
+`ERROR` (unknown command).
 
 ### SET_STATE body
 
@@ -62,6 +71,28 @@ nothing.
 Only the selected fields are applied, and they are applied together or not
 at all. Unselected bytes are ignored, whatever their value.
 
+### SET_AUTO_BIAS body
+
+| Offset | Field | Values |
+|---|---|---|
+| 0 | `bias` (`i8`) | −50 to +50, percent |
+
+Shifts the automatic brightness curve: the level the curve gives for the
+current light is multiplied by `(100 + bias) / 100`, then kept within the
+lamp's range. 0 restores the factory curve. The lamp forgets the bias when
+it restarts: the host sends it again after each connection. Manual mode is
+not affected. The current value is reported in `DIAGNOSTICS`.
+
+### SELF_TEST sequence
+
+The lamp shows red, green, blue and white for 1.5 s each at 50 %, checks
+the light sensor, then waits up to 10 s for a touch on the lid while it
+glows blue at 20 %. It then restores its state and sends
+`SELF_TEST_RESULT`, with the `seq` of the `SELF_TEST` command. During the
+test the lamp ignores the touch and answers `SET_STATE`, `SET_AUTO_BIAS`
+and a second `SELF_TEST` with `ERROR` (busy). Only a person can check the
+colors: the result covers the light sensor and the touch.
+
 ## Messages (lamp to host)
 
 | Type | Name | Sent |
@@ -69,7 +100,9 @@ at all. Unselected bytes are ignored, whatever their value.
 | `0x81` | `INFO` | reply to `GET_INFO` |
 | `0x82` | `STATE` | reply to `GET_STATE` and `SET_STATE`; unsolicited on every change |
 | `0x83` | `TELEMETRY` | every `period_ms` after `SET_TELEMETRY` |
-| `0x8E` | `ACK` | reply to `SET_TELEMETRY` and `RESET` |
+| `0x84` | `DIAGNOSTICS` | reply to `GET_DIAGNOSTICS` |
+| `0x85` | `SELF_TEST_RESULT` | at the end of a self-test |
+| `0x8E` | `ACK` | reply to `SET_TELEMETRY`, `RESET`, `SET_AUTO_BIAS`, `SELF_TEST` and `ENTER_BOOTLOADER` |
 | `0x8F` | `ERROR` | reply to a rejected command |
 
 ### INFO body (56 bytes)
@@ -81,7 +114,7 @@ at all. Unselected bytes are ignored, whatever their value.
 | 2 | 3 | firmware major, minor, patch |
 | 5 | 1 | board revision |
 | 6 | 12 | chip unique ID, most significant byte first (also the USB serial number) |
-| 18 | 4 | capabilities: bit 0 telemetry, bit 1 debug console |
+| 18 | 4 | capabilities: bit 0 telemetry, bit 1 debug console, bit 2 `SET_AUTO_BIAS`, bit 3 `GET_DIAGNOSTICS`, bit 4 `SELF_TEST`, bit 5 `ENTER_BOOTLOADER` |
 | 22 | 1 | reset cause: 0 unknown, 1 power-on, 2 reset pin, 3 software, 4 watchdog, 5 window watchdog, 6 low power |
 | 23 | 1 | flags: bit 0 debug build, bit 1 a fault occurred before the last reset |
 | 24 | 4 | fault `mcause` (0 without fault) |
@@ -126,26 +159,81 @@ and should send `GET_STATE`.
 
 Telemetry stops when the USB link leaves the configured state.
 
+### DIAGNOSTICS body (36 bytes)
+
+Counters "since power-up" survive resets (they live in the backup
+registers); the others restart at every boot.
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 4 | uptime, ms |
+| 4 | 2 | boots since power-up |
+| 6 | 2 | watchdog resets since power-up |
+| 8 | 2 | faults since power-up |
+| 10 | 4 | last fault `mcause` (0 without fault) |
+| 14 | 4 | last fault `mepc` |
+| 18 | 4 | last fault `mtval` |
+| 22 | 2 | stack bytes never used since boot (the smallest margin seen) |
+| 24 | 2 | I2C errors since boot |
+| 26 | 2 | light sensor probes since boot (1 when it answered at the first try) |
+| 28 | 2 | touch samples lost since boot |
+| 30 | 2 | touch baseline recalibrations since boot (finger at start-up, object on the lid) |
+| 32 | 2 | USB suspends since boot |
+| 34 | 1 | automatic brightness bias, `i8` percent |
+| 35 | 1 | flags: bit 0 light sensor present, bit 1 crystal running |
+
+### SELF_TEST_RESULT body (9 bytes)
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 1 | results: bit 0 light sensor answered with a plausible reading, bit 1 touch baseline within the expected range, bit 2 a touch was detected, bit 3 the test ran to its end |
+| 1 | 4 | ambient light during the test, lux × 100 |
+| 5 | 2 | touch baseline, TouchKey counts |
+| 7 | 2 | largest touch drop seen while waiting, per mille (`i16`) |
+
 ### ACK and ERROR
 
 | Message | Body |
 |---|---|
 | `ACK` | `u8` type of the acknowledged command |
-| `ERROR` | `u8` type of the rejected command, `u8` error: 1 unknown command, 2 bad length, 3 bad value |
+| `ERROR` | `u8` type of the rejected command, `u8` error: 1 unknown command, 2 bad length, 3 bad value, 4 busy (version 1.1) |
+
+## Compatibility
+
+Within major version 1, a new minor version may only:
+
+- add commands, messages, `INFO` capability bits, error codes or values of
+  an enumeration;
+- add fields at the end of a body.
+
+To stay compatible with these changes:
+
+- decoders accept a body **longer** than the size given here and ignore
+  the extra bytes; a shorter body is an error;
+- hosts ignore unsolicited messages of an unknown type, check a
+  capability bit before using an optional command, and treat an
+  unknown value of an enumeration as an error for that message only;
+- lamps answer an unknown command with `ERROR` (unknown command).
+
+Versions 1.0 of the firmware and of the app expect exact body sizes: they
+predate these rules.
 
 ## Test vectors
 
 [`vectors/v1.json`](vectors/v1.json) lists commands and messages with their
 exact bytes. The firmware unit tests (`firmware/test/test_protocol`) and the
-desktop app tests (`app/src-tauri`) both check their codec against it, so
-the two sides cannot drift apart.
+Rust codec tests (`crates/disled-protocol`, used by the desktop app) both
+check their codec against it, so the two sides cannot drift apart.
 
 Fields of a vector:
 
 - `bytes`: the significant start of the 63-byte payload, as hexadecimal
   pairs; the rest of the payload is zero.
 - commands: `status` (`ok`, `unknown_command`, `bad_length`,
-  `bad_value`), `type`, `seq` and, when relevant, `set_state` or
-  `telemetry_period_ms`. `"canonical": false` marks bytes that a decoder
-  must accept but an encoder never produces (non-zero unselected fields).
-- messages: `kind` and the decoded fields.
+  `bad_value`), `type`, `seq` and, when relevant, `set_state`,
+  `telemetry_period_ms` or `auto_bias`. `"canonical": false` marks bytes
+  that a decoder must accept but an encoder never produces (non-zero
+  unselected fields, extra body bytes).
+- messages: `kind` and the decoded fields. `"canonical": false` marks a
+  message only a decoder is tested with (a body longer than this version
+  defines).

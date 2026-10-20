@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! DISLED USB HID protocol v1 (see `protocol/README.md`): command encoder
-//! and message decoder. Pure functions, no I/O.
+//! DISLED USB HID protocol v1.1 (see `protocol/README.md`): command encoder
+//! and message decoder. Pure functions, no I/O. Shared by the desktop app
+//! and the production tool.
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -13,16 +14,27 @@ pub const REPORT_ID_MESSAGE: u8 = 2;
 pub const PAYLOAD_SIZE: usize = 63;
 const HEADER_SIZE: usize = 3;
 pub const PROTOCOL_MAJOR: u8 = 1;
+pub const PROTOCOL_MINOR: u8 = 1;
+
+/// Automatic brightness bias limits, percent.
+pub const AUTO_BIAS_MIN: i8 = -50;
+pub const AUTO_BIAS_MAX: i8 = 50;
 
 const CMD_GET_INFO: u8 = 0x01;
 const CMD_GET_STATE: u8 = 0x02;
 const CMD_SET_STATE: u8 = 0x03;
 const CMD_SET_TELEMETRY: u8 = 0x04;
 const CMD_RESET: u8 = 0x05;
+const CMD_SET_AUTO_BIAS: u8 = 0x06;
+const CMD_GET_DIAGNOSTICS: u8 = 0x07;
+const CMD_SELF_TEST: u8 = 0x08;
+const CMD_ENTER_BOOTLOADER: u8 = 0x09;
 
 const MSG_INFO: u8 = 0x81;
 const MSG_STATE: u8 = 0x82;
 const MSG_TELEMETRY: u8 = 0x83;
+const MSG_DIAGNOSTICS: u8 = 0x84;
+const MSG_SELF_TEST_RESULT: u8 = 0x85;
 const MSG_ACK: u8 = 0x8E;
 const MSG_ERROR: u8 = 0x8F;
 
@@ -40,7 +52,7 @@ macro_rules! wire_enum {
         pub enum $name { $($variant = $value),+ }
 
         impl $name {
-            fn from_wire(value: u8) -> Result<Self, DecodeError> {
+            pub fn from_wire(value: u8) -> Result<Self, DecodeError> {
                 match value {
                     $($value => Ok(Self::$variant),)+
                     _ => Err(DecodeError::BadValue(stringify!($name), value)),
@@ -64,7 +76,12 @@ wire_enum!(ResetCause {
     LowPower = 6,
 });
 wire_enum!(TouchState { Calibrating = 0, Idle = 1, Pressed = 2 });
-wire_enum!(ProtocolError { UnknownCommand = 1, BadLength = 2, BadValue = 3 });
+wire_enum!(ProtocolError {
+    UnknownCommand = 1,
+    BadLength = 2,
+    BadValue = 3,
+    Busy = 4,
+});
 
 /// Lamp settings to change; `None` leaves a setting as it is.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -82,8 +99,17 @@ pub enum Command {
     GetInfo,
     GetState,
     SetState(SetState),
-    SetTelemetry { period_ms: u16 },
+    SetTelemetry {
+        period_ms: u16,
+    },
     Reset,
+    /// Percent, `AUTO_BIAS_MIN` to `AUTO_BIAS_MAX` (version 1.1).
+    SetAutoBias {
+        bias: i8,
+    },
+    GetDiagnostics,
+    SelfTest,
+    EnterBootloader,
 }
 
 impl Command {
@@ -121,6 +147,10 @@ impl Command {
                 (CMD_SET_TELEMETRY, period_ms.to_le_bytes().to_vec())
             }
             Command::Reset => (CMD_RESET, vec![]),
+            Command::SetAutoBias { bias } => (CMD_SET_AUTO_BIAS, bias.to_le_bytes().to_vec()),
+            Command::GetDiagnostics => (CMD_GET_DIAGNOSTICS, vec![]),
+            Command::SelfTest => (CMD_SELF_TEST, vec![]),
+            Command::EnterBootloader => (CMD_ENTER_BOOTLOADER, vec![]),
         };
         let mut payload = [0u8; PAYLOAD_SIZE];
         payload[0] = kind;
@@ -147,6 +177,11 @@ pub struct Info {
     pub uid: String,
     pub telemetry: bool,
     pub debug_console: bool,
+    /// Optional commands of version 1.1.
+    pub auto_bias: bool,
+    pub diagnostics: bool,
+    pub self_test: bool,
+    pub enter_bootloader: bool,
     pub reset_cause: ResetCause,
     pub debug_build: bool,
     pub fault: Option<Fault>,
@@ -183,11 +218,61 @@ pub struct Telemetry {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Diagnostics {
+    pub uptime_ms: u32,
+    /// Since power-up (kept across resets).
+    pub boots: u16,
+    pub watchdog_resets: u16,
+    pub faults: u16,
+    /// Last fault, `None` when no fault happened since power-up.
+    pub last_fault: Option<FaultDetail>,
+    /// Smallest stack margin seen since boot, bytes.
+    pub stack_free_min: u16,
+    /// Since boot.
+    pub i2c_errors: u16,
+    pub light_sensor_probes: u16,
+    pub touch_samples_lost: u16,
+    pub touch_recalibrations: u16,
+    pub usb_suspends: u16,
+    /// Automatic brightness bias in force, percent.
+    pub auto_bias: i8,
+    pub light_sensor_present: bool,
+    pub crystal_running: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FaultDetail {
+    pub mcause: u32,
+    pub mepc: u32,
+    pub mtval: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct SelfTestResult {
+    pub light_sensor_ok: bool,
+    pub touch_idle_ok: bool,
+    pub touch_pressed: bool,
+    pub completed: bool,
+    pub lux_centi: u32,
+    pub touch_baseline: u16,
+    pub touch_peak_permille: i16,
+}
+
+impl SelfTestResult {
+    /// Everything the lamp can check by itself passed.
+    pub fn passed(&self) -> bool {
+        self.light_sensor_ok && self.touch_idle_ok && self.touch_pressed && self.completed
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Message {
     Info(Info),
     State(State),
     Telemetry(Telemetry),
+    Diagnostics(Diagnostics),
+    SelfTestResult(SelfTestResult),
     Ack { command: u8 },
     Error { command: u8, error: ProtocolError },
 }
@@ -205,10 +290,12 @@ pub enum DecodeError {
     TooShort(usize),
     #[error("body length {0} does not fit the report")]
     BadLength(usize),
+    /// Hosts ignore unsolicited messages of an unknown type (compatibility
+    /// rules of the specification): callers usually skip this error.
     #[error("unknown message type 0x{0:02x}")]
     UnknownType(u8),
-    #[error("message 0x{0:02x}: body of {1} bytes, expected {2}")]
-    WrongBodySize(u8, usize, usize),
+    #[error("message 0x{0:02x}: body of {1} bytes, expected at least {2}")]
+    BodyTooShort(u8, usize, usize),
     #[error("invalid {0} value {1}")]
     BadValue(&'static str, u8),
 }
@@ -226,8 +313,16 @@ impl Reader<'_> {
         value
     }
 
+    fn i8(&mut self) -> i8 {
+        i8::from_le_bytes([self.u8()])
+    }
+
     fn u16(&mut self) -> u16 {
         u16::from_le_bytes([self.u8(), self.u8()])
+    }
+
+    fn i16(&mut self) -> i16 {
+        i16::from_le_bytes([self.u8(), self.u8()])
     }
 
     fn u32(&mut self) -> u32 {
@@ -241,11 +336,13 @@ impl Reader<'_> {
     }
 }
 
+/// Bodies may be longer than this version knows (a newer lamp added fields
+/// at the end): only a shorter body is an error.
 fn expect_size(kind: u8, body: &[u8], expected: usize) -> Result<(), DecodeError> {
-    if body.len() == expected {
+    if body.len() >= expected {
         Ok(())
     } else {
-        Err(DecodeError::WrongBodySize(kind, body.len(), expected))
+        Err(DecodeError::BodyTooShort(kind, body.len(), expected))
     }
 }
 
@@ -283,8 +380,12 @@ pub fn decode_message(payload: &[u8]) -> Result<Frame, DecodeError> {
                 firmware_version: String::from_utf8_lossy(&text[..end]).into_owned(),
                 board_revision,
                 uid,
-                telemetry: capabilities & 0x1 != 0,
-                debug_console: capabilities & 0x2 != 0,
+                telemetry: capabilities & (1 << 0) != 0,
+                debug_console: capabilities & (1 << 1) != 0,
+                auto_bias: capabilities & (1 << 2) != 0,
+                diagnostics: capabilities & (1 << 3) != 0,
+                self_test: capabilities & (1 << 4) != 0,
+                enter_bootloader: capabilities & (1 << 5) != 0,
                 reset_cause,
                 debug_build: flags & 0x1 != 0,
                 fault: (flags & 0x2 != 0).then_some(Fault { mcause, mepc }),
@@ -310,7 +411,7 @@ pub fn decode_message(payload: &[u8]) -> Result<Frame, DecodeError> {
                 touch_raw: r.u16(),
                 touch_value: r.u16(),
                 touch_baseline: r.u16(),
-                touch_delta_permille: r.u16() as i16,
+                touch_delta_permille: r.i16(),
                 touch_state: TouchState::from_wire(r.u8())?,
                 lux_centi: r.u32(),
                 als_raw: r.u16(),
@@ -319,6 +420,55 @@ pub fn decode_message(payload: &[u8]) -> Result<Frame, DecodeError> {
                 cap_ma: r.u16(),
                 link: UsbLink::from_wire(r.u8())?,
                 level_permille: r.u16(),
+            })
+        }
+        MSG_DIAGNOSTICS => {
+            expect_size(kind, body, 36)?;
+            let uptime_ms = r.u32();
+            let (boots, watchdog_resets, faults) = (r.u16(), r.u16(), r.u16());
+            let (mcause, mepc, mtval) = (r.u32(), r.u32(), r.u32());
+            let stack_free_min = r.u16();
+            let i2c_errors = r.u16();
+            let light_sensor_probes = r.u16();
+            let touch_samples_lost = r.u16();
+            let touch_recalibrations = r.u16();
+            let usb_suspends = r.u16();
+            let auto_bias = r.i8();
+            let flags = r.u8();
+            Message::Diagnostics(Diagnostics {
+                uptime_ms,
+                boots,
+                watchdog_resets,
+                faults,
+                // mcause 0 is a real exception (misaligned fetch): the
+                // counter tells whether a fault happened.
+                last_fault: (faults != 0).then_some(FaultDetail {
+                    mcause,
+                    mepc,
+                    mtval,
+                }),
+                stack_free_min,
+                i2c_errors,
+                light_sensor_probes,
+                touch_samples_lost,
+                touch_recalibrations,
+                usb_suspends,
+                auto_bias,
+                light_sensor_present: flags & 0x1 != 0,
+                crystal_running: flags & 0x2 != 0,
+            })
+        }
+        MSG_SELF_TEST_RESULT => {
+            expect_size(kind, body, 9)?;
+            let results = r.u8();
+            Message::SelfTestResult(SelfTestResult {
+                light_sensor_ok: results & 0x1 != 0,
+                touch_idle_ok: results & 0x2 != 0,
+                touch_pressed: results & 0x4 != 0,
+                completed: results & 0x8 != 0,
+                lux_centi: r.u32(),
+                touch_baseline: r.u16(),
+                touch_peak_permille: r.i16(),
             })
         }
         MSG_ACK => {
@@ -363,11 +513,20 @@ mod tests {
         v[key].as_u64().unwrap_or_else(|| panic!("number {key}"))
     }
 
+    fn i(v: &Value, key: &str) -> i64 {
+        v[key].as_i64().unwrap_or_else(|| panic!("number {key}"))
+    }
+
     #[test]
     fn protocol_version_matches_the_vectors() {
+        let doc = vectors();
         assert_eq!(
-            vectors()["protocol_version"][0].as_u64(),
+            doc["protocol_version"][0].as_u64(),
             Some(u64::from(PROTOCOL_MAJOR))
+        );
+        assert_eq!(
+            doc["protocol_version"][1].as_u64(),
+            Some(u64::from(PROTOCOL_MINOR))
         );
     }
 
@@ -383,6 +542,12 @@ mod tests {
                 CMD_GET_INFO => Command::GetInfo,
                 CMD_GET_STATE => Command::GetState,
                 CMD_RESET => Command::Reset,
+                CMD_GET_DIAGNOSTICS => Command::GetDiagnostics,
+                CMD_SELF_TEST => Command::SelfTest,
+                CMD_ENTER_BOOTLOADER => Command::EnterBootloader,
+                CMD_SET_AUTO_BIAS => Command::SetAutoBias {
+                    bias: i(v, "auto_bias") as i8,
+                },
                 CMD_SET_TELEMETRY => Command::SetTelemetry {
                     period_ms: u(v, "telemetry_period_ms") as u16,
                 },
@@ -407,7 +572,7 @@ mod tests {
             assert_eq!(command.encode(u(v, "seq") as u8), expected, "{name}");
             checked += 1;
         }
-        assert!(checked >= 6, "too few command vectors checked: {checked}");
+        assert!(checked >= 10, "too few command vectors checked: {checked}");
     }
 
     #[test]
@@ -434,25 +599,32 @@ mod tests {
                     assert_eq!(s.link as u64, u(e, "link"), "{name}");
                     assert_eq!(s.source as u64, u(e, "source"), "{name}");
                 }
-                (Some("info"), Message::Info(i)) => {
+                (Some("info"), Message::Info(info)) => {
                     let e = &v["info"];
-                    assert_eq!(i.protocol, [1, 0], "{name}");
+                    assert_eq!(info.protocol, [PROTOCOL_MAJOR, PROTOCOL_MINOR], "{name}");
                     assert_eq!(
-                        i.firmware,
+                        info.firmware,
                         [
                             u(e, "fw_major") as u8,
                             u(e, "fw_minor") as u8,
                             u(e, "fw_patch") as u8
                         ]
                     );
-                    assert_eq!(u64::from(i.board_revision), u(e, "board_revision"));
-                    assert_eq!(i.uid, e["uid"].as_str().unwrap_or("").to_uppercase());
-                    assert_eq!(i.firmware_version, e["fw_version"].as_str().unwrap_or(""));
-                    assert_eq!(i.reset_cause as u64, u(e, "reset_cause"));
-                    let flags = u(e, "flags");
-                    assert_eq!(i.debug_build, flags & 1 != 0);
+                    assert_eq!(u64::from(info.board_revision), u(e, "board_revision"));
+                    assert_eq!(info.uid, e["uid"].as_str().unwrap_or("").to_uppercase());
                     assert_eq!(
-                        i.fault,
+                        info.firmware_version,
+                        e["fw_version"].as_str().unwrap_or("")
+                    );
+                    assert_eq!(info.reset_cause as u64, u(e, "reset_cause"));
+                    let capabilities = u(e, "capabilities");
+                    assert_eq!(info.telemetry, capabilities & 1 != 0);
+                    assert_eq!(info.debug_console, capabilities & 2 != 0);
+                    assert_eq!(info.auto_bias, capabilities & 4 != 0);
+                    let flags = u(e, "flags");
+                    assert_eq!(info.debug_build, flags & 1 != 0);
+                    assert_eq!(
+                        info.fault,
                         (flags & 2 != 0).then(|| Fault {
                             mcause: u(e, "fault_mcause") as u32,
                             mepc: u(e, "fault_mepc") as u32
@@ -467,7 +639,7 @@ mod tests {
                     assert_eq!(u64::from(t.touch_baseline), u(e, "touch_baseline"));
                     assert_eq!(
                         i64::from(t.touch_delta_permille),
-                        e["touch_delta_permille"].as_i64().unwrap_or(0)
+                        i(e, "touch_delta_permille")
                     );
                     assert_eq!(t.touch_state as u64, u(e, "touch_state"));
                     assert_eq!(u64::from(t.lux_centi), u(e, "lux_centi"));
@@ -486,6 +658,51 @@ mod tests {
                     assert_eq!(u64::from(t.cap_ma), u(e, "cap_ma"));
                     assert_eq!(t.link as u64, u(e, "link"));
                     assert_eq!(u64::from(t.level_permille), u(e, "level_permille"));
+                }
+                (Some("diagnostics"), Message::Diagnostics(d)) => {
+                    let e = &v["diagnostics"];
+                    assert_eq!(u64::from(d.uptime_ms), u(e, "uptime_ms"), "{name}");
+                    assert_eq!(u64::from(d.boots), u(e, "boots"), "{name}");
+                    assert_eq!(u64::from(d.watchdog_resets), u(e, "watchdog_resets"));
+                    assert_eq!(u64::from(d.faults), u(e, "faults"));
+                    assert_eq!(
+                        d.last_fault,
+                        Some(FaultDetail {
+                            mcause: u(e, "fault_mcause") as u32,
+                            mepc: u(e, "fault_mepc") as u32,
+                            mtval: u(e, "fault_mtval") as u32,
+                        })
+                    );
+                    assert_eq!(u64::from(d.stack_free_min), u(e, "stack_free_min"));
+                    assert_eq!(u64::from(d.i2c_errors), u(e, "i2c_errors"));
+                    assert_eq!(
+                        u64::from(d.light_sensor_probes),
+                        u(e, "light_sensor_probes")
+                    );
+                    assert_eq!(u64::from(d.touch_samples_lost), u(e, "touch_samples_lost"));
+                    assert_eq!(
+                        u64::from(d.touch_recalibrations),
+                        u(e, "touch_recalibrations")
+                    );
+                    assert_eq!(u64::from(d.usb_suspends), u(e, "usb_suspends"));
+                    assert_eq!(i64::from(d.auto_bias), i(e, "auto_bias"));
+                    let flags = u(e, "flags");
+                    assert_eq!(d.light_sensor_present, flags & 1 != 0);
+                    assert_eq!(d.crystal_running, flags & 2 != 0);
+                }
+                (Some("self_test_result"), Message::SelfTestResult(t)) => {
+                    let e = &v["self_test_result"];
+                    let flags = u(e, "flags");
+                    assert_eq!(t.light_sensor_ok, flags & 1 != 0, "{name}");
+                    assert_eq!(t.touch_idle_ok, flags & 2 != 0, "{name}");
+                    assert_eq!(t.touch_pressed, flags & 4 != 0, "{name}");
+                    assert_eq!(t.completed, flags & 8 != 0, "{name}");
+                    assert_eq!(u64::from(t.lux_centi), u(e, "lux_centi"));
+                    assert_eq!(u64::from(t.touch_baseline), u(e, "touch_baseline"));
+                    assert_eq!(
+                        i64::from(t.touch_peak_permille),
+                        i(e, "touch_peak_permille")
+                    );
                 }
                 (Some("ack"), Message::Ack { command }) => {
                     assert_eq!(u64::from(*command), u(v, "command"), "{name}");
@@ -509,7 +726,7 @@ mod tests {
         p[2] = 8;
         assert_eq!(
             decode_message(&p),
-            Err(DecodeError::WrongBodySize(0x82, 8, 9))
+            Err(DecodeError::BodyTooShort(0x82, 8, 9))
         );
         p[0] = 0x42;
         assert_eq!(decode_message(&p), Err(DecodeError::UnknownType(0x42)));
@@ -520,6 +737,22 @@ mod tests {
             decode_message(&p),
             Err(DecodeError::BadValue("LampColor", 9))
         );
+    }
+
+    #[test]
+    fn self_test_passes_only_when_every_check_did() {
+        let mut result = SelfTestResult {
+            light_sensor_ok: true,
+            touch_idle_ok: true,
+            touch_pressed: true,
+            completed: true,
+            lux_centi: 0,
+            touch_baseline: 0,
+            touch_peak_permille: 0,
+        };
+        assert!(result.passed());
+        result.touch_pressed = false;
+        assert!(!result.passed());
     }
 
     #[test]
@@ -538,5 +771,10 @@ mod tests {
         let command: Command = serde_json::from_str(r#"{"kind":"set_telemetry","period_ms":100}"#)
             .expect("set_telemetry");
         assert_eq!(command, Command::SetTelemetry { period_ms: 100 });
+        let command: Command =
+            serde_json::from_str(r#"{"kind":"set_auto_bias","bias":-20}"#).expect("bias");
+        assert_eq!(command, Command::SetAutoBias { bias: -20 });
+        let command: Command = serde_json::from_str(r#"{"kind":"self_test"}"#).expect("self_test");
+        assert_eq!(command, Command::SelfTest);
     }
 }

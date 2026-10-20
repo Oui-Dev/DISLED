@@ -1,0 +1,15 @@
+[package]
+name = "disled-protocol"
+description = "DISLED USB HID protocol codec (protocol/README.md)"
+authors = ["The DISLED contributors"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+
+[dev-dependencies]
+serde_json = "1"

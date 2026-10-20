@@ -144,8 +144,10 @@ object time), so it cannot drift under the hand and blunt the next touch.
 - **Rust backend** (`app/src-tauri`). A worker thread owns the USB
   connection through `hidapi`: it finds the lamp, reconnects after an
   unplug, writes commands and decodes messages. Results reach the web view
-  as Tauri events (`device-connection`, `device-message`). The codec is
-  tested against the shared vectors.
+  as Tauri events (`device-connection`, `device-message`). The codec
+  lives in its own crate, `crates/disled-protocol`, shared with the
+  production tool and tested against the shared vectors. The Rust code is
+  one Cargo workspace at the repository root.
 - **Vue front end** (`app/src`). One reactive store (`lib/device.ts`)
   holds the connection, the lamp state and the telemetry history; the
   components only render it and send commands.

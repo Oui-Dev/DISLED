@@ -601,12 +601,20 @@ dependencies = [
 name = "disled-app"
 version = "0.0.0"
 dependencies = [
+ "disled-protocol",
  "hidapi",
  "serde",
- "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+]
+
+[[package]]
+name = "disled-protocol"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
  "thiserror 2.0.21",
 ]
 

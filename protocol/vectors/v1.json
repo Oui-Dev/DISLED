@@ -1,8 +1,8 @@
 {
-  "description": "DISLED USB protocol v1 test vectors. 'bytes' is the start of the 63-byte payload (after the report ID); the rest is zero. See protocol/README.md.",
+  "description": "DISLED USB protocol v1 test vectors (version 1.1). 'bytes' is the start of the 63-byte payload (after the report ID); the rest is zero. See protocol/README.md.",
   "protocol_version": [
     1,
-    0
+    1
   ],
   "payload_size": 63,
   "commands": [
@@ -123,11 +123,12 @@
       "seq": 18
     },
     {
-      "name": "get_info_with_body",
+      "name": "get_info_ignores_extra_body",
       "bytes": "01 13 01 00",
-      "status": "bad_length",
+      "status": "ok",
       "type": 1,
-      "seq": 19
+      "seq": 19,
+      "canonical": false
     },
     {
       "name": "unknown_command",
@@ -135,6 +136,76 @@
       "status": "unknown_command",
       "type": 127,
       "seq": 20
+    },
+    {
+      "name": "set_state_ignores_extra_body",
+      "bytes": "03 1d 06 01 01 00 00 00 ff",
+      "status": "ok",
+      "type": 3,
+      "seq": 29,
+      "set_state": {
+        "fields": 1,
+        "on": true
+      },
+      "canonical": false
+    },
+    {
+      "name": "set_auto_bias_plus_20",
+      "bytes": "06 15 01 14",
+      "status": "ok",
+      "type": 6,
+      "seq": 21,
+      "auto_bias": 20
+    },
+    {
+      "name": "set_auto_bias_minus_50",
+      "bytes": "06 16 01 ce",
+      "status": "ok",
+      "type": 6,
+      "seq": 22,
+      "auto_bias": -50
+    },
+    {
+      "name": "set_auto_bias_too_high",
+      "bytes": "06 17 01 33",
+      "status": "bad_value",
+      "type": 6,
+      "seq": 23
+    },
+    {
+      "name": "set_auto_bias_too_low",
+      "bytes": "06 18 01 cd",
+      "status": "bad_value",
+      "type": 6,
+      "seq": 24
+    },
+    {
+      "name": "set_auto_bias_without_body",
+      "bytes": "06 19 00",
+      "status": "bad_length",
+      "type": 6,
+      "seq": 25
+    },
+    {
+      "name": "get_diagnostics",
+      "bytes": "07 1a 00",
+      "status": "ok",
+      "type": 7,
+      "seq": 26
+    },
+    {
+      "name": "self_test",
+      "bytes": "08 1b 00",
+      "status": "ok",
+      "type": 8,
+      "seq": 27
+    },
+    {
+      "name": "enter_bootloader",
+      "bytes": "09 1c 00",
+      "status": "ok",
+      "type": 9,
+      "seq": 28
     }
   ],
   "messages": [
@@ -187,7 +258,7 @@
         "fault_mepc": 6700,
         "fw_version": "0.1.2-3-gabcdef0"
       },
-      "bytes": "81 01 38 01 00 00 01 02 04 01 02 03 04 05 06 07 08 09 0a 0b 0c 03 00 00 00 01 03 05 00 00 00 2c 1a 00 00 30 2e 31 2e 32 2d 33 2d 67 61 62 63 64 65 66 30 00 00 00 00 00 00 00 00"
+      "bytes": "81 01 38 01 01 00 01 02 04 01 02 03 04 05 06 07 08 09 0a 0b 0c 03 00 00 00 01 03 05 00 00 00 2c 1a 00 00 30 2e 31 2e 32 2d 33 2d 67 61 62 63 64 65 66 30 00 00 00 00 00 00 00 00"
     },
     {
       "name": "telemetry",
@@ -228,6 +299,66 @@
       "command": 127,
       "error": 1,
       "bytes": "8f 14 02 7f 01"
+    },
+    {
+      "name": "diagnostics",
+      "kind": "diagnostics",
+      "seq": 26,
+      "diagnostics": {
+        "uptime_ms": 3600000,
+        "boots": 3,
+        "watchdog_resets": 1,
+        "faults": 1,
+        "fault_mcause": 5,
+        "fault_mepc": 6700,
+        "fault_mtval": 536881152,
+        "stack_free_min": 312,
+        "i2c_errors": 2,
+        "light_sensor_probes": 1,
+        "touch_samples_lost": 0,
+        "touch_recalibrations": 4,
+        "usb_suspends": 2,
+        "auto_bias": -20,
+        "flags": 3
+      },
+      "bytes": "84 1a 24 80 ee 36 00 03 00 01 00 01 00 05 00 00 00 2c 1a 00 00 00 28 00 20 38 01 02 00 01 00 00 00 04 00 02 00 ec 03"
+    },
+    {
+      "name": "self_test_result",
+      "kind": "self_test_result",
+      "seq": 27,
+      "self_test_result": {
+        "flags": 15,
+        "lux_centi": 35120,
+        "touch_baseline": 2620,
+        "touch_peak_permille": 52
+      },
+      "bytes": "85 1b 09 0f 30 89 00 00 3c 0a 34 00"
+    },
+    {
+      "name": "error_busy",
+      "kind": "error",
+      "seq": 30,
+      "command": 3,
+      "error": 4,
+      "bytes": "8f 1e 02 03 04"
+    },
+    {
+      "name": "state_with_a_longer_body",
+      "kind": "state",
+      "seq": 0,
+      "state": {
+        "state_seq": 4660,
+        "on": true,
+        "color": 1,
+        "brightness_mode": 0,
+        "manual_level": 50,
+        "applied_percent": 30,
+        "link": 1,
+        "source": 1
+      },
+      "bytes": "82 00 0a 34 12 01 01 00 32 1e 01 01 ab",
+      "canonical": false
     }
   ]
 }

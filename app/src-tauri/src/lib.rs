@@ -4,10 +4,9 @@
 //! DISLED desktop app: Tauri commands over the USB device worker.
 
 mod device;
-mod protocol;
 
 use device::{Connection, DeviceHandle};
-use protocol::Command;
+use disled_protocol::Command;
 use tauri::{Manager, State};
 
 /// Current connection, for a frontend that starts after the first event.

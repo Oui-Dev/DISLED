@@ -196,6 +196,9 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             s_reset_at_ms = now_ms + APP_RESET_DELAY_MS;
             break;
         default:
+            /* Optional version 1.1 commands this firmware does not announce
+             * in INFO: the specification asks for "unknown command". */
+            send_error(command.seq, command.type, PROTO_ERR_UNKNOWN_COMMAND);
             break;
     }
 }

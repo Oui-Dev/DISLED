@@ -9,6 +9,7 @@
 
 _Static_assert(PROTO_INFO_SIZE <= PROTO_MAX_BODY_SIZE, "INFO fits one report");
 _Static_assert(PROTO_TELEMETRY_SIZE <= PROTO_MAX_BODY_SIZE, "TELEMETRY fits one report");
+_Static_assert(PROTO_DIAGNOSTICS_SIZE <= PROTO_MAX_BODY_SIZE, "DIAGNOSTICS fits one report");
 _Static_assert(LAMP_FIELD_POWER == 0x01u && LAMP_FIELD_COLOR == 0x02u &&
                    LAMP_FIELD_BRIGHTNESS_MODE == 0x04u && LAMP_FIELD_MANUAL_LEVEL == 0x08u,
                "SET_STATE field bits are part of the protocol");
@@ -67,14 +68,20 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
         return PROTO_ERR_BAD_LENGTH;
     }
 
+    /* Bodies may be longer than this version knows: the extra bytes are
+     * ignored, so that newer hosts can extend a command (compatibility
+     * rules of the specification). */
     switch (command->type) {
         case PROTO_CMD_GET_INFO:
         case PROTO_CMD_GET_STATE:
         case PROTO_CMD_RESET:
-            return (length == 0u) ? PROTO_OK : PROTO_ERR_BAD_LENGTH;
+        case PROTO_CMD_GET_DIAGNOSTICS:
+        case PROTO_CMD_SELF_TEST:
+        case PROTO_CMD_ENTER_BOOTLOADER:
+            return PROTO_OK;
 
         case PROTO_CMD_SET_STATE: {
-            if (length != PROTO_SET_STATE_SIZE) {
+            if (length < PROTO_SET_STATE_SIZE) {
                 return PROTO_ERR_BAD_LENGTH;
             }
             /* Fields that are not selected are ignored, whatever their value. */
@@ -91,7 +98,7 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
         }
 
         case PROTO_CMD_SET_TELEMETRY: {
-            if (length != PROTO_SET_TELEMETRY_SIZE) {
+            if (length < PROTO_SET_TELEMETRY_SIZE) {
                 return PROTO_ERR_BAD_LENGTH;
             }
             const uint16_t period = get_u16(body);
@@ -99,6 +106,20 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
                 return PROTO_ERR_BAD_VALUE;
             }
             command->body.telemetry_period_ms = period;
+            return PROTO_OK;
+        }
+
+        case PROTO_CMD_SET_AUTO_BIAS: {
+            if (length < PROTO_SET_AUTO_BIAS_SIZE) {
+                return PROTO_ERR_BAD_LENGTH;
+            }
+            /* Two's complement byte to int8_t without implementation-defined
+             * conversion. */
+            const int32_t bias = (body[0] < 0x80u) ? (int32_t)body[0] : (int32_t)body[0] - 256;
+            if (bias < PROTO_AUTO_BIAS_MIN || bias > PROTO_AUTO_BIAS_MAX) {
+                return PROTO_ERR_BAD_VALUE;
+            }
+            command->body.auto_bias = (int8_t)bias;
             return PROTO_OK;
         }
 
@@ -169,6 +190,39 @@ void proto_encode_telemetry(uint8_t payload[PROTO_REPORT_SIZE], const proto_tele
     put_u16(&w, telemetry->cap_ma);
     put_u8(&w, (uint8_t)telemetry->link);
     put_u16(&w, telemetry->level_permille);
+    end_message(&w);
+}
+
+void proto_encode_diagnostics(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq,
+                              const proto_diagnostics_t *diagnostics)
+{
+    writer_t w = begin_message(payload, PROTO_MSG_DIAGNOSTICS, seq);
+    put_u32(&w, diagnostics->uptime_ms);
+    put_u16(&w, diagnostics->boots);
+    put_u16(&w, diagnostics->watchdog_resets);
+    put_u16(&w, diagnostics->faults);
+    put_u32(&w, diagnostics->fault_mcause);
+    put_u32(&w, diagnostics->fault_mepc);
+    put_u32(&w, diagnostics->fault_mtval);
+    put_u16(&w, diagnostics->stack_free_min);
+    put_u16(&w, diagnostics->i2c_errors);
+    put_u16(&w, diagnostics->light_sensor_probes);
+    put_u16(&w, diagnostics->touch_samples_lost);
+    put_u16(&w, diagnostics->touch_recalibrations);
+    put_u16(&w, diagnostics->usb_suspends);
+    put_u8(&w, (uint8_t)diagnostics->auto_bias);
+    put_u8(&w, diagnostics->flags);
+    end_message(&w);
+}
+
+void proto_encode_self_test_result(uint8_t payload[PROTO_REPORT_SIZE], uint8_t seq,
+                                   const proto_self_test_result_t *result)
+{
+    writer_t w = begin_message(payload, PROTO_MSG_SELF_TEST_RESULT, seq);
+    put_u8(&w, result->results);
+    put_u32(&w, result->lux_centi);
+    put_u16(&w, result->touch_baseline);
+    put_u16(&w, (uint16_t)result->touch_peak_permille);
     end_message(&w);
 }
 

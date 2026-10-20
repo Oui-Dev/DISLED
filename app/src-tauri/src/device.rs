@@ -12,8 +12,9 @@ use hidapi::{HidApi, HidDevice};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
-use crate::protocol::{
-    self, Command, Message, PAYLOAD_SIZE, PROTOCOL_MAJOR, REPORT_ID_COMMAND, REPORT_ID_MESSAGE,
+use disled_protocol::{
+    self as protocol, Command, DecodeError, Message, PAYLOAD_SIZE, PROTOCOL_MAJOR,
+    REPORT_ID_COMMAND, REPORT_ID_MESSAGE,
 };
 
 /// pid.codes test IDs used during phase 1: release and debug builds.
@@ -200,6 +201,9 @@ impl Worker {
                             self.check_protocol_version(&frame.message);
                             let _ = self.app.emit(EVENT_MESSAGE, frame);
                         }
+                        // A newer lamp may send message types this app does
+                        // not know: the protocol says to ignore them.
+                        Err(DecodeError::UnknownType(_)) => {}
                         Err(error) => {
                             let _ = self.app.emit(EVENT_PROTOCOL_ERROR, error.to_string());
                         }
