@@ -3,8 +3,10 @@
 #
 # Build and check tools of the firmware, at the versions the CI uses:
 # `uv sync` installs them in .venv, `uv run pio ...` runs them. uv.lock pins
-# every package; Dependabot keeps both files up to date. The firmware
-# version itself comes from git tags (scripts/version.py), not from here.
+# every package; Dependabot keeps both files up to date. With no
+# [build-system], uv installs only the tools, never this project. The
+# format requires a version; the firmware version itself comes from git
+# tags (scripts/version.py), not from here.
 
 [project]
 name = "disled-firmware-tools"
@@ -17,6 +19,4 @@ dependencies = [
 ]
 
 [tool.uv]
-# Tools only: there is no Python package to build.
-package = false
 required-version = ">=0.13"
