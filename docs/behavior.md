@@ -34,6 +34,11 @@ Each contact triggers at most one action. Releasing the touch re-arms it.
   produces a state notification with an increasing sequence number.
 - In `AUTO` mode the notification carries the level currently applied, so
   the app can show it on a disabled slider.
+- The host can shift the automatic curve ("brighter" or "darker", −50 to
+  +50 %). The lamp forgets it when it restarts: the app sends it again
+  after each connection. Manual mode ignores it.
+- The host can read diagnostics (resets, faults, stack margin, error
+  counters) and run the self-test below.
 
 ## Transitions
 
@@ -47,14 +52,27 @@ hysteresis, so it never flickers.
 |---|---|---|---|---|
 | `UNCONFIGURED` | Power-up, plain charger, hub without a host | Works locally | Active | 70 mA |
 | `CONFIGURED` | Enumerated by a host | Normal | Active | 125 mA (tuned after thermal test V2) |
-| `SUSPENDED` | Host asleep | Off | Ignored | 0 |
+| `SUSPENDED` | Host asleep | Off at once | Ignored | 0 |
 
-On resume, the lamp shows its previous state again.
+Suspend turns the LED off without a fade: a suspended USB device must
+drop its current within a few milliseconds. The touch and the light
+sensor stop, and the chip slows down to 1 MHz. On resume, the lamp fades
+back to its previous state.
 
 The caps use the worst-case LED model: 86 mA (red), 63 mA (green) and
 125 mA (blue) at 100 % duty. When a color would exceed the cap, the three
 channels are scaled down together, which keeps the hue. A pure color fits
 within 125 mA; warm white is limited to about half of its full power.
+
+## Self-test (production)
+
+On request from the host (or the debug console), the lamp shows red,
+green, blue and warm white for 1.5 s each, checks that the light sensor
+answers and that the idle touch reading is plausible, then glows blue and
+waits up to 10 s for a touch on the lid. It then restores its state and
+reports the results. A person checks the colors; the touch that ends the
+test does not change the lamp. Meanwhile, the touch does nothing and the
+host's lamp changes are refused ("busy").
 
 ## Out of scope for now
 
@@ -83,3 +101,7 @@ Run them on a board connected to a computer, with the desktop app open.
     current stays at or below 70 mA.
 11. Every change, from the touch or from the app, shows up in the app with
     an increasing sequence number.
+12. In auto mode, set the brightness correction to +30 % then −30 %: the
+    applied level rises then falls by about that much.
+13. Run the self-test: four colors, then blue; touch the lid. The result
+    shows every check passed, and the lamp is back in its previous state.

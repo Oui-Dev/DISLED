@@ -9,11 +9,22 @@
 
 #include "time_utils.h"
 
+/* Takes the current reading as the new baseline: an object on or near the
+ * lid, or a finger present at power-up that has gone. */
+static void rebaseline(touch_detector_t *td)
+{
+    td->baseline_q8 = (uint32_t)td->value << 8;
+    if (td->recalibrations < UINT16_MAX) {
+        td->recalibrations++;
+    }
+}
+
 static void reset_contact(touch_detector_t *td)
 {
     td->contact = false;
     td->pending = false;
     td->long_fired = false;
+    td->consume_next = false;
     td->rearming = false;
     td->inverted = false;
     td->near = false;
@@ -38,6 +49,7 @@ void touch_detector_init(touch_detector_t *td, const touch_config_t *config)
     td->release_ms = 0;
     td->inverted_since_ms = 0;
     td->near_since_ms = 0;
+    td->recalibrations = 0;
     touch_detector_recalibrate(td);
 }
 
@@ -87,7 +99,7 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
             td->near = true;
             td->near_since_ms = now_ms;
         } else if (time_elapsed_ms(now_ms, td->near_since_ms) >= cfg->object_ms) {
-            td->baseline_q8 = (uint32_t)td->value << 8;
+            rebaseline(td);
             td->near = false;
         }
         return;
@@ -99,7 +111,7 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
             td->inverted = true;
             td->inverted_since_ms = now_ms;
         } else if (time_elapsed_ms(now_ms, td->inverted_since_ms) >= cfg->inverted_ms) {
-            td->baseline_q8 = (uint32_t)td->value << 8;
+            rebaseline(td);
             td->inverted = false;
         }
         return;
@@ -151,6 +163,9 @@ static bool update_contact(touch_detector_t *td, uint32_t now_ms)
 
     if (raw_contact == td->contact) {
         td->pending = false;
+        if (!td->contact) {
+            td->consume_next = false; /* the press to swallow did not come */
+        }
         return false;
     }
     if (!td->pending) {
@@ -197,7 +212,8 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
              * of the debounce. */
             td->state = TOUCH_STATE_PRESSED;
             td->press_start_ms = contact_start_ms;
-            td->long_fired = false;
+            td->long_fired = td->consume_next; /* a consumed touch fires nothing */
+            td->consume_next = false;
             td->near = false;
             td->press_floor = recent_floor(td);
         } else if (!td->contact && !td->pending) {
@@ -215,7 +231,7 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
     const uint32_t held_ms = time_elapsed_ms(now_ms, td->press_start_ms);
     if (held_ms >= cfg->object_ms) {
         /* Object on the lid: absorb it into the baseline. */
-        td->baseline_q8 = (uint32_t)td->value << 8;
+        rebaseline(td);
         td->state = TOUCH_STATE_IDLE;
         reset_contact(td);
         return TOUCH_EVENT_NONE;
@@ -265,4 +281,18 @@ uint16_t touch_detector_baseline(const touch_detector_t *td)
 int16_t touch_detector_delta_permille(const touch_detector_t *td)
 {
     return td->delta_permille;
+}
+
+uint16_t touch_detector_recalibrations(const touch_detector_t *td)
+{
+    return td->recalibrations;
+}
+
+void touch_detector_consume(touch_detector_t *td)
+{
+    if (td->state == TOUCH_STATE_PRESSED) {
+        td->long_fired = true; /* no long press, no event at the release */
+    } else {
+        td->consume_next = true;
+    }
 }

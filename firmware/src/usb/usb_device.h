@@ -23,6 +23,9 @@ void usb_device_init(bool crystal_ok);
 
 void usb_device_task(void);
 
+/* USB wake-up interrupt (EXTI line 18), for the slow clock of suspend. */
+void usb_device_wake_irq(bool enabled);
+
 usb_link_t usb_device_link(void);
 
 /* Queues a message report. False if the queue is full or no host is

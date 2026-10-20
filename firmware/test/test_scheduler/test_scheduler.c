@@ -30,9 +30,9 @@ static void always(uint32_t now_ms)
 }
 
 static scheduler_task_t tasks[] = {
-    { "fast", 10, fast, 0 },
-    { "slow", 100, slow, 0 },
-    { "always", 0, always, 0 },
+    { "fast", 10, fast, 0, 0 },
+    { "slow", 100, slow, 0, 0 },
+    { "always", 0, always, 0, 0 },
 };
 #define TASK_COUNT (sizeof tasks / sizeof tasks[0])
 
@@ -84,11 +84,34 @@ static void test_survives_time_wrap_around(void)
     TEST_ASSERT_EQUAL_UINT(1, slow_runs);
 }
 
+static uint32_t fake_us;
+
+static uint32_t fake_clock(void)
+{
+    return fake_us;
+}
+
+static void slow_task(uint32_t now_ms)
+{
+    (void)now_ms;
+    fake_us += 700; /* the task "takes" 700 us */
+}
+
+static void test_timed_run_records_the_longest_run(void)
+{
+    scheduler_task_t timed[] = { { "slow", 0, slow_task, 0, 0 } };
+    fake_us = 0xFFFFFF00u; /* the clock wraps during the first run */
+    (void)scheduler_run_timed(timed, 1, 0, fake_clock);
+    (void)scheduler_run_timed(timed, 1, 1, fake_clock);
+    TEST_ASSERT_EQUAL_UINT32(700, timed[0].max_us);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_tasks_run_at_their_period);
     RUN_TEST(test_a_late_task_runs_once_without_burst);
     RUN_TEST(test_survives_time_wrap_around);
+    RUN_TEST(test_timed_run_records_the_longest_run);
     return UNITY_END();
 }

@@ -40,12 +40,43 @@ static void test_decode_get_state(void)
     TEST_ASSERT_EQUAL_UINT8(7, command.seq);
 }
 
-static void test_decode_rejects_a_body_on_get_info(void)
+static void test_decode_ignores_extra_body_bytes(void)
 {
-    const uint8_t body[] = { 0 };
-    command_payload(PROTO_CMD_GET_INFO, 1, body, 1);
+    /* Compatibility rule of version 1.1: a newer host may extend a body. */
+    const uint8_t extra[] = { 0xAB };
+    command_payload(PROTO_CMD_GET_INFO, 1, extra, sizeof extra);
+    TEST_ASSERT_EQUAL(PROTO_OK, proto_decode_command(payload, &command));
+
+    const uint8_t period[] = { 0xFA, 0x00, 0xAB };
+    command_payload(PROTO_CMD_SET_TELEMETRY, 2, period, sizeof period);
+    TEST_ASSERT_EQUAL(PROTO_OK, proto_decode_command(payload, &command));
+    TEST_ASSERT_EQUAL_UINT16(250, command.body.telemetry_period_ms);
+
+    /* A shorter body is still an error. */
+    const uint8_t short_state[] = { LAMP_FIELD_POWER, 1, 0, 0 };
+    command_payload(PROTO_CMD_SET_STATE, 3, short_state, sizeof short_state);
     TEST_ASSERT_EQUAL(PROTO_ERR_BAD_LENGTH, proto_decode_command(payload, &command));
-    TEST_ASSERT_EQUAL_UINT8(1, command.seq);
+    TEST_ASSERT_EQUAL_UINT8(3, command.seq);
+}
+
+static void test_decode_set_auto_bias_limits(void)
+{
+    const uint8_t plus_50[] = { 50 };
+    command_payload(PROTO_CMD_SET_AUTO_BIAS, 1, plus_50, sizeof plus_50);
+    TEST_ASSERT_EQUAL(PROTO_OK, proto_decode_command(payload, &command));
+    TEST_ASSERT_EQUAL_INT8(50, command.body.auto_bias);
+
+    const uint8_t minus_50[] = { 0xCE };
+    command_payload(PROTO_CMD_SET_AUTO_BIAS, 1, minus_50, sizeof minus_50);
+    TEST_ASSERT_EQUAL(PROTO_OK, proto_decode_command(payload, &command));
+    TEST_ASSERT_EQUAL_INT8(-50, command.body.auto_bias);
+
+    const uint8_t minus_128[] = { 0x80 };
+    command_payload(PROTO_CMD_SET_AUTO_BIAS, 1, minus_128, sizeof minus_128);
+    TEST_ASSERT_EQUAL(PROTO_ERR_BAD_VALUE, proto_decode_command(payload, &command));
+
+    command_payload(PROTO_CMD_SET_AUTO_BIAS, 1, NULL, 0);
+    TEST_ASSERT_EQUAL(PROTO_ERR_BAD_LENGTH, proto_decode_command(payload, &command));
 }
 
 static void test_decode_unknown_command(void)
@@ -199,6 +230,37 @@ static void test_encode_ack_and_error(void)
     TEST_ASSERT_EQUAL_HEX8_ARRAY(error, payload, sizeof error);
 }
 
+static void test_encode_diagnostics_layout(void)
+{
+    const proto_diagnostics_t diagnostics = {
+        .uptime_ms = 1,
+        .stack_free_min = 0x0102,
+        .auto_bias = -1,
+        .flags = PROTO_DIAG_FLAG_LIGHT_SENSOR | PROTO_DIAG_FLAG_CRYSTAL,
+    };
+    proto_encode_diagnostics(payload, 7, &diagnostics);
+    TEST_ASSERT_EQUAL_HEX8(PROTO_MSG_DIAGNOSTICS, payload[0]);
+    TEST_ASSERT_EQUAL_UINT8(7, payload[1]);
+    TEST_ASSERT_EQUAL_UINT8(PROTO_DIAGNOSTICS_SIZE, payload[2]);
+    TEST_ASSERT_EQUAL_HEX8(0x02, payload[3 + 22]);
+    TEST_ASSERT_EQUAL_HEX8(0x01, payload[3 + 23]);
+    TEST_ASSERT_EQUAL_HEX8(0xFF, payload[3 + 34]);
+    TEST_ASSERT_EQUAL_HEX8(0x03, payload[3 + 35]);
+    TEST_ASSERT_EQUAL_HEX8(0, payload[3 + PROTO_DIAGNOSTICS_SIZE]);
+}
+
+static void test_encode_self_test_result_signed_peak(void)
+{
+    const proto_self_test_result_t result = { .results = PROTO_SELF_TEST_COMPLETED,
+                                              .touch_peak_permille = -3 };
+    proto_encode_self_test_result(payload, 8, &result);
+    TEST_ASSERT_EQUAL_HEX8(PROTO_MSG_SELF_TEST_RESULT, payload[0]);
+    TEST_ASSERT_EQUAL_UINT8(PROTO_SELF_TEST_RESULT_SIZE, payload[2]);
+    TEST_ASSERT_EQUAL_HEX8(PROTO_SELF_TEST_COMPLETED, payload[3]);
+    TEST_ASSERT_EQUAL_HEX8(0xFD, payload[3 + 7]);
+    TEST_ASSERT_EQUAL_HEX8(0xFF, payload[3 + 8]);
+}
+
 static void test_vectors_match_the_protocol_version(void)
 {
     TEST_ASSERT_EQUAL_UINT(PROTO_VERSION_MAJOR, VECTORS_PROTOCOL_MAJOR);
@@ -237,6 +299,9 @@ static void test_command_vectors(void)
             TEST_ASSERT_EQUAL_UINT16_MESSAGE(v->telemetry_period_ms,
                                              command.body.telemetry_period_ms, v->name);
         }
+        if (v->has_auto_bias) {
+            TEST_ASSERT_EQUAL_INT8_MESSAGE(v->auto_bias, command.body.auto_bias, v->name);
+        }
     }
 }
 
@@ -244,6 +309,9 @@ static void test_message_vectors(void)
 {
     for (size_t i = 0; i < sizeof message_vectors / sizeof message_vectors[0]; i++) {
         const message_vector_t *v = &message_vectors[i];
+        if (!v->canonical) {
+            continue; /* decoder-only: the firmware never sends it */
+        }
         switch (v->kind) {
             case MSG_STATE:
                 proto_encode_state(payload, v->seq, &v->state);
@@ -253,6 +321,12 @@ static void test_message_vectors(void)
                 break;
             case MSG_TELEMETRY:
                 proto_encode_telemetry(payload, &v->telemetry);
+                break;
+            case MSG_DIAGNOSTICS:
+                proto_encode_diagnostics(payload, v->seq, &v->diagnostics);
+                break;
+            case MSG_SELF_TEST_RESULT:
+                proto_encode_self_test_result(payload, v->seq, &v->self_test_result);
                 break;
             case MSG_ACK:
                 proto_encode_ack(payload, v->seq, v->command);
@@ -270,7 +344,8 @@ int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_decode_get_state);
-    RUN_TEST(test_decode_rejects_a_body_on_get_info);
+    RUN_TEST(test_decode_ignores_extra_body_bytes);
+    RUN_TEST(test_decode_set_auto_bias_limits);
     RUN_TEST(test_decode_unknown_command);
     RUN_TEST(test_decode_rejects_an_oversized_length);
     RUN_TEST(test_decode_set_state);
@@ -282,6 +357,8 @@ int main(void)
     RUN_TEST(test_encode_info_truncates_a_long_version);
     RUN_TEST(test_encode_telemetry_size_and_signed_delta);
     RUN_TEST(test_encode_ack_and_error);
+    RUN_TEST(test_encode_diagnostics_layout);
+    RUN_TEST(test_encode_self_test_result_signed_peak);
     RUN_TEST(test_vectors_match_the_protocol_version);
     RUN_TEST(test_command_vectors);
     RUN_TEST(test_message_vectors);

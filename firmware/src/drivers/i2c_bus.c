@@ -22,8 +22,13 @@ static uint32_t s_speed_hz;
 static uint8_t s_step;
 static i2c_bus_failure_t s_failure;
 
+static uint16_t s_error_count;
+
 static i2c_bus_status_t fail(i2c_bus_status_t status)
 {
+    if (s_error_count < UINT16_MAX) {
+        s_error_count++;
+    }
     s_failure.step = s_step;
     s_failure.status = status;
     s_failure.star1 = BOARD_I2C->STAR1;
@@ -248,4 +253,9 @@ void i2c_bus_recover(void)
 i2c_bus_failure_t i2c_bus_last_failure(void)
 {
     return s_failure;
+}
+
+uint16_t i2c_bus_error_count(void)
+{
+    return s_error_count;
 }

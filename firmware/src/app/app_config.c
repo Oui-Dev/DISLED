@@ -32,10 +32,10 @@ const tkey_config_t app_tkey_config = {
 };
 
 const touch_config_t app_touch_config = {
-    .window_samples = 20,     /* 20 ms at 1 kHz: one 50 Hz mains period */
-    .calibration_windows = 8, /* 160 ms */
-    .baseline_shift = 8,      /* about 5 s time constant */
-    .press_permille = 28,     /* see the TouchKey note; recheck on the Mac (V4) */
+    .window_samples = 20,                       /* 20 ms at 1 kHz: one 50 Hz mains period */
+    .calibration_windows = 8,                   /* 160 ms */
+    .baseline_shift = 8,                        /* about 5 s time constant */
+    .press_permille = APP_TOUCH_PRESS_PERMILLE, /* see the TouchKey note; recheck on the Mac (V4) */
     .release_permille = 16,
     .press_rise_permille = 18, /* a hand resting near the lid reads 20-30 */
     .proximity_permille = 10,  /* rest noise and the LED on/off shift stay below */
@@ -103,4 +103,20 @@ const power_config_t app_power_config = {
     .full_scale_ma = { 86, 63, 125 },
     .unconfigured_cap_ma = 70,
     .configured_cap_ma = 125,
+};
+
+/* Self-test: colors at 50 % and the blue glow at 20 % perceived, in linear
+ * light (the CIE table of color.c). The white step is the palette's warm
+ * white at 50 % (63000/58000/1600 x 12071/65535): equal channels looked
+ * pink. Idle TouchKey reading: about 2600 counts on the first board, 4095
+ * when saturated. */
+const self_test_config_t app_self_test_config = {
+    .color_ms = 1500,
+    .touch_wait_ms = 10000,
+    .color_linear = 12071,
+    .white = { 11604, 10683, 295 },
+    .wait_linear = 1959,
+    .touch_idle_min = 1000,
+    .touch_idle_max = 3800,
+    .touch_press_permille = APP_TOUCH_PRESS_PERMILLE,
 };

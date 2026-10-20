@@ -47,6 +47,10 @@ typedef struct {
     usb_link_t link;
     /* Debug override of the current cap (0 = use the cap of the link). */
     uint16_t cap_override_ma;
+    /* Self-test: show this linear color instead of the lamp state, still
+     * through the fade and the power limit. */
+    bool show_override;
+    rgb16_t override_rgb;
 } led_output_inputs_t;
 
 typedef struct {

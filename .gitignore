@@ -24,5 +24,7 @@ firmware/tools/*/touch_replay.exe
 # Desktop app (Tauri + Vue)
 app/node_modules/
 app/dist/
+# Rust workspace build output (and the old per-crate location)
+/target/
 app/src-tauri/target/
 app/src-tauri/gen/schemas/

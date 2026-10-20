@@ -1,6 +1,6 @@
 # 0004 — Updates through the ROM bootloader buttons only
 
-- Status: Accepted
+- Status: Superseded by [0010](0010-firmware-updates-from-the-app.md)
 - Date: 2026-10-12
 
 ## Context

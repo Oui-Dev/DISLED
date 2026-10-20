@@ -20,6 +20,7 @@
 #include "app_context.h"
 #include "app_host.h"
 #include "bsp/bsp.h"
+#include "bsp/bsp_power.h"
 #include "bsp/bsp_time.h"
 #include "bsp/bsp_watchdog.h"
 #include "bsp/ch32.h"
@@ -58,23 +59,61 @@ static const char *link_name(usb_link_t link)
 
 /* --- Tasks ----------------------------------------------------------- */
 
+static void task_output(uint32_t now_ms);
+static void als_start(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms);
+
+/* Host asleep: the LED goes dark, the touch and the light sensor stop, and
+ * the core drops to the slow clock until the bus wakes up. */
+static void enter_suspend(uint32_t now_ms)
+{
+    if (self_test_running(&app.self_test)) {
+        self_test_abort(&app.self_test); /* nobody to report to */
+    }
+    tkey_stop();
+    task_output(now_ms); /* app.link is suspended: duties drop to 0 */
+    led_pwm_stop();
+    if (app.als.present) {
+        (void)veml7700_shutdown();
+    }
+    if (app.usb_suspends < UINT16_MAX) {
+        app.usb_suspends++;
+    }
+#ifndef DISLED_NO_SLOW_SUSPEND
+    usb_device_wake_irq(true);
+    bsp_power_slow_clock();
+#endif
+}
+
+static void leave_suspend(uint32_t now_ms)
+{
+    /* The USB wake-up interrupt normally restored the clock already. */
+    if (!bsp_power_full_clock()) {
+        LOG_ERROR("crystal failed on resume");
+    }
+    usb_device_wake_irq(false);
+    led_pwm_start();
+    if (app.als.present) {
+        als_start(&app.als, now_ms, APP_ALS_FIRST_RETRY_MS); /* wakes the sensor */
+    }
+    touch_detector_recalibrate(&app.touch);
+    tkey_start();
+}
+
 static void task_usb(uint32_t now_ms)
 {
-    (void)now_ms;
     usb_device_task();
 
     const usb_link_t link = usb_device_link();
     if (link == app.link) {
         return;
     }
-    if (link == USB_LINK_SUSPENDED) {
-        /* Host asleep: the LED goes dark (cap 0) and the touch is ignored. */
-        tkey_stop();
-    } else if (app.link == USB_LINK_SUSPENDED) {
-        touch_detector_recalibrate(&app.touch);
-        tkey_start();
-    }
+    const usb_link_t previous = app.link;
     app.link = link;
+    if (link == USB_LINK_SUSPENDED) {
+        enter_suspend(now_ms);
+    } else if (previous == USB_LINK_SUSPENDED) {
+        leave_suspend(now_ms);
+    }
     LOG_INFO("usb: %s", link_name(link));
 }
 
@@ -86,7 +125,9 @@ static void task_touch(uint32_t now_ms)
     while (tkey_read(&raw, &sample_ms)) {
         const touch_event_t event = touch_detector_feed(&app.touch, raw, sample_ms);
         bool changed = false;
-        if (event == TOUCH_EVENT_SHORT_PRESS) {
+        if (self_test_running(&app.self_test)) {
+            /* The self-test watches the touch signal itself. */
+        } else if (event == TOUCH_EVENT_SHORT_PRESS) {
             changed = lamp_fsm_short_press(&app.lamp);
         } else if (event == TOUCH_EVENT_LONG_PRESS) {
             changed = lamp_fsm_long_press(&app.lamp);
@@ -100,9 +141,9 @@ static void task_touch(uint32_t now_ms)
     }
 }
 
-/* Probes the sensor. The first readings after power-on are not valid
- * until an integration completes, so they are skipped. */
-static void als_probe(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
+/* Starts (or wakes) the sensor. The first readings after power-on are not
+ * valid until an integration completes, so they are skipped. */
+static void als_start(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
 {
     als->present = veml7700_init(&app_veml7700_config);
     als->errors = 0;
@@ -110,10 +151,22 @@ static void als_probe(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
     als->settle_ms = now_ms + 2u * veml7700_integration_ms();
 }
 
+/* A detection attempt (start-up, sensor lost): counted for the diagnostics. */
+static void als_probe(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
+{
+    if (als->probes < UINT16_MAX) {
+        als->probes++;
+    }
+    als_start(als, now_ms, retry_delay_ms);
+}
+
 static void task_als(uint32_t now_ms)
 {
     app_als_t *als = &app.als;
 
+    if (app.link == USB_LINK_SUSPENDED) {
+        return; /* sensor asleep, I2C idle on the slow clock */
+    }
     if (!als->present) {
         if (time_reached(now_ms, als->retry_ms)) {
             i2c_bus_recover(); /* start each attempt from a clean bus */
@@ -145,15 +198,50 @@ static void task_als(uint32_t now_ms)
     }
 }
 
+/* Feeds the running self-test; returns the color it wants shown. */
+static rgb16_t run_self_test(uint32_t now_ms)
+{
+    const self_test_inputs_t measurements = {
+        .light_present = app.als.present,
+        .lux_centi = app.als.lux_centi,
+        .touch_ready = touch_detector_state(&app.touch) != TOUCH_STATE_CALIBRATING,
+        .touch_baseline = touch_detector_baseline(&app.touch),
+        .touch_delta_permille = touch_detector_delta_permille(&app.touch),
+    };
+    if (self_test_update(&app.self_test, now_ms, &measurements)) {
+        if ((app.self_test.results & SELF_TEST_TOUCH_PRESSED) != 0u) {
+            touch_detector_consume(&app.touch); /* the finger is still down */
+        }
+        app.self_test_report = true;
+        LOG_INFO("self-test: results 0x%02x", (unsigned)app.self_test.results);
+    }
+    return self_test_color(&app.self_test, now_ms);
+}
+
+bool app_start_self_test(uint8_t seq)
+{
+    if (self_test_running(&app.self_test)) {
+        return false;
+    }
+    app.self_test_seq = seq;
+    app.self_test_report = false;
+    self_test_start(&app.self_test, bsp_time_ms());
+    LOG_INFO("self-test: started");
+    return true;
+}
+
 static void task_output(uint32_t now_ms)
 {
     brightness_set_mode(&app.brightness, app.lamp.brightness_mode, app.lamp.manual_level);
+    const bool testing = self_test_running(&app.self_test);
     const led_output_inputs_t inputs = {
         .on = app.lamp.on,
         .color = app.lamp.color,
         .level_permille = brightness_level_permille(&app.brightness),
         .link = app.link,
         .cap_override_ma = app.cap_override_ma,
+        .show_override = testing,
+        .override_rgb = testing ? run_self_test(now_ms) : (rgb16_t){ 0, 0, 0 },
     };
 #ifdef DISLED_BOOT_DIAG
     /* Heartbeat: the level breathes while the loop runs. */
@@ -171,6 +259,34 @@ static void task_output(uint32_t now_ms)
 static void task_host(uint32_t now_ms)
 {
     app_host_task(now_ms);
+}
+
+static uint16_t saturate_u16(uint32_t value)
+{
+    return (value > UINT16_MAX) ? (uint16_t)UINT16_MAX : (uint16_t)value;
+}
+
+void app_diagnostics(proto_diagnostics_t *diagnostics)
+{
+    const fault_stats_t stats = bsp_fault_stats();
+    *diagnostics = (proto_diagnostics_t){
+        .uptime_ms = bsp_time_ms(),
+        .boots = stats.boots,
+        .watchdog_resets = stats.watchdog_resets,
+        .faults = stats.faults,
+        .fault_mcause = stats.last.mcause,
+        .fault_mepc = stats.last.mepc,
+        .fault_mtval = stats.last.mtval,
+        .stack_free_min = bsp_stack_free_min(),
+        .i2c_errors = i2c_bus_error_count(),
+        .light_sensor_probes = app.als.probes,
+        .touch_samples_lost = saturate_u16(tkey_overruns()),
+        .touch_recalibrations = touch_detector_recalibrations(&app.touch),
+        .usb_suspends = app.usb_suspends,
+        .auto_bias = brightness_auto_bias(&app.brightness),
+        .flags = (uint8_t)((app.als.present ? PROTO_DIAG_FLAG_LIGHT_SENSOR : 0u) |
+                           (app.crystal_ok ? PROTO_DIAG_FLAG_CRYSTAL : 0u)),
+    };
 }
 
 #if DISLED_DEBUG
@@ -222,13 +338,13 @@ static void diag_blink(uint16_t count)
 #endif
 
 static scheduler_task_t tasks[] = {
-    { "usb", 0, TASK_FN(task_usb), 0 },
-    { "touch", 0, TASK_FN(task_touch), 0 },
-    { "als", APP_ALS_PERIOD_MS, TASK_FN(task_als), 0 },
-    { "output", APP_OUTPUT_PERIOD_MS, TASK_FN(task_output), 0 },
-    { "host", 0, TASK_FN(task_host), 0 },
+    { "usb", 0, TASK_FN(task_usb), 0, 0 },
+    { "touch", 0, TASK_FN(task_touch), 0, 0 },
+    { "als", APP_ALS_PERIOD_MS, TASK_FN(task_als), 0, 0 },
+    { "output", APP_OUTPUT_PERIOD_MS, TASK_FN(task_output), 0, 0 },
+    { "host", 0, TASK_FN(task_host), 0, 0 },
 #if DISLED_DEBUG
-    { "console", 0, TASK_FN(task_console), 0 },
+    { "console", 0, TASK_FN(task_console), 0, 0 },
 #endif
 };
 
@@ -278,6 +394,7 @@ void app_init(const fault_record_t *fault)
 #endif
     app.source = CHANGE_SOURCE_BOOT;
     brightness_init(&app.brightness, &app_brightness_config);
+    self_test_init(&app.self_test, &app_self_test_config);
 
     i2c_bus_init(APP_I2C_SPEED_HZ);
     /* The sensor may still be powering up: retry soon if it is silent. */
@@ -312,11 +429,15 @@ void app_run(void)
 {
     scheduler_start(tasks, TASK_COUNT, bsp_time_ms());
     for (;;) {
-        (void)scheduler_run(tasks, TASK_COUNT, bsp_time_ms());
+        (void)scheduler_run_timed(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
-        /* No WFI here: on this QingKe core the CPU never woke from it (not
-         * even on the 1 ms tick), which starved USB and tripped the
-         * watchdog. Low-power idle comes back in phase 2, tested on a board. */
+        /* No WFI: in this loop the core never woke up again (ADR 0011). */
     }
+}
+
+const scheduler_task_t *app_tasks(size_t *count)
+{
+    *count = TASK_COUNT;
+    return tasks;
 }

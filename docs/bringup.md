@@ -138,7 +138,15 @@ Closed enclosure on the monitor, at room temperature.
       configured cap may rise; otherwise lower it.
 - [ ] `cap off` at the end.
 
-## 9. Release firmware
+## 9. Diagnostics and self-test
+
+- [ ] Console `diag`: no faults, a stack margin above 1 KB, no I2C errors.
+- [ ] Console `tasks`: no task longer than a few milliseconds.
+- [ ] Console `selftest`: check the four colors by eye, touch the lid
+      while it glows blue; the log shows `results 0x0f` and the lamp is
+      back in its previous state.
+
+## 10. Release firmware
 
 - [ ] `pio run -e release -t upload`: the lamp shows up as `1209:0001`,
       HID only, and the app works the same.

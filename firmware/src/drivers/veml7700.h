@@ -45,6 +45,9 @@ bool veml7700_init(const veml7700_config_t *config);
 /* Reads the ALS count. False on a bus error. */
 bool veml7700_read(uint16_t *als_raw);
 
+/* Puts the sensor to sleep (about 0.5 uA); veml7700_init() wakes it. */
+bool veml7700_shutdown(void);
+
 /* Converts a count to lux x 100 for the configured gain and integration. */
 uint32_t veml7700_lux_centi(uint16_t als_raw);
 

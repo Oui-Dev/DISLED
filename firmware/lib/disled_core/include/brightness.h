@@ -33,18 +33,29 @@ typedef struct {
     uint16_t fallback_permille; /* automatic level without a lux reading */
 } brightness_config_t;
 
+/* Limits of the automatic brightness bias, percent (protocol 1.1). */
+#define BRIGHTNESS_BIAS_MIN (-50)
+#define BRIGHTNESS_BIAS_MAX 50
+
 typedef struct {
     const brightness_config_t *config;
     brightness_mode_t mode;
     uint8_t manual_percent;
+    int8_t bias_percent; /* automatic mode: level x (100 + bias) / 100 */
     bool have_lux;
-    uint32_t auto_q8; /* filtered automatic level, per mille << 8 */
+    uint32_t auto_q8; /* filtered automatic level before the bias, per mille << 8 */
 } brightness_t;
 
 void brightness_init(brightness_t *b, const brightness_config_t *config);
 
 /* Applies the lamp settings. `manual_percent` is 1 to 100. */
 void brightness_set_mode(brightness_t *b, brightness_mode_t mode, uint8_t manual_percent);
+
+/* Shifts the automatic curve ("brighter" / "darker" in the app): the
+ * automatic level is multiplied by (100 + bias) / 100 and kept within
+ * 1..1000. Clamped to BRIGHTNESS_BIAS_MIN..MAX. Manual mode ignores it. */
+void brightness_set_auto_bias(brightness_t *b, int8_t bias_percent);
+int8_t brightness_auto_bias(const brightness_t *b);
 
 /* New ambient light reading, typically every 100 ms. */
 void brightness_update_lux(brightness_t *b, uint32_t lux_centi);

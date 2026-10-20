@@ -56,19 +56,48 @@ void brightness_init(brightness_t *b, const brightness_config_t *config)
     b->config = config;
     b->mode = BRIGHTNESS_MODE_AUTO;
     b->manual_percent = BRIGHTNESS_MANUAL_MAX;
+    b->bias_percent = 0;
     b->have_lux = false;
     b->auto_q8 = (uint32_t)config->fallback_permille << 8;
+}
+
+/* Automatic level with the bias applied, 1..1000. */
+static uint16_t biased(const brightness_t *b, uint32_t level_permille)
+{
+    const uint32_t factor = (uint32_t)(100 + (int32_t)b->bias_percent);
+    uint32_t level = (level_permille * factor + 50u) / 100u;
+    if (level > BRIGHTNESS_PERMILLE_MAX) {
+        level = BRIGHTNESS_PERMILLE_MAX;
+    }
+    return (uint16_t)((level == 0u) ? 1u : level);
 }
 
 void brightness_set_mode(brightness_t *b, brightness_mode_t mode, uint8_t manual_percent)
 {
     if (mode == BRIGHTNESS_MODE_AUTO && b->mode == BRIGHTNESS_MODE_MANUAL) {
-        /* Start the automatic filter from the level in use, so that the
-         * switch fades instead of jumping. */
-        b->auto_q8 = (uint32_t)brightness_level_permille(b) << 8;
+        /* Start the automatic filter from the level in use, before the
+         * bias, so that the switch fades instead of jumping. */
+        const uint32_t factor = (uint32_t)(100 + (int32_t)b->bias_percent);
+        const uint32_t level = brightness_level_permille(b);
+        b->auto_q8 = ((level * 100u + factor / 2u) / factor) << 8;
     }
     b->mode = mode;
     b->manual_percent = manual_percent;
+}
+
+void brightness_set_auto_bias(brightness_t *b, int8_t bias_percent)
+{
+    if (bias_percent < BRIGHTNESS_BIAS_MIN) {
+        bias_percent = BRIGHTNESS_BIAS_MIN;
+    } else if (bias_percent > BRIGHTNESS_BIAS_MAX) {
+        bias_percent = BRIGHTNESS_BIAS_MAX;
+    }
+    b->bias_percent = bias_percent;
+}
+
+int8_t brightness_auto_bias(const brightness_t *b)
+{
+    return b->bias_percent;
 }
 
 void brightness_update_lux(brightness_t *b, uint32_t lux_centi)
@@ -107,7 +136,7 @@ uint16_t brightness_level_permille(const brightness_t *b)
     if (b->mode == BRIGHTNESS_MODE_MANUAL) {
         return (uint16_t)(b->manual_percent * 10u);
     }
-    return (uint16_t)((b->auto_q8 + 128u) >> 8);
+    return biased(b, (b->auto_q8 + 128u) >> 8);
 }
 
 uint8_t brightness_level_percent(const brightness_t *b)

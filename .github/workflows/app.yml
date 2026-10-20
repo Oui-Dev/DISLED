@@ -6,12 +6,18 @@ on:
   push:
     paths:
       - "app/**"
+      - "crates/**"
       - "protocol/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/app.yml"
   pull_request:
     paths:
       - "app/**"
+      - "crates/**"
       - "protocol/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/app.yml"
 
 permissions:
@@ -43,9 +49,7 @@ jobs:
         with:
           components: clippy, rustfmt
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: app/src-tauri
+      - uses: Swatinem/rust-cache@v2 # Rust workspace at the repository root
 
       - name: Front end
         run: |
@@ -55,9 +59,9 @@ jobs:
           npm run format:check
           npm run build
 
-      - name: Back end
-        working-directory: app/src-tauri
+      - name: Back end and shared crates
+        working-directory: .
         run: |
-          cargo fmt --check
-          cargo clippy --all-targets -- -D warnings
-          cargo test
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace

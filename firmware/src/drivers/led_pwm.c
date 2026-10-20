@@ -77,6 +77,30 @@ void led_pwm_init(uint32_t frequency_hz)
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 
+void led_pwm_stop(void)
+{
+    for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
+        s_duty[i] = 0;
+    }
+    /* Force the outputs low now: stopping the counter in the middle of a
+     * pulse would otherwise leave a channel on. */
+    TIM_ForcedOC1Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
+    TIM_ForcedOC2Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
+    TIM_ForcedOC3Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
+    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update | TIM_IT_CC4, DISABLE);
+    TIM_Cmd(BOARD_LED_TIMER, DISABLE);
+}
+
+void led_pwm_start(void)
+{
+    init_channel(TIM_OC1Init, TIM_OC1PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_channel(TIM_OC2Init, TIM_OC2PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_channel(TIM_OC3Init, TIM_OC3PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
+    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
+    TIM_Cmd(BOARD_LED_TIMER, ENABLE);
+}
+
 uint16_t led_pwm_period(void)
 {
     return s_period;

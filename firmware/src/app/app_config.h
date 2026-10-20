@@ -15,6 +15,7 @@
 #include "drivers/tkey.h"
 #include "drivers/veml7700.h"
 #include "power_limiter.h"
+#include "self_test.h"
 #include "touch_detector.h"
 
 /* LED PWM: above 20 kHz no audible capacitor whine. TIM3 runs at 72 MHz
@@ -47,5 +48,9 @@ extern const color_config_t app_color_config;
 extern const power_config_t app_power_config;
 /* Light lost per PWM pulse, per channel (see led_output_config_t). */
 extern const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT];
+extern const self_test_config_t app_self_test_config;
+
+/* Touch press threshold, shared by the detector and the self-test. */
+#define APP_TOUCH_PRESS_PERMILLE 28u
 
 #endif /* DISLED_APP_CONFIG_H */

@@ -91,13 +91,15 @@ typedef struct {
     int16_t recent[TOUCH_FLOOR_WINDOWS];
     uint8_t recent_next;
     int16_t press_floor;
-    bool long_fired;
-    bool rearming; /* a release happened less than rearm_ms ago */
+    bool long_fired;   /* also set by touch_detector_consume() */
+    bool consume_next; /* swallow the press being debounced */
+    bool rearming;     /* a release happened less than rearm_ms ago */
     uint32_t release_ms;
     bool inverted;
     uint32_t inverted_since_ms;
     bool near; /* in the proximity band, baseline frozen */
     uint32_t near_since_ms;
+    uint16_t recalibrations; /* automatic re-baselines since init */
 } touch_detector_t;
 
 void touch_detector_init(touch_detector_t *td, const touch_config_t *config);
@@ -110,10 +112,18 @@ touch_event_t touch_detector_feed(touch_detector_t *td, uint16_t raw, uint32_t n
  * power-up or when resuming from USB suspend. */
 void touch_detector_recalibrate(touch_detector_t *td);
 
+/* The current touch was used elsewhere (the self-test): it fires no short
+ * or long press, including a press still being debounced. */
+void touch_detector_consume(touch_detector_t *td);
+
 touch_state_t touch_detector_state(const touch_detector_t *td);
 uint16_t touch_detector_raw(const touch_detector_t *td);
 uint16_t touch_detector_value(const touch_detector_t *td);
 uint16_t touch_detector_baseline(const touch_detector_t *td);
 int16_t touch_detector_delta_permille(const touch_detector_t *td);
+
+/* Automatic re-baselines since init: finger at power-up, object on or near
+ * the lid (diagnostics). */
+uint16_t touch_detector_recalibrations(const touch_detector_t *td);
 
 #endif /* DISLED_TOUCH_DETECTOR_H */

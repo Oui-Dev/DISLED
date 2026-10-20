@@ -49,6 +49,9 @@ breaking change does too; `fix` raises the patch version.
   other workflows only need to read.
 - To force a version, add `Release-As: X.Y.Z` to the body of a commit that
   touches the component.
+- `protocol/`, `crates/` and the root `Cargo.*` files belong to no
+  component: a change there is released with the component that the same
+  commit touches (a protocol change touches the firmware, the app or both).
 - One release pull request for both components: with one per component,
   both edited `.release-please-manifest.json`, so merging one left the
   other in conflict, and release-please does not rebuild a pull request

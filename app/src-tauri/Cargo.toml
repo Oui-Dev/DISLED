@@ -4,10 +4,10 @@ name = "disled-app"
 # bumps it, and tauri.conf.json reads it from there.
 description = "Desktop app for the DISLED USB status light"
 authors = ["The DISLED contributors"]
-license = "GPL-3.0-or-later"
-repository = "https://github.com/Oui-Dev/DISLED"
-edition = "2024"
-publish = false
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
 
 [lib]
 # The `_lib` suffix keeps the library name distinct from the binary name
@@ -19,16 +19,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+disled-protocol = { path = "../../crates/disled-protocol" }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 hidapi = "2"
-thiserror = "2"
-
-[profile.release]
-codegen-units = 1
-lto = true
-opt-level = 3
-panic = "abort"
-strip = true

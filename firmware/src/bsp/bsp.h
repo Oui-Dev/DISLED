@@ -27,6 +27,12 @@ bool bsp_crystal_ok(void);
 /* Clock of the timers on APB1 (TIM2..TIM4), in Hz. */
 uint32_t bsp_apb1_timer_clock_hz(void);
 
+/* Stack use: fills the free stack with a pattern (first thing in main),
+ * then reports how many bytes were never touched since (the smallest
+ * margin seen). */
+void bsp_stack_paint(void);
+uint16_t bsp_stack_free_min(void);
+
 /* Resets the chip. */
 __attribute__((noreturn)) void bsp_system_reset(void);
 

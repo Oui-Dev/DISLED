@@ -99,6 +99,34 @@ uint32_t bsp_apb1_timer_clock_hz(void)
     return divided ? 2u * clocks.PCLK1_Frequency : clocks.PCLK1_Frequency;
 }
 
+/* Stack bounds from the linker script (2 KB at the top of RAM). */
+extern uint32_t _susrstack[];
+extern uint32_t _eusrstack[];
+
+#define STACK_PATTERN 0xA5A5A5A5u
+
+void bsp_stack_paint(void)
+{
+    /* Stop well below the current frame. */
+    const uintptr_t limit = (uintptr_t)__builtin_frame_address(0) - 64u;
+    for (uint32_t *word = _susrstack; (uintptr_t)word < limit; word++) {
+        *word = STACK_PATTERN;
+    }
+}
+
+uint16_t bsp_stack_free_min(void)
+{
+    /* Addresses as integers: the two linker symbols are different objects
+     * for the C language. */
+    const uintptr_t bottom = (uintptr_t)_susrstack;
+    const uintptr_t top = (uintptr_t)_eusrstack;
+    uintptr_t address = bottom;
+    while (address < top && *(const uint32_t *)address == STACK_PATTERN) {
+        address += sizeof(uint32_t);
+    }
+    return (uint16_t)(address - bottom);
+}
+
 void bsp_system_reset(void)
 {
     NVIC_SystemReset();

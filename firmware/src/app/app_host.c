@@ -127,7 +127,10 @@ static void send_info(uint8_t seq)
         .fw_minor = DISLED_FW_VERSION_MINOR,
         .fw_patch = DISLED_FW_VERSION_PATCH,
         .board_revision = BOARD_REVISION,
-        .capabilities = PROTO_CAP_TELEMETRY | (DISLED_DEBUG ? PROTO_CAP_DEBUG_CONSOLE : 0u),
+        /* No ENTER_BOOTLOADER: the CH32V203 cannot start its ROM
+         * bootloader from software (ADR 0010). */
+        .capabilities = PROTO_CAP_TELEMETRY | PROTO_CAP_AUTO_BIAS | PROTO_CAP_DIAGNOSTICS |
+                        PROTO_CAP_SELF_TEST | (DISLED_DEBUG ? PROTO_CAP_DEBUG_CONSOLE : 0u),
         .reset_cause = app.reset_cause,
         .flags = (uint8_t)((DISLED_DEBUG ? PROTO_INFO_FLAG_DEBUG_BUILD : 0u) |
                            (app.fault.valid ? PROTO_INFO_FLAG_FAULT : 0u)),
@@ -155,6 +158,45 @@ static void send_error(uint8_t seq, uint8_t command_type, proto_status_t error)
     (void)usb_hid_send(payload);
 }
 
+static void send_diagnostics(uint8_t seq)
+{
+    proto_diagnostics_t diagnostics;
+    app_diagnostics(&diagnostics);
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_diagnostics(payload, seq, &diagnostics);
+    (void)usb_hid_send(payload);
+}
+
+_Static_assert(SELF_TEST_LIGHT_OK == PROTO_SELF_TEST_LIGHT_OK &&
+                   SELF_TEST_TOUCH_IDLE_OK == PROTO_SELF_TEST_TOUCH_IDLE_OK &&
+                   SELF_TEST_TOUCH_PRESSED == PROTO_SELF_TEST_TOUCH_PRESSED &&
+                   SELF_TEST_COMPLETED == PROTO_SELF_TEST_COMPLETED,
+               "self-test result bits are part of the protocol");
+
+static void send_self_test_result(void)
+{
+    const self_test_t *test = &app.self_test;
+    const proto_self_test_result_t result = {
+        .results = test->results,
+        .lux_centi = test->lux_centi,
+        .touch_baseline = test->touch_baseline,
+        .touch_peak_permille = test->touch_peak_permille,
+    };
+    uint8_t payload[PROTO_REPORT_SIZE];
+    proto_encode_self_test_result(payload, app.self_test_seq, &result);
+    if (usb_hid_send(payload)) {
+        app.self_test_report = false;
+    }
+}
+
+/* Commands that change what the lamp shows wait for the self-test. */
+static bool busy_with_self_test(uint8_t type)
+{
+    return self_test_running(&app.self_test) &&
+           (type == PROTO_CMD_SET_STATE || type == PROTO_CMD_SET_AUTO_BIAS ||
+            type == PROTO_CMD_SELF_TEST);
+}
+
 static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t now_ms)
 {
     proto_command_t command;
@@ -162,6 +204,10 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
     if (status != PROTO_OK) {
         LOG_WARN("host: command 0x%02x rejected (%u)", command.type, (unsigned)status);
         send_error(command.seq, command.type, status);
+        return;
+    }
+    if (busy_with_self_test(command.type)) {
+        send_error(command.seq, command.type, PROTO_ERR_BUSY);
         return;
     }
 
@@ -195,7 +241,22 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             s_reset_pending = true;
             s_reset_at_ms = now_ms + APP_RESET_DELAY_MS;
             break;
+        case PROTO_CMD_SET_AUTO_BIAS:
+            brightness_set_auto_bias(&app.brightness, command.body.auto_bias);
+            LOG_INFO("host: auto brightness bias %d%%", (int)command.body.auto_bias);
+            send_ack(command.seq, command.type);
+            break;
+        case PROTO_CMD_GET_DIAGNOSTICS:
+            send_diagnostics(command.seq);
+            break;
+        case PROTO_CMD_SELF_TEST:
+            (void)app_start_self_test(command.seq);
+            send_ack(command.seq, command.type);
+            break;
         default:
+            /* Optional version 1.1 commands this firmware does not announce
+             * in INFO: the specification asks for "unknown command". */
+            send_error(command.seq, command.type, PROTO_ERR_UNKNOWN_COMMAND);
             break;
     }
 }
@@ -256,6 +317,10 @@ void app_host_task(uint32_t now_ms)
     }
 
     send_telemetry(now_ms);
+
+    if (app.self_test_report && app.link == USB_LINK_CONFIGURED) {
+        send_self_test_result();
+    }
 
     if (s_reset_pending && time_reached(now_ms, s_reset_at_ms)) {
         LOG_WARN("host: reset requested");

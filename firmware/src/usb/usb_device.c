@@ -55,6 +55,21 @@ static void flush_tx(void)
     }
 }
 
+void usb_device_wake_irq(bool enabled)
+{
+    /* Bus activity during suspend raises EXTI line 18 (TinyUSB enables the
+     * USBWakeUp interrupt, not the line itself). Only during suspend: the
+     * line may also pulse with ordinary bus traffic. */
+    EXTI->INTFR = EXTI_Line18;
+    if (enabled) {
+        EXTI->RTENR |= EXTI_Line18;
+        EXTI->INTENR |= EXTI_Line18;
+    } else {
+        EXTI->INTENR &= ~EXTI_Line18;
+        EXTI->RTENR &= ~EXTI_Line18;
+    }
+}
+
 void usb_device_task(void)
 {
     if (!s_started) {
