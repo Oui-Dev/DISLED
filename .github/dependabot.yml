@@ -1,6 +1,9 @@
 version: 2
+# Commit messages follow Conventional Commits, read by release-please
+# (docs/releasing.md): fix(deps) releases the component it touches;
+# chore(deps-dev), build(deps) and ci(deps) release nothing.
 updates:
-  # APP dependencies
+  # APP dependencies: front end and Tauri CLI
   - package-ecosystem: 'npm'
     directory: '/app/'
     schedule:
@@ -9,7 +12,45 @@ updates:
     target-branch: 'main'
     open-pull-requests-limit: 8
     commit-message:
-      prefix: 'deps (app)'
+      prefix: 'fix'
+      prefix-development: 'chore'
+      include: 'scope'
+    labels:
+      - 'type:dependencies'
+      - 'service:app'
+    # Shipped and development dependencies apart, so that a tooling update
+    # does not release the app.
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - '*'
+      production:
+        applies-to: version-updates
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
+      development:
+        applies-to: version-updates
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # APP back end and shared crates: Rust workspace at the root. Updates of
+  # Cargo.lock alone belong to no component: they go out with the next
+  # app release.
+  - package-ecosystem: 'cargo'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      timezone: 'UTC'
+    target-branch: 'main'
+    open-pull-requests-limit: 8
+    commit-message:
+      prefix: 'fix'
+      include: 'scope'
     labels:
       - 'type:dependencies'
       - 'service:app'
@@ -24,6 +65,23 @@ updates:
           - 'minor'
           - 'patch'
 
+  # FIRMWARE build and check tools (PlatformIO, clang-format), with uv:
+  # pyproject.toml and uv.lock. The PlatformIO platform and SDK are pinned
+  # by commit in platformio.ini, and TinyUSB follows its releases by hand:
+  # Dependabot reads neither.
+  - package-ecosystem: 'uv'
+    directory: '/firmware/'
+    schedule:
+      interval: 'weekly'
+      timezone: 'UTC'
+    target-branch: 'main'
+    commit-message:
+      prefix: 'build'
+      include: 'scope'
+    labels:
+      - 'type:dependencies'
+      - 'service:firmware'
+
   # CI dependencies
   - package-ecosystem: 'github-actions'
     directory: '/'
@@ -32,7 +90,8 @@ updates:
       timezone: 'UTC'
     target-branch: 'main'
     commit-message:
-      prefix: 'deps (ci)'
+      prefix: 'ci'
+      include: 'scope'
     labels:
       - 'type:dependencies'
       - 'service:ci'

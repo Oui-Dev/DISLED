@@ -18,3 +18,6 @@ one.
 | [0010](0010-firmware-updates-from-the-app.md) | Firmware updates from the desktop app; no software entry into the ROM bootloader | Accepted |
 | [0011](0011-low-power.md) | Low power without WFI: slow clock during USB suspend | Accepted |
 | [0012](0012-protocol-v1-frozen.md) | USB protocol version 1 frozen at 1.1, compatibility rules | Accepted |
+| [0013](0013-tray-app.md) | Desktop app in the tray with a popup; settings re-applied at every connection | Accepted |
+| [0014](0014-app-updates.md) | App updates through GitHub Releases, signed, version bound to the signature | Accepted |
+| [0015](0015-releases-published-complete.md) | Releases drafted at the merge, published once all binaries are attached; immutable | Accepted |

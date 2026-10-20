@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Releases (docs/releasing.md). On every push to main, release-please keeps
-# one release pull request per component up to date. Merging it tags
-# fw-vX.Y.Z or app-vX.Y.Z and publishes the GitHub release; the jobs below
-# then build that tag and attach the binaries.
+# Releases (docs/releasing.md, ADR 0015). On every push to main,
+# release-please keeps the release pull request up to date. Merging it
+# tags fw-vX.Y.Z and/or app-vX.Y.Z and creates draft releases, visible to
+# the maintainers only. The jobs below build those tags, attach the
+# binaries, and publish each release only once it is complete: published
+# releases are immutable (repository setting). The app release is
+# published as the "latest" one and a firmware release never is: the app
+# updater reads releases/latest/download/latest.json.
 name: release
 
 on:
@@ -29,7 +33,7 @@ jobs:
       app-tag: ${{ steps.release.outputs['app--tag_name'] }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v5
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
@@ -42,18 +46,19 @@ jobs:
       TAG: ${{ needs.release-please.outputs.firmware-tag }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.TAG }}
           submodules: true
           fetch-depth: 0 # the build takes its version from the tag
 
-      - uses: actions/setup-python@v7
+      # uv version from pyproject.toml, Python from .python-version.
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          python-version: "3.14"
+          working-directory: firmware
 
       - name: Cache PlatformIO packages
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.platformio
           key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
@@ -61,11 +66,11 @@ jobs:
       - name: Build
         working-directory: firmware
         run: |
-          pip install platformio==6.2.0
-          pio test -e native
-          pio run -e debug -e release
+          uv sync --locked
+          uv run pio test -e native
+          uv run pio run -e debug -e release
 
-      - name: Attach to the release
+      - name: Attach to the draft release
         working-directory: firmware
         run: |
           version="${TAG#fw-v}"
@@ -79,6 +84,10 @@ jobs:
           (cd dist && sha256sum * > SHA256SUMS)
           gh release upload "$TAG" dist/* --clobber
 
+      - name: Publish the release
+        # Never as the "latest" release: that one is the app's.
+        run: gh release edit "$TAG" --draft=false --latest=false
+
   app:
     needs: release-please
     if: needs.release-please.outputs.app-released == 'true'
@@ -89,7 +98,7 @@ jobs:
           - os: windows-2022
             bundles: nsis
           - os: macos-14 # Apple Silicon
-            bundles: dmg
+            bundles: app,dmg # the updater archive is made from the app bundle
           - os: ubuntu-22.04 # oldest supported glibc: the .deb installs on older systems too
             bundles: deb
     runs-on: ${{ matrix.os }}
@@ -101,7 +110,7 @@ jobs:
         shell: bash
         working-directory: app
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.TAG }}
 
@@ -112,23 +121,71 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev \
             libayatana-appindicator3-dev librsvg2-dev libudev-dev
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
 
-      - uses: Swatinem/rust-cache@v2 # Rust workspace at the repository root
+      # Rust workspace at the repository root.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       - name: Build the installer
+        env:
+          # Signs the installers for the app updater (docs/releasing.md).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           npm ci
-          npm run tauri build -- --bundles ${{ matrix.bundles }}
+          npm run tauri build -- --bundles ${{ matrix.bundles }} \
+            --config src-tauri/tauri.updater.conf.json
 
-      - name: Attach to the release
+      - name: Attach to the draft release
+        working-directory: target/release/bundle
         run: |
-          find ../target/release/bundle -type f \
-            \( -name '*.exe' -o -name '*.dmg' -o -name '*.deb' \) \
+          # The macOS updater archive has neither version nor architecture
+          # in its name.
+          if [ -f macos/DISLED.app.tar.gz ]; then
+            for ext in "" .sig; do
+              mv "macos/DISLED.app.tar.gz$ext" "macos/DISLED_${TAG#app-v}_aarch64.app.tar.gz$ext"
+            done
+          fi
+          find . -type f \
+            \( -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.app.tar.gz' -o -name '*.sig' \) \
             -print0 | xargs -0 gh release upload "$TAG" --clobber
+
+  app-publish:
+    # Only once every installer is attached: a published release can no
+    # longer change. If one platform failed, re-run it: this job follows.
+    needs: [release-please, app]
+    if: needs.release-please.outputs.app-released == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ needs.release-please.outputs.app-tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Attach latest.json
+        run: |
+          mkdir signatures
+          gh release download "$TAG" --pattern '*.sig' --dir signatures
+          gh release view "$TAG" --json body --jq .body > notes.md
+          node app/scripts/updater-manifest.mjs "${TAG#app-v}" \
+            "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG" \
+            signatures notes.md > latest.json
+          cat latest.json
+          gh release upload "$TAG" latest.json --clobber
+
+      - name: Publish the release
+        run: gh release edit "$TAG" --draft=false --latest

@@ -1,14 +1,42 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Application-wide device store: connection, lamp state, telemetry history
-// and recordings. One instance, shared by every component.
+// Device store of one window: connection, lamp state, settings, telemetry
+// history, recordings, diagnostics and self-test. Each window (popup,
+// diagnostics) has its own instance, fed by the same backend events.
 
 import { reactive, shallowRef, triggerRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
-import type { Command, Connection, Frame, Info, LampState, SetState, Telemetry } from "./protocol";
+import type {
+  BrightnessMode,
+  Command,
+  Connection,
+  Diagnostics,
+  Frame,
+  Info,
+  LampState,
+  SelfTestResult,
+  SetState,
+  Telemetry,
+} from "./protocol";
+
+/** Settings kept on this computer and applied at every connection. */
+export interface Settings {
+  brightness_mode: BrightnessMode;
+  /** Percent, 1 to 100. */
+  manual_level: number;
+  /** Automatic brightness bias, percent (-50 to +50). */
+  auto_bias: number;
+  autostart_initialized: boolean;
+  /** Look for a new version of the app at start-up and once a day. */
+  check_updates: boolean;
+}
+
+export type SettingsPatch = Partial<
+  Pick<Settings, "brightness_mode" | "manual_level" | "auto_bias" | "check_updates">
+>;
 
 /** Telemetry samples kept for the charts. */
 const HISTORY_LENGTH = 600;
@@ -44,6 +72,9 @@ export const device = reactive({
   lastError: null as string | null,
   recording: false,
   recordedRows: 0,
+  settings: null as Settings | null,
+  diagnostics: null as Diagnostics | null,
+  selfTest: { running: false, result: null as SelfTestResult | null },
 });
 
 /** Chart data, outside deep reactivity: it changes many times per second. */
@@ -114,7 +145,20 @@ function onFrame(frame: Frame): void {
       }
       break;
     }
+    case "diagnostics": {
+      const { kind: _kind, ...diagnostics } = message;
+      device.diagnostics = diagnostics;
+      break;
+    }
+    case "self_test_result": {
+      const { kind: _kind, ...result } = message;
+      device.selfTest = { running: false, result };
+      break;
+    }
     case "error":
+      if (message.command === COMMAND_SELF_TEST) {
+        device.selfTest.running = false;
+      }
       device.lastError = `the lamp rejected command 0x${message.command.toString(16)}: ${message.error}`;
       break;
     case "ack":
@@ -131,8 +175,49 @@ export async function send(command: Command): Promise<void> {
   }
 }
 
-export function setLamp(changes: SetState): Promise<void> {
+/** Power and color: the lamp's own state, not saved on this computer. */
+export function setLamp(changes: Pick<SetState, "on" | "color">): Promise<void> {
   return send({ kind: "set_state", ...changes });
+}
+
+/** Saved on this computer; the brightness settings are also applied to the lamp. */
+export async function updateSettings(patch: SettingsPatch): Promise<void> {
+  try {
+    device.settings = await invoke<Settings>("settings_set", { patch });
+    device.lastError = null;
+  } catch (error) {
+    device.lastError = String(error);
+  }
+}
+
+export function getAutostart(): Promise<boolean> {
+  return invoke<boolean>("autostart_get");
+}
+
+export async function setAutostart(enabled: boolean): Promise<boolean> {
+  try {
+    return await invoke<boolean>("autostart_set", { enabled });
+  } catch (error) {
+    device.lastError = String(error);
+    return getAutostart();
+  }
+}
+
+export function requestDiagnostics(): Promise<void> {
+  return send({ kind: "get_diagnostics" });
+}
+
+export function startSelfTest(): Promise<void> {
+  device.selfTest = { running: true, result: null };
+  return send({ kind: "self_test" });
+}
+
+export function openDiagnostics(): Promise<void> {
+  return invoke("open_diagnostics");
+}
+
+export function quitApp(): Promise<void> {
+  return invoke("quit");
 }
 
 export async function setTelemetry(periodMs: number): Promise<void> {
@@ -166,8 +251,14 @@ export async function exportRecording(): Promise<void> {
   }
 }
 
+const COMMAND_SELF_TEST = 0x08;
+
 /** Subscribes to the backend events. Call once at start-up. */
 export async function startDevice(): Promise<void> {
+  await listen<Settings>("settings-changed", (event) => {
+    device.settings = event.payload;
+  });
+  device.settings = await invoke<Settings>("settings_get");
   await listen<Connection>("device-connection", (event) => {
     device.connection = event.payload;
     if (event.payload.connected) {
@@ -179,6 +270,8 @@ export async function startDevice(): Promise<void> {
       device.info = null;
       device.state = null;
       device.telemetry = null;
+      device.diagnostics = null;
+      device.selfTest = { running: false, result: null };
     }
   });
   await listen<Frame>("device-message", (event) => onFrame(event.payload));

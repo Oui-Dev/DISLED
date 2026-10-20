@@ -25,4 +25,9 @@ export default defineConfig(
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
+  // Release scripts run in Node.
+  {
+    files: ["scripts/**"],
+    languageOptions: { globals: globals.node },
+  },
 );

@@ -1,15 +1,18 @@
 # DISLED desktop app
 
-Tauri 2 app that drives the lamp over USB and records measurements for
-tuning. Phase 1 scope: test and tuning tool. Phase 2 turns it into the
-product app (menu bar or tray icon, start at login, installers).
+Tauri 2 app that lives in the menu bar (macOS) or the notification area
+(Windows): a dot in the color of the lamp, and a popup under it to control
+the lamp. A Diagnostics window, opened on demand, keeps the tuning tools:
+live telemetry, CSV recordings, lamp diagnostics and the self-test.
 
 ## Install
 
 Installers are attached to each `app-vX.Y.Z` release on the
 [releases page](https://github.com/Oui-Dev/DISLED/releases): Windows
 (`.exe`), macOS on Apple Silicon (`.dmg`) and Debian or Ubuntu (`.deb`).
-They are not signed, so Windows and macOS warn on first launch.
+They are not signed, so Windows and macOS warn on first launch. Once
+installed, the app updates itself (0.1.0 has no updater: install a newer
+version by hand once).
 
 On Linux, only root may open a USB HID device by default. The `.deb`
 installs a udev rule, `/usr/lib/udev/rules.d/70-disled.rules`
@@ -38,26 +41,46 @@ reconnects when it is plugged back in. No driver is needed.
 
 ## Features
 
-- Connection status, firmware version, serial number, last reset cause and
-  fault report.
-- Lamp controls: power, the four colors, automatic or manual brightness.
-  The lamp owns the state; the controls follow its notifications, including
-  touches on the lid.
-- Telemetry at 50 ms to 1 s: touch reading, baseline and signal, ambient
-  light, LED current and cap, PWM duties, with live charts.
-- Recording of the telemetry to CSV, for the tuning campaigns described in
+- **Tray icon**: shows the lamp (a dot in its color, a ring when it is off,
+  a faint ring without a lamp). Left click opens the popup; right click
+  opens a menu (Open, Diagnostics, Quit). On Linux the menu is the only
+  way in: tray click events do not exist there.
+- **Popup**: power, the four colors, automatic brightness with a "darker /
+  brighter" correction, or a fixed level; a settings page (start at login,
+  updates, diagnostics, versions). It hides when it loses the focus.
+- **Settings saved on the computer** and applied again every time the lamp
+  connects (it restarts in automatic brightness with no correction): the
+  brightness mode, the fixed level and the correction. Power and color are
+  not saved: the lamp always starts green, "available".
+- **Start at login**, turned on at the first launch (installed app only);
+  one running instance (a second launch shows the popup).
+- **Updates** ([ADR 0014](../docs/decisions/0014-app-updates.md)): the
+  installed app looks for a new version at start-up and once a day (a
+  setting turns it off); the popup offers it and installs it on request,
+  then restarts. Updates are signed; `tauri dev` never checks by itself.
+- **Diagnostics window**: connection, firmware, serial number, last fault;
+  lamp controls; diagnostics counters (resets, faults, stack margin,
+  errors); the production self-test; telemetry at 50 ms to 1 s with live
+  charts, and CSV recordings for the tuning campaigns of
   [`docs/bringup.md`](../docs/bringup.md).
 
 ## Layout
 
-| Path                        | Content                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| `../crates/disled-protocol` | Protocol codec (shared with the tools), tested against `protocol/vectors/v1.json` |
-| `src-tauri/src/device.rs`   | USB worker thread: discovery, reconnection, reads and writes                      |
-| `src-tauri/src/lib.rs`      | Tauri commands (`device_connection`, `device_send`, `save_csv`)                   |
-| `src/lib/protocol.ts`       | TypeScript mirror of the Rust message types                                       |
-| `src/lib/device.ts`         | Device store shared by the components, CSV recorder                               |
-| `src/components/`           | Header, lamp panel, telemetry panel, canvas line chart                            |
+| Path                                | Content                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------- |
+| `../crates/disled-protocol`         | Protocol codec (shared with the tools), tested against `protocol/vectors/v1.json`  |
+| `src-tauri/src/device.rs`           | USB worker thread: discovery, reconnection, settings applied on INFO, tray updates |
+| `src-tauri/src/settings.rs`         | Settings saved on the computer (store plugin) and the commands that apply them     |
+| `src-tauri/src/tray.rs`             | Tray icon (drawn at run time), menu and clicks                                     |
+| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics window                                     |
+| `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                   |
+| `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                  |
+| `src/lib/protocol.ts`               | TypeScript mirror of the Rust message types                                        |
+| `src/lib/device.ts`                 | Store of one window (each window has its own), settings, CSV recorder              |
+| `src/lib/updates.ts`                | Update status shown in the popup                                                   |
+| `src/components/`                   | Popup and Diagnostics views and their panels                                       |
+| `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                |
+| `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                           |
 
 The Rust code is one Cargo workspace at the repository root: this app
 (`src-tauri`) and the shared crates (`../crates`). Its build output goes to

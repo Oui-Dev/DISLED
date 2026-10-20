@@ -12,16 +12,31 @@
   "app": {
     "windows": [
       {
+        "label": "popup",
         "title": "DISLED",
-        "width": 1040,
-        "height": 760,
-        "minWidth": 760,
-        "minHeight": 560
+        "width": 320,
+        "height": 380,
+        "resizable": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": true
       }
     ],
     "security": {
       "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
       "devCsp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM1QThCQjQ2ODRCODJGREYKUldUZkw3aUVScnVvTlFvSng1R29rOUYxWFlXTnM5bEZUVU5GNG53d3lNekFQRmozK1RwOGxtYi8K",
+      "endpoints": ["https://github.com/Oui-Dev/DISLED/releases/latest/download/latest.json"],
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {

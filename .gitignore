@@ -14,8 +14,9 @@ __pycache__/
 *.step
 *.stp
 
-# Firmware (PlatformIO)
+# Firmware (PlatformIO, tools installed by uv)
 firmware/.pio/
+firmware/.venv/
 firmware/.vscode/*
 !firmware/.vscode/extensions.json
 firmware/tools/*/touch_replay

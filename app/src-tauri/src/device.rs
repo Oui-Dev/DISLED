@@ -4,18 +4,22 @@
 //! Connection to the lamp on a worker thread: discovery and reconnection,
 //! command writes, message reads. Results reach the frontend as events.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::Duration;
 
 use hidapi::{HidApi, HidDevice};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use disled_protocol::{
     self as protocol, Command, DecodeError, Message, PAYLOAD_SIZE, PROTOCOL_MAJOR,
     REPORT_ID_COMMAND, REPORT_ID_MESSAGE,
 };
+
+use crate::settings::SettingsState;
+use crate::tray::{self, Look};
 
 /// pid.codes test IDs used during phase 1: release and debug builds.
 pub const VENDOR_ID: u16 = 0x1209;
@@ -40,13 +44,15 @@ pub struct Connection {
 pub struct DeviceHandle {
     commands: mpsc::Sender<Command>,
     connection: Arc<Mutex<Connection>>,
+    auto_bias: Arc<AtomicBool>,
 }
 
 impl DeviceHandle {
     pub fn spawn(app: AppHandle) -> Self {
         let (commands, receiver) = mpsc::channel();
         let connection = Arc::new(Mutex::new(Connection::default()));
-        let shared = Arc::clone(&connection);
+        let auto_bias = Arc::new(AtomicBool::new(false));
+        let (shared, shared_bias) = (Arc::clone(&connection), Arc::clone(&auto_bias));
         thread::Builder::new()
             .name("disled-usb".into())
             .spawn(move || {
@@ -54,6 +60,7 @@ impl DeviceHandle {
                     app,
                     receiver,
                     connection: shared,
+                    auto_bias: shared_bias,
                     seq: 0,
                 }
                 .run()
@@ -62,7 +69,13 @@ impl DeviceHandle {
         Self {
             commands,
             connection,
+            auto_bias,
         }
+    }
+
+    /// The connected lamp understands SET_AUTO_BIAS (protocol 1.1).
+    pub fn auto_bias_supported(&self) -> bool {
+        self.auto_bias.load(Ordering::Relaxed)
     }
 
     pub fn send(&self, command: Command) -> Result<(), String> {
@@ -86,6 +99,7 @@ struct Worker {
     app: AppHandle,
     receiver: mpsc::Receiver<Command>,
     connection: Arc<Mutex<Connection>>,
+    auto_bias: Arc<AtomicBool>,
     seq: u8,
 }
 
@@ -109,7 +123,9 @@ impl Worker {
                     if let Exit::AppClosed = self.serve(&device) {
                         return;
                     }
+                    self.auto_bias.store(false, Ordering::Relaxed);
                     self.set_connection(Connection::default());
+                    tray::show(&self.app, Look::NoLamp);
                 }
                 None => {
                     // Commands sent while no lamp is connected are dropped.
@@ -175,6 +191,33 @@ impl Worker {
         }
     }
 
+    /// Reacts to the lamp's messages: settings re-applied once its
+    /// capabilities are known, state shown in the tray icon. Returns false
+    /// if the lamp is gone.
+    fn follow(&mut self, device: &HidDevice, message: &Message) -> bool {
+        match message {
+            Message::Info(info) => {
+                self.auto_bias.store(info.auto_bias, Ordering::Relaxed);
+                let settings = self.app.state::<SettingsState>().get();
+                for command in settings.commands(info.auto_bias) {
+                    if !self.write(device, &command) {
+                        return false;
+                    }
+                }
+            }
+            Message::State(state) => {
+                let look = if state.on {
+                    Look::On(state.color)
+                } else {
+                    Look::Off
+                };
+                tray::show(&self.app, look);
+            }
+            _ => {}
+        }
+        true
+    }
+
     fn serve(&mut self, device: &HidDevice) -> Exit {
         // Learn who is there and what it shows.
         if !self.write(device, &Command::GetInfo) || !self.write(device, &Command::GetState) {
@@ -199,6 +242,9 @@ impl Worker {
                     match protocol::decode_message(&buffer[1..length]) {
                         Ok(frame) => {
                             self.check_protocol_version(&frame.message);
+                            if !self.follow(device, &frame.message) {
+                                return Exit::Disconnected;
+                            }
                             let _ = self.app.emit(EVENT_MESSAGE, frame);
                         }
                         // A newer lamp may send message types this app does

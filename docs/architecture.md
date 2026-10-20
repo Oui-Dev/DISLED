@@ -165,9 +165,20 @@ object time), so it cannot drift under the hand and blunt the next touch.
   lives in its own crate, `crates/disled-protocol`, shared with the
   production tool and tested against the shared vectors. The Rust code is
   one Cargo workspace at the repository root.
-- **Vue front end** (`app/src`). One reactive store (`lib/device.ts`)
-  holds the connection, the lamp state and the telemetry history; the
-  components only render it and send commands.
+- **Tray and windows** ([ADR 0013](decisions/0013-tray-app.md)). The app
+  lives in the menu bar or notification area; its icon is drawn at run
+  time from the lamp state. Two windows share one page: the popup (daily
+  use) and the Diagnostics window (tuning), chosen by the window label.
+- **Settings** (brightness mode, fixed level, correction) are saved with
+  the store plugin; the USB worker applies them as soon as the lamp
+  answers `INFO`, so they hold across lamp restarts. Changes are broadcast
+  to every window (`settings-changed`).
+- **Updates** ([ADR 0014](decisions/0014-app-updates.md)). A thread checks
+  the `latest.json` of the latest GitHub release at start-up and once a
+  day (`updates.rs`, updater plugin); the popup shows the result
+  (`update-status`) and asks the backend to install it.
+- **Vue front end** (`app/src`). One reactive store per window
+  (`lib/device.ts`) holds the connection, the lamp state, the settings and
+  the telemetry history; the components only render it and send commands.
 - USB access stays in Rust: the macOS web view has no WebHID, and a
-  backend-owned connection keeps working once the app runs in the
-  background (phase 2).
+  backend-owned connection keeps working while every window is hidden.
