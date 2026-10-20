@@ -5,6 +5,7 @@
  */
 #include "bsp_time.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "ch32.h"
@@ -34,14 +35,24 @@ void bsp_time_set_tick_hook(bsp_tick_hook_t hook)
     s_tick_hook = hook;
 }
 
-void bsp_time_init(void)
+static void start_systick(void)
 {
     SysTick->CTLR = 0;
     SysTick->SR = 0;
     SysTick->CNT = 0;
     SysTick->CMP = (SystemCoreClock / 1000u) - 1u;
     SysTick->CTLR = STK_CTLR_STE | STK_CTLR_STIE | STK_CTLR_STCLK | STK_CTLR_STRE;
+}
+
+void bsp_time_init(void)
+{
+    start_systick();
     NVIC_EnableIRQ(SysTick_IRQn);
+}
+
+void bsp_time_core_clock_changed(void)
+{
+    start_systick();
 }
 
 uint32_t bsp_time_ms(void)
@@ -53,6 +64,22 @@ uint32_t bsp_time_ms(void)
 static uint32_t systick_count(void)
 {
     return (uint32_t)SysTick->CNT;
+}
+
+uint32_t bsp_time_us(void)
+{
+    uint32_t ms;
+    uint32_t count;
+    bool reloaded;
+    do {
+        ms = s_ms;
+        count = systick_count();
+        reloaded = (SysTick->SR & 1u) != 0u; /* tick pending, not counted yet */
+    } while (ms != s_ms);
+    if (reloaded && count < (uint32_t)SysTick->CMP / 2u) {
+        ms++;
+    }
+    return ms * 1000u + count / (SystemCoreClock / 1000000u);
 }
 
 void bsp_time_delay_us(uint32_t us)

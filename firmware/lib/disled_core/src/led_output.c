@@ -5,6 +5,7 @@
  */
 #include "led_output.h"
 
+#include "disled_assert.h"
 #include "time_utils.h"
 
 static const rgb16_t black = { 0, 0, 0 };
@@ -16,6 +17,7 @@ static bool same_color(rgb16_t a, rgb16_t b)
 
 void led_output_init(led_output_t *out, const led_output_config_t *config)
 {
+    DISLED_ASSERT(config->pwm_period <= PWM_DITHER_PERIOD_MAX);
     out->config = config;
     out->from = black;
     out->target = black;
@@ -31,7 +33,13 @@ void led_output_init(led_output_t *out, const led_output_config_t *config)
 
 static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in)
 {
-    if (!in->on || in->link == USB_LINK_SUSPENDED) {
+    if (in->link == USB_LINK_SUSPENDED) {
+        return black;
+    }
+    if (in->show_override) {
+        return in->override_rgb;
+    }
+    if (!in->on) {
         return black;
     }
     return color_compose(out->config->color, in->color, in->level_permille);

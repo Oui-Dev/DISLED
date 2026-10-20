@@ -47,6 +47,7 @@ void setUp(void)
     in.level_permille = 1000;
     in.link = USB_LINK_CONFIGURED;
     in.cap_override_ma = 0;
+    in.show_override = false;
 }
 
 void tearDown(void)
@@ -130,6 +131,23 @@ static void test_suspend_turns_off_immediately(void)
     TEST_ASSERT_EQUAL_UINT16(0, led_output_cap_ma(&out));
 }
 
+static void test_override_shows_a_raw_color_even_when_off(void)
+{
+    in.on = false;
+    in.show_override = true;
+    in.override_rgb = (rgb16_t){ 0, 0, 32768 };
+    led_output_update(&out, &in, 0, duty);
+    led_output_update(&out, &in, 400, duty);
+    TEST_ASSERT_UINT16_WITHIN(LED_DUTY_SUBTICKS, FULL / 2u, duty[LED_CHANNEL_BLUE]);
+    TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_RED]);
+    TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_GREEN]);
+
+    /* Suspend still wins. */
+    in.link = USB_LINK_SUSPENDED;
+    led_output_update(&out, &in, 401, duty);
+    TEST_ASSERT_EQUAL_UINT16(0, duty[LED_CHANNEL_BLUE]);
+}
+
 static void test_white_is_capped_by_the_usb_state(void)
 {
     in.color = LAMP_COLOR_WARM_WHITE; /* full white in this palette */
@@ -161,6 +179,7 @@ int main(void)
     RUN_TEST(test_turning_off_fades_out);
     RUN_TEST(test_retarget_during_a_fade_does_not_jump);
     RUN_TEST(test_suspend_turns_off_immediately);
+    RUN_TEST(test_override_shows_a_raw_color_even_when_off);
     RUN_TEST(test_white_is_capped_by_the_usb_state);
     RUN_TEST(test_cap_override_for_the_thermal_test);
     return UNITY_END();

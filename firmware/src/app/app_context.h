@@ -10,6 +10,7 @@
 #define DISLED_APP_CONTEXT_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "brightness.h"
@@ -17,6 +18,9 @@
 #include "disled_types.h"
 #include "lamp_fsm.h"
 #include "led_output.h"
+#include "protocol.h"
+#include "scheduler.h"
+#include "self_test.h"
 #include "touch_detector.h"
 
 typedef struct {
@@ -26,6 +30,7 @@ typedef struct {
     uint32_t settle_ms; /* first valid reading after (re)initialization */
     uint16_t raw;
     uint32_t lux_centi;
+    uint16_t probes; /* detection attempts since boot (diagnostics) */
 } app_als_t;
 
 typedef struct {
@@ -43,6 +48,10 @@ typedef struct {
     reset_cause_t reset_cause;
     fault_record_t fault;
     bool crystal_ok;
+    uint16_t usb_suspends; /* since boot (diagnostics) */
+    self_test_t self_test;
+    uint8_t self_test_seq; /* seq of the SELF_TEST command, for the result */
+    bool self_test_report; /* a result is waiting to be sent */
 } app_context_t;
 
 /* The single instance, owned by app.c. */
@@ -51,5 +60,15 @@ extern app_context_t app;
 /* Applies a lamp request coming from the host or the console. Returns
  * true if the state changed. */
 bool app_apply_request(const lamp_request_t *request);
+
+/* Starts the self-test; its result is reported to the host with `seq`.
+ * Returns false if one is already running. */
+bool app_start_self_test(uint8_t seq);
+
+/* Snapshot of the DIAGNOSTICS message. */
+void app_diagnostics(proto_diagnostics_t *diagnostics);
+
+/* The scheduler table, with the longest run of each task (console). */
+const scheduler_task_t *app_tasks(size_t *count);
 
 #endif /* DISLED_APP_CONTEXT_H */

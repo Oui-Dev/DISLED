@@ -112,8 +112,14 @@ static void cmd_set(int argc, char **argv)
         request.fields = LAMP_FIELD_BRIGHTNESS_MODE | LAMP_FIELD_MANUAL_LEVEL;
         request.brightness_mode = BRIGHTNESS_MODE_MANUAL;
         request.manual_level = (uint8_t)((value > 255u) ? 255u : value);
+    } else if (argc == 3 && strcmp(argv[1], "bias") == 0 &&
+               parse_u32(argv[2] + (argv[2][0] == '-' ? 1 : 0), &value) && value <= 50u) {
+        const int32_t bias = (argv[2][0] == '-') ? -(int32_t)value : (int32_t)value;
+        brightness_set_auto_bias(&app.brightness, (int8_t)bias);
+        cmd_state(0, NULL);
+        return;
     } else {
-        console_printf("usage: set on|off|auto|color <0-3>|level <1-100>\r\n");
+        console_printf("usage: set on|off|auto|color <0-3>|level <1-100>|bias <-50..50>\r\n");
         return;
     }
     if (!lamp_request_is_valid(&request)) {
@@ -315,6 +321,47 @@ static void cmd_reset(int argc, char **argv)
     bsp_system_reset();
 }
 
+static void cmd_diag(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    proto_diagnostics_t d;
+    app_diagnostics(&d);
+    console_printf("since power-up: %u boots, %u watchdog resets, %u faults\r\n", (unsigned)d.boots,
+                   (unsigned)d.watchdog_resets, (unsigned)d.faults);
+    if (d.faults != 0u) {
+        console_printf("last fault: mcause %08lx mepc %08lx mtval %08lx\r\n",
+                       (unsigned long)d.fault_mcause, (unsigned long)d.fault_mepc,
+                       (unsigned long)d.fault_mtval);
+    }
+    console_printf("since boot: stack free %u B, %u I2C errors, %u light sensor probes\r\n",
+                   (unsigned)d.stack_free_min, (unsigned)d.i2c_errors,
+                   (unsigned)d.light_sensor_probes);
+    console_printf("touch: %u samples lost, %u recalibrations; %u USB suspends; bias %d%%\r\n",
+                   (unsigned)d.touch_samples_lost, (unsigned)d.touch_recalibrations,
+                   (unsigned)d.usb_suspends, (int)d.auto_bias);
+}
+
+static void cmd_tasks(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    size_t count = 0;
+    const scheduler_task_t *tasks = app_tasks(&count);
+    for (size_t i = 0; i < count; i++) {
+        console_printf("%-8s longest run %lu us\r\n", tasks[i].name,
+                       (unsigned long)tasks[i].max_us);
+    }
+}
+
+static void cmd_selftest(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+    console_printf(app_start_self_test(0) ? "self-test started: watch the colors, then touch\r\n"
+                                          : "a self-test is already running\r\n");
+}
+
 static const console_command_t commands[] = {
     { "info", "", "firmware, chip and fault information", cmd_info },
     { "state", "", "lamp, USB and LED output", cmd_state },
@@ -325,6 +372,9 @@ static const console_command_t commands[] = {
     { "pulse", "[<r> <g> <b>]", "show or tune the PWM pulse loss (RAM only)", cmd_pulse },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
     { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
+    { "diag", "", "diagnostics counters (as sent to the host)", cmd_diag },
+    { "tasks", "", "longest run of each task (watchdog margin)", cmd_tasks },
+    { "selftest", "", "run the production self-test", cmd_selftest },
     { "log", "<0-3>", "log level", cmd_log },
     { "reset", "", "restart the firmware", cmd_reset },
 };

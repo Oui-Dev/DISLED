@@ -12,6 +12,7 @@
 
 int main(void)
 {
+    bsp_stack_paint();
     bsp_init();
     const fault_record_t fault = bsp_fault_take();
     app_init(&fault);

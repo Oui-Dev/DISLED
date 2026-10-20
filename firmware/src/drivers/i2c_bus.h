@@ -43,6 +43,9 @@ typedef struct {
 
 i2c_bus_failure_t i2c_bus_last_failure(void);
 
+/* Failed transfers since boot (diagnostics). */
+uint16_t i2c_bus_error_count(void);
+
 /* Clocks SCL until a stuck slave releases SDA, then re-initializes. */
 void i2c_bus_recover(void);
 

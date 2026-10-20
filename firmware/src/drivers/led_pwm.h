@@ -24,6 +24,11 @@
 /* Starts the PWM at `frequency_hz` with all channels at 0 %. */
 void led_pwm_init(uint32_t frequency_hz);
 
+/* Stops the timer with every output low (USB suspend), and restarts it at
+ * 0 %. The touch sample point needs the timer: stop the touch first. */
+void led_pwm_stop(void);
+void led_pwm_start(void);
+
 /* Timer ticks for 100 % duty. */
 uint16_t led_pwm_period(void);
 

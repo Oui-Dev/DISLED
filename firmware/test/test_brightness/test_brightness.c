@@ -122,6 +122,42 @@ static void test_lost_sensor_falls_back(void)
     TEST_ASSERT_EQUAL_UINT16(500, brightness_level_permille(&b));
 }
 
+static void test_bias_scales_the_automatic_level(void)
+{
+    brightness_update_lux(&b, LUX(100)); /* 300 per mille */
+    brightness_set_auto_bias(&b, 20);
+    TEST_ASSERT_EQUAL_UINT16(360, brightness_level_permille(&b));
+    brightness_set_auto_bias(&b, -50);
+    TEST_ASSERT_EQUAL_UINT16(150, brightness_level_permille(&b));
+    TEST_ASSERT_EQUAL_INT8(-50, brightness_auto_bias(&b));
+}
+
+static void test_bias_is_clamped_and_kept_in_range(void)
+{
+    brightness_update_lux(&b, LUX(3000)); /* 1000 per mille */
+    brightness_set_auto_bias(&b, 90);
+    TEST_ASSERT_EQUAL_INT8(BRIGHTNESS_BIAS_MAX, brightness_auto_bias(&b));
+    TEST_ASSERT_EQUAL_UINT16(1000, brightness_level_permille(&b));
+    brightness_set_auto_bias(&b, -100);
+    TEST_ASSERT_EQUAL_INT8(BRIGHTNESS_BIAS_MIN, brightness_auto_bias(&b));
+}
+
+static void test_bias_does_not_touch_manual_mode(void)
+{
+    brightness_set_auto_bias(&b, 50);
+    brightness_set_mode(&b, BRIGHTNESS_MODE_MANUAL, 40);
+    TEST_ASSERT_EQUAL_UINT16(400, brightness_level_permille(&b));
+}
+
+static void test_back_to_auto_with_a_bias_does_not_jump(void)
+{
+    brightness_update_lux(&b, LUX(1000));
+    brightness_set_auto_bias(&b, 25);
+    brightness_set_mode(&b, BRIGHTNESS_MODE_MANUAL, 50);
+    brightness_set_mode(&b, BRIGHTNESS_MODE_AUTO, 50);
+    TEST_ASSERT_UINT16_WITHIN(1, 500, brightness_level_permille(&b));
+}
+
 static void test_percent_is_rounded(void)
 {
     brightness_set_mode(&b, BRIGHTNESS_MODE_MANUAL, 1);
@@ -143,6 +179,10 @@ int main(void)
     RUN_TEST(test_manual_mode_uses_the_host_level);
     RUN_TEST(test_back_to_auto_starts_from_the_manual_level);
     RUN_TEST(test_lost_sensor_falls_back);
+    RUN_TEST(test_bias_scales_the_automatic_level);
+    RUN_TEST(test_bias_is_clamped_and_kept_in_range);
+    RUN_TEST(test_bias_does_not_touch_manual_mode);
+    RUN_TEST(test_back_to_auto_with_a_bias_does_not_jump);
     RUN_TEST(test_percent_is_rounded);
     return UNITY_END();
 }

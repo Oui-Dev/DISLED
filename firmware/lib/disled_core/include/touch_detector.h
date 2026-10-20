@@ -98,6 +98,7 @@ typedef struct {
     uint32_t inverted_since_ms;
     bool near; /* in the proximity band, baseline frozen */
     uint32_t near_since_ms;
+    uint16_t recalibrations; /* automatic re-baselines since init */
 } touch_detector_t;
 
 void touch_detector_init(touch_detector_t *td, const touch_config_t *config);
@@ -115,5 +116,9 @@ uint16_t touch_detector_raw(const touch_detector_t *td);
 uint16_t touch_detector_value(const touch_detector_t *td);
 uint16_t touch_detector_baseline(const touch_detector_t *td);
 int16_t touch_detector_delta_permille(const touch_detector_t *td);
+
+/* Automatic re-baselines since init: finger at power-up, object on or near
+ * the lid (diagnostics). */
+uint16_t touch_detector_recalibrations(const touch_detector_t *td);
 
 #endif /* DISLED_TOUCH_DETECTOR_H */

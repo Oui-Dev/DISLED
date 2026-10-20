@@ -40,6 +40,11 @@ void usb_device_init(bool crystal_ok)
         return;
     }
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
+    /* Bus activity during suspend raises EXTI line 18 (TinyUSB enables its
+     * USBWakeUp interrupt, not the line itself). */
+    EXTI->INTFR = EXTI_Line18;
+    EXTI->RTENR |= EXTI_Line18;
+    EXTI->INTENR |= EXTI_Line18;
     const tusb_rhport_init_t dev_init = { .role = TUSB_ROLE_DEVICE, .speed = TUSB_SPEED_FULL };
     s_started = tusb_init(0, &dev_init);
 }

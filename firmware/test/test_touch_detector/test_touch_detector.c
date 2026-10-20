@@ -99,6 +99,7 @@ static void test_flat_signal_gives_no_event(void)
 {
     hold(BASELINE, 5000);
     TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_recalibrations(&td));
 }
 
 static void test_short_press_fires_once_on_release(void)
@@ -220,6 +221,7 @@ static void test_object_near_the_lid_is_absorbed(void)
     hold((uint16_t)(BASELINE - 40u), 12000);
     TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
     TEST_ASSERT_UINT16_WITHIN(1, BASELINE - 40u, touch_detector_baseline(&td));
+    TEST_ASSERT_EQUAL_UINT16(1, touch_detector_recalibrations(&td));
 }
 
 static void test_taps_with_the_hand_resting_near_the_lid(void)

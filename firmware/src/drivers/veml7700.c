@@ -13,6 +13,7 @@
 #define REG_ID       0x07u
 
 #define DEVICE_ID_LSB 0x81u
+#define CONF_SHUTDOWN (1u << 0) /* ALS_SD */
 
 /* Resolution at gain x2 and 800 ms, in micro-lux per count (VEML7700
  * datasheet; to be confirmed against the revision in use). Other settings
@@ -55,6 +56,11 @@ uint16_t veml7700_integration_ms(void)
     }
 }
 
+static uint16_t configuration(void)
+{
+    return (uint16_t)(((uint16_t)s_config.gain << 11) | ((uint16_t)s_config.integration << 6));
+}
+
 static bool write_register(uint8_t reg, uint16_t value)
 {
     const uint8_t frame[3] = { reg, (uint8_t)(value & 0xFFu), (uint8_t)(value >> 8) };
@@ -80,9 +86,12 @@ bool veml7700_init(const veml7700_config_t *config)
         return false;
     }
     /* Persistence 1, interrupt off, shutdown bit cleared (powered on). */
-    const uint16_t conf =
-        (uint16_t)(((uint16_t)config->gain << 11) | ((uint16_t)config->integration << 6));
-    return write_register(REG_ALS_CONF, conf);
+    return write_register(REG_ALS_CONF, configuration());
+}
+
+bool veml7700_shutdown(void)
+{
+    return write_register(REG_ALS_CONF, (uint16_t)(configuration() | CONF_SHUTDOWN));
 }
 
 bool veml7700_read(uint16_t *als_raw)
