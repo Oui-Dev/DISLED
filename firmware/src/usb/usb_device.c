@@ -40,11 +40,6 @@ void usb_device_init(bool crystal_ok)
         return;
     }
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
-    /* Bus activity during suspend raises EXTI line 18 (TinyUSB enables its
-     * USBWakeUp interrupt, not the line itself). */
-    EXTI->INTFR = EXTI_Line18;
-    EXTI->RTENR |= EXTI_Line18;
-    EXTI->INTENR |= EXTI_Line18;
     const tusb_rhport_init_t dev_init = { .role = TUSB_ROLE_DEVICE, .speed = TUSB_SPEED_FULL };
     s_started = tusb_init(0, &dev_init);
 }
@@ -57,6 +52,21 @@ static void flush_tx(void)
     if (tud_hid_report(PROTO_REPORT_ID_MESSAGE, s_tx[s_tx_head].payload, PROTO_REPORT_SIZE)) {
         s_tx_head = (s_tx_head + 1u) % TX_QUEUE_SIZE;
         s_tx_count--;
+    }
+}
+
+void usb_device_wake_irq(bool enabled)
+{
+    /* Bus activity during suspend raises EXTI line 18 (TinyUSB enables the
+     * USBWakeUp interrupt, not the line itself). Only during suspend: the
+     * line may also pulse with ordinary bus traffic. */
+    EXTI->INTFR = EXTI_Line18;
+    if (enabled) {
+        EXTI->RTENR |= EXTI_Line18;
+        EXTI->INTENR |= EXTI_Line18;
+    } else {
+        EXTI->INTENR &= ~EXTI_Line18;
+        EXTI->RTENR &= ~EXTI_Line18;
     }
 }
 

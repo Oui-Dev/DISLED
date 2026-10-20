@@ -13,11 +13,6 @@
 
 static volatile bool s_slow;
 
-void bsp_power_idle(void)
-{
-    __WFI();
-}
-
 void bsp_power_slow_clock(void)
 {
     if (s_slow) {
@@ -33,6 +28,8 @@ void bsp_power_slow_clock(void)
     /* The PLL settings stay in CFGR0 for the way back. */
     RCC->CTLR &= ~RCC_PLLON;
     RCC->CTLR &= ~RCC_HSEON;
+    /* 8 MHz / 8: the core and the buses run at 1 MHz (APB1 at 250 kHz). */
+    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV8;
     SystemCoreClockUpdate();
     bsp_time_core_clock_changed();
     s_slow = true;
@@ -54,6 +51,12 @@ bool bsp_power_full_clock_from_isr(void)
     if (!s_slow) {
         return true;
     }
+    /* Full speed internal oscillator first, so that the waits below are
+     * short and the time base stays right if the crystal fails. */
+    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV1;
+    SystemCoreClockUpdate();
+    bsp_time_core_clock_changed();
+
     RCC->CTLR |= RCC_HSEON;
     if (!wait_for(&RCC->CTLR, RCC_HSERDY, RCC_HSERDY)) {
         RCC->CTLR &= ~RCC_HSEON;

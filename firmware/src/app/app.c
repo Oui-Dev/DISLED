@@ -79,6 +79,7 @@ static void enter_suspend(uint32_t now_ms)
         app.usb_suspends++;
     }
 #ifndef DISLED_NO_SLOW_SUSPEND
+    usb_device_wake_irq(true);
     bsp_power_slow_clock();
 #endif
 }
@@ -89,6 +90,7 @@ static void leave_suspend(uint32_t now_ms)
     if (!bsp_power_full_clock()) {
         LOG_ERROR("crystal failed on resume");
     }
+    usb_device_wake_irq(false);
     led_pwm_start();
     if (app.als.present) {
         als_start(&app.als, now_ms, APP_ALS_FIRST_RETRY_MS); /* wakes the sensor */
@@ -427,12 +429,7 @@ void app_run(void)
         (void)scheduler_run_timed(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
-#ifndef DISLED_NO_IDLE
-        /* Sleep until the next interrupt: the PWM period (50 us), the 1 ms
-         * tick or USB. Checked on the board in phase 2 (ADR 0011); the
-         * phase 1 hang came from elsewhere. */
-        bsp_power_idle();
-#endif
+        /* No WFI: in this loop the core never woke up again (ADR 0011). */
     }
 }
 
