@@ -52,9 +52,10 @@ jobs:
           submodules: true
           fetch-depth: 0 # the build takes its version from the tag
 
-      - uses: actions/setup-python@v7
+      # uv version from pyproject.toml, Python from .python-version.
+      - uses: astral-sh/setup-uv@v10
         with:
-          python-version: "3.14"
+          working-directory: firmware
 
       - name: Cache PlatformIO packages
         uses: actions/cache@v6
@@ -65,9 +66,9 @@ jobs:
       - name: Build
         working-directory: firmware
         run: |
-          pip install -r requirements.txt
-          pio test -e native
-          pio run -e debug -e release
+          uv sync --locked
+          uv run pio test -e native
+          uv run pio run -e debug -e release
 
       - name: Attach to the draft release
         working-directory: firmware

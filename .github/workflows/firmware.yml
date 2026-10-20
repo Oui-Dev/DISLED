@@ -35,9 +35,10 @@ jobs:
           submodules: true
           fetch-depth: 0 # git describe needs the tags for the version
 
-      - uses: actions/setup-python@v7
+      # uv version from pyproject.toml, Python from .python-version.
+      - uses: astral-sh/setup-uv@v10
         with:
-          python-version: "3.14"
+          working-directory: firmware
 
       - name: Cache PlatformIO packages
         uses: actions/cache@v6
@@ -46,23 +47,23 @@ jobs:
           key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
 
       - name: Install tools
-        run: pip install -r requirements.txt
+        run: uv sync --locked
 
       - name: Format
-        run: clang-format --dry-run --Werror $(git ls-files 'lib/disled_core/*.[ch]' 'src/*.[ch]' 'test/*.c' 'tools/*.c')
+        run: uv run clang-format --dry-run --Werror $(git ls-files 'lib/disled_core/*.[ch]' 'src/*.[ch]' 'test/*.c' 'tools/*.c')
 
       - name: Unit tests (host)
-        run: pio test -e native
+        run: uv run pio test -e native
 
       - name: Build debug and release
-        run: pio run -e debug -e release
+        run: uv run pio run -e debug -e release
 
       # The platform picks the compiler per OS; it cannot be pinned (ADR 0008).
       - name: Toolchain version
         run: ~/.platformio/packages/toolchain-riscv/bin/riscv-wch-elf-gcc --version | head -n 1
 
       - name: Static analysis
-        run: pio check -e debug
+        run: uv run pio check -e debug
 
       - uses: actions/upload-artifact@v7
         with:

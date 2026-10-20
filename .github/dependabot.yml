@@ -65,10 +65,11 @@ updates:
           - 'minor'
           - 'patch'
 
-  # FIRMWARE build and check tools (PlatformIO, clang-format). The
-  # PlatformIO platform and SDK are pinned by commit in platformio.ini, and
-  # TinyUSB follows its releases by hand: Dependabot reads neither.
-  - package-ecosystem: 'pip'
+  # FIRMWARE build and check tools (PlatformIO, clang-format), with uv:
+  # pyproject.toml and uv.lock. The PlatformIO platform and SDK are pinned
+  # by commit in platformio.ini, and TinyUSB follows its releases by hand:
+  # Dependabot reads neither.
+  - package-ecosystem: 'uv'
     directory: '/firmware/'
     schedule:
       interval: 'weekly'
