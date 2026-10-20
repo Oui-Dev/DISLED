@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.2.0...app-v0.3.0) (2026-10-20)
+
+
+### Features
+
+* **app:** live in the tray with a popup, settings applied at every connection ([45294be](https://github.com/Oui-Dev/DISLED/commit/45294bec26cbddc953472cca6c18ad5726dcab03))
+* **app:** updates from GitHub Releases, offered in the popup ([1c16054](https://github.com/Oui-Dev/DISLED/commit/1c160546f981723c3c8b34a3b4c4cf1afa298ba2))
+
 ## [0.2.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.1.0...app-v0.2.0) (2026-10-20)
 
 
