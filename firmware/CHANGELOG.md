@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Oui-Dev/DISLED/compare/fw-v0.2.0...fw-v0.2.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **firmware:** build the Intel HEX file that releases and flashing use ([e1980d6](https://github.com/Oui-Dev/DISLED/commit/e1980d696f36383b9741bb9a866a15429e443b12))
+
 ## [0.2.0](https://github.com/Oui-Dev/DISLED/compare/fw-v0.1.0...fw-v0.2.0) (2026-10-20)
 
 
