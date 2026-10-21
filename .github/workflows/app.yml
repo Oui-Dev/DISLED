@@ -11,6 +11,7 @@ on:
     paths:
       - "app/**"
       - "crates/**"
+      - "tools/**"
       - "protocol/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -62,7 +63,7 @@ jobs:
           npm run format:check
           npm run build
 
-      - name: Back end and shared crates
+      - name: Rust workspace (app, shared crates, tools)
         working-directory: .
         run: |
           cargo fmt --all --check

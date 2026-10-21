@@ -9,6 +9,7 @@ members = [
     "app/src-tauri",
     "crates/disled-flash",
     "crates/disled-protocol",
+    "tools/disled-factory",
 ]
 
 [workspace.package]
