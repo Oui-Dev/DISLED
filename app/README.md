@@ -83,25 +83,25 @@ variable.
 
 ## Layout
 
-| Path                                | Content                                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------------------- |
-| `../crates/disled-protocol`         | Protocol codec (shared with the tools), tested against `protocol/vectors/v1.json`  |
-| `src-tauri/src/device.rs`           | USB worker thread: discovery, reconnection, settings applied on INFO, tray updates |
-| `src-tauri/src/settings.rs`         | Settings saved on the computer (store plugin) and the commands that apply them     |
-| `src-tauri/src/tray.rs`             | Tray icon (drawn at run time), menu and clicks                                     |
-| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics and lamp update windows                    |
-| `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                   |
-| `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, signature check, update steps        |
-| `src-tauri/src/wchisp.rs`           | Runs wchisp and reads its log lines (bootloader search, flash stages)              |
-| `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                  |
-| `src/lib/protocol.ts`               | TypeScript mirror of the Rust message types                                        |
-| `src/lib/device.ts`                 | Store of one window (each window has its own), settings, CSV recorder              |
-| `src/lib/updates.ts`                | Update status shown in the popup                                                   |
-| `src/lib/firmware.ts`               | Lamp update status, shown by the popup and the lamp update window                  |
-| `src/components/`                   | Popup, Diagnostics and lamp update views, and their panels                         |
-| `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                |
-| `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)    |
-| `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                           |
+| Path                                | Content                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `../crates/disled-protocol`         | Protocol codec (shared with the tools), tested against `protocol/vectors/v1.json`   |
+| `../crates/disled-flash`            | Signed firmware files and wchisp, run as a separate program (shared with the tools) |
+| `src-tauri/src/device.rs`           | USB worker thread: discovery, reconnection, settings applied on INFO, tray updates  |
+| `src-tauri/src/settings.rs`         | Settings saved on the computer (store plugin) and the commands that apply them      |
+| `src-tauri/src/tray.rs`             | Tray icon (drawn at run time), menu and clicks                                      |
+| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics and lamp update windows                     |
+| `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                    |
+| `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, download, update steps                |
+| `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                   |
+| `src/lib/protocol.ts`               | TypeScript mirror of the Rust message types                                         |
+| `src/lib/device.ts`                 | Store of one window (each window has its own), settings, CSV recorder               |
+| `src/lib/updates.ts`                | Update status shown in the popup                                                    |
+| `src/lib/firmware.ts`               | Lamp update status, shown by the popup and the lamp update window                   |
+| `src/components/`                   | Popup, Diagnostics and lamp update views, and their panels                          |
+| `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                 |
+| `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)     |
+| `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                            |
 
 The Rust code is one Cargo workspace at the repository root: this app
 (`src-tauri`) and the shared crates (`../crates`). Its build output goes to

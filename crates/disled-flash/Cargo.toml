@@ -1,0 +1,17 @@
+[package]
+name = "disled-flash"
+description = "Flashing a DISLED lamp: the signed firmware files and the wchisp flasher, run as a separate program"
+authors = ["The DISLED contributors"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+base64 = "0.22"
+minisign-verify = "0.3"
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1"

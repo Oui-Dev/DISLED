@@ -59,7 +59,7 @@ Building it settled what that record left open.
 - The first lamp update the app can make is the first signed firmware
   release, the one after 0.2.1.
 - A new wchisp version means checking its messages against
-  `app/src-tauri/src/wchisp.rs` first.
+  `crates/disled-flash/src/wchisp.rs` first.
 - A firmware that breaks the protocol (a new major version, ADR 0012)
   needs an app release that knows it first; the popup offers the app
   update before the lamp update.

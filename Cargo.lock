@@ -813,10 +813,9 @@ dependencies = [
 name = "disled-app"
 version = "0.0.0"
 dependencies = [
- "base64 0.22.1",
+ "disled-flash",
  "disled-protocol",
  "hidapi",
- "minisign-verify",
  "reqwest",
  "rustls",
  "semver",
@@ -831,6 +830,17 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-store",
  "tauri-plugin-updater",
+]
+
+[[package]]
+name = "disled-flash"
+version = "0.0.0"
+dependencies = [
+ "base64 0.22.1",
+ "minisign-verify",
+ "semver",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

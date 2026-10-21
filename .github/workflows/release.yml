@@ -25,9 +25,9 @@ concurrency:
 
 env:
   # The flasher shipped with the app for the lamp updates (ADR 0016). The
-  # app reads its messages (app/src-tauri/src/wchisp.rs), and its notice
-  # names the version (app/src-tauri/third-party/wchisp): check both
-  # before changing it.
+  # app reads its messages (crates/disled-flash/src/wchisp.rs), and its
+  # notice names the version (app/src-tauri/third-party/wchisp): check
+  # both before changing it.
   WCHISP_VERSION: 0.3.0
 
 jobs:

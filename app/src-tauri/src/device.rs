@@ -14,17 +14,11 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use disled_protocol::{
     self as protocol, Command, DecodeError, Info, Message, PAYLOAD_SIZE, PROTOCOL_MAJOR,
-    REPORT_ID_COMMAND, REPORT_ID_MESSAGE,
+    REPORT_ID_COMMAND, REPORT_ID_MESSAGE, USB_PRODUCT_ID_DEBUG,
 };
 
 use crate::settings::SettingsState;
 use crate::tray::{self, Look};
-
-/// pid.codes test IDs used during phase 1: release and debug builds.
-pub const VENDOR_ID: u16 = 0x1209;
-pub const PRODUCT_ID_RELEASE: u16 = 0x0001;
-pub const PRODUCT_ID_DEBUG: u16 = 0x0002;
-const USAGE_PAGE_VENDOR: u16 = 0xFF00;
 
 const SCAN_INTERVAL: Duration = Duration::from_millis(1000);
 const READ_TIMEOUT_MS: i32 = 20;
@@ -148,15 +142,13 @@ impl Worker {
 
     fn open(&mut self, api: &mut HidApi) -> Option<HidDevice> {
         api.refresh_devices().ok()?;
-        let info = api.device_list().find(|d| {
-            d.vendor_id() == VENDOR_ID
-                && (d.product_id() == PRODUCT_ID_RELEASE || d.product_id() == PRODUCT_ID_DEBUG)
-                && (d.usage_page() == USAGE_PAGE_VENDOR || d.usage_page() == 0)
-        })?;
+        let info = api
+            .device_list()
+            .find(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))?;
         let device = info.open_device(api).ok()?;
         self.set_connection(Connection {
             connected: true,
-            debug_build: info.product_id() == PRODUCT_ID_DEBUG,
+            debug_build: info.product_id() == USB_PRODUCT_ID_DEBUG,
             serial: info.serial_number().map(str::to_owned),
         });
         Some(device)
