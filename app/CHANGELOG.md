@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.3.0...app-v0.4.0) (2026-10-21)
+
+
+### Features
+
+* **app:** update the lamp firmware from the app ([4036ce7](https://github.com/Oui-Dev/DISLED/commit/4036ce7319b2b1e73ed96e3bc98e5aa9bfaca32a))
+
+
+### Bug Fixes
+
+* **deps:** bump the production group across 1 directory with 3 updates ([4746a45](https://github.com/Oui-Dev/DISLED/commit/4746a45daea3a3cbeddf4b569e0fdfc1f544c6a9))
+
 ## [0.3.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.2.0...app-v0.3.0) (2026-10-20)
 
 
