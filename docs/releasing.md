@@ -147,6 +147,8 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 - `protocol/`, `crates/` and the root `Cargo.*` files belong to no
   component: a change there is released with the component that the same
   commit touches (a protocol change touches the firmware, the app or both).
+  Neither does `tools/`: the production tool is not released, it runs from
+  the repository ([docs/production.md](production.md)).
 - One release pull request for both components: with one per component,
   both edited `.release-please-manifest.json`, so merging one left the
   other in conflict, and release-please does not rebuild a pull request

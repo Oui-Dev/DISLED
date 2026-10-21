@@ -97,6 +97,9 @@ Any WCH ISP tool can flash `firmware.bin` or `firmware.hex` from
 `firmware/.pio/build/<env>/`, or from the CI artifacts: `wchisp flash
 firmware.bin`, WCHISPTool on Windows, or WCHISPStudio on macOS.
 
+For a batch of boards, `disled-factory` flashes and tests them one after
+the other ([production.md](production.md)).
+
 ## Troubleshooting
 
 | Symptom | Check |

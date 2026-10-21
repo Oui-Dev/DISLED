@@ -15,6 +15,8 @@ desktop app gives full control.
 |---|---|
 | [`firmware/`](firmware/) | CH32V203 firmware (PlatformIO, C11, TinyUSB) |
 | [`app/`](app/) | Desktop app (Tauri 2, Rust and Vue 3) |
+| [`tools/`](tools/) | Production tool, `disled-factory` (Rust) |
+| [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
 | [`hardware/`](hardware/) | PCB design files, renders and design review |
 | [`docs/`](docs/) | Architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
@@ -37,6 +39,7 @@ desktop app gives full control.
 | Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
 | Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |
 | Bring up a new board | [docs/bringup.md](docs/bringup.md) |
+| Flash and test a batch of lamps | [docs/production.md](docs/production.md) |
 | Publish a release | [docs/releasing.md](docs/releasing.md) |
 
 ## Licensing
