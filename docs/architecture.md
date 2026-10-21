@@ -167,8 +167,9 @@ object time), so it cannot drift under the hand and blunt the next touch.
   one Cargo workspace at the repository root.
 - **Tray and windows** ([ADR 0013](decisions/0013-tray-app.md)). The app
   lives in the menu bar or notification area; its icon is drawn at run
-  time from the lamp state. Two windows share one page: the popup (daily
-  use) and the Diagnostics window (tuning), chosen by the window label.
+  time from the lamp state. Three windows share one page, chosen by the
+  window label: the popup (daily use), the Diagnostics window (tuning)
+  and the lamp update window.
 - **Settings** (brightness mode, fixed level, correction) are saved with
   the store plugin; the USB worker applies them as soon as the lamp
   answers `INFO`, so they hold across lamp restarts. Changes are broadcast
@@ -177,6 +178,13 @@ object time), so it cannot drift under the hand and blunt the next touch.
   the `latest.json` of the latest GitHub release at start-up and once a
   day (`updates.rs`, updater plugin); the popup shows the result
   (`update-status`) and asks the backend to install it.
+- **Lamp updates** ([ADR 0016](decisions/0016-lamp-updates.md)). The same
+  thread looks for the newest signed `fw-v*` release (`firmware.rs`). An
+  update runs on its own thread: download, signature check against the
+  update key, then `wchisp probe` every second until the ROM bootloader
+  shows up, `wchisp flash`, and the `INFO` of the restarted lamp. wchisp
+  is a separate program next to the app, driven through its log lines
+  (`wchisp.rs`); the lamp update window follows `firmware-status`.
 - **Vue front end** (`app/src`). One reactive store per window
   (`lib/device.ts`) holds the connection, the lamp state, the settings and
   the telemetry history; the components only render it and send commands.

@@ -3,7 +3,21 @@
 DISLED is flashed over USB through the bootloader in the CH32V203 ROM. That
 bootloader cannot be erased, so a bad firmware never bricks a board: the
 BOOT button always brings it back. The buttons sit on the board, so the
-enclosure has to be open ([ADR 0004](decisions/0004-firmware-updates.md)).
+enclosure has to be open ([ADR 0010](decisions/0010-firmware-updates-from-the-app.md)).
+
+## From the desktop app
+
+The app offers a new firmware in its popup when the connected lamp runs an
+older one (Settings, **Update the lamp**), and guides the update in a
+window of its own. It downloads the release build, checks its signature
+([ADR 0016](decisions/0016-lamp-updates.md)), asks for BOOT and RESET,
+flashes the lamp and checks the version it then reports. On Windows it
+also shows the driver steps below when they are needed.
+
+A lamp that no longer starts gets its firmware the same way: Settings,
+**Lamp not detected? Reinstall its firmware**.
+
+The rest of this page is for development and for flashing by hand.
 
 ## Enter the bootloader
 
@@ -15,8 +29,9 @@ enclosure has to be open ([ADR 0004](decisions/0004-firmware-updates.md)).
 
 ## First time on Windows: install the WinUSB driver
 
-PlatformIO flashes with [`wchisp`](https://github.com/ch32-rs/wchisp), which
-talks to the bootloader through WinUSB.
+PlatformIO and the desktop app flash with
+[`wchisp`](https://github.com/ch32-rs/wchisp), which talks to the
+bootloader through WinUSB.
 
 1. Enter the bootloader (above).
 2. Run [Zadig](https://zadig.akeo.ie/), then **Options → List All Devices**.

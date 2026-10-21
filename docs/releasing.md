@@ -29,11 +29,14 @@ version, tag and changelog:
    attaches the binaries to its draft, and publishes the release only once
    all of them are attached:
    - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
-     with `SHA256SUMS`;
+     with `SHA256SUMS`; for the app, the signature of the release build
+     (`disled-fw-X.Y.Z.hex.sig`);
    - **app:** Windows installer (`.exe`), macOS disk image for Apple
      Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives); for
      the updater, the macOS app archive (`.app.tar.gz`), one signature
-     (`.sig`) per installer and `latest.json`.
+     (`.sig`) per installer and `latest.json`; the source of the wchisp
+     inside the installers and its notice
+     (`wchisp-X.Y.Z-source.tar.gz`, `wchisp-NOTICE.md`).
 
    Published releases are immutable (repository setting, Settings,
    General, Releases): their files and tag can no longer change, only their
@@ -95,8 +98,29 @@ update files.
 3. Put the content of `disled-updater.key.pub` in `plugins.updater.pubkey`
    of `app/src-tauri/tauri.conf.json`.
 4. Keep a backup of the private key and its password, outside the
-   computer: the installed apps accept no other key, and a new key means
-   a manual reinstall for every user.
+   computer: the installed apps accept no other key, for their own updates
+   and for the lamp firmware, and a new key means a manual reinstall for
+   every user.
+
+## Lamp updates
+
+The app updates the lamp firmware from the newest published `fw-v*`
+release ([ADR 0016](decisions/0016-lamp-updates.md)):
+
+- the `firmware` job signs the release build with the same update key,
+  the version included in the signature (`tauri signer sign
+  --app-version`); the app refuses any other file;
+- each `app` job builds wchisp (`WCHISP_VERSION` at the top of the
+  workflow) and bundles it with `src-tauri/tauri.wchisp.conf.json`, with
+  its license and notice (`src-tauri/third-party/wchisp`);
+- `app-publish` attaches the crates.io package of that wchisp, checked
+  against the crates.io index, and the notice: wchisp is GPL-2.0, its
+  source goes with the installers.
+
+A local installer with wchisp needs the binary first, named after the
+target: `cargo install wchisp@0.3.0 --locked`, copied to
+`app/src-tauri/binaries/wchisp-<target triple>` (`.exe` on Windows),
+then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 
 ## Notes
 
