@@ -13,17 +13,15 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use base64::Engine;
-use base64::engine::general_purpose::STANDARD as BASE64;
+use disled_flash::firmware::{self as files, file_name};
+use disled_flash::wchisp::{self, Probe, Stage, Wchisp};
 use disled_protocol::Command;
-use minisign_verify::{PublicKey, Signature};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::device::DeviceHandle;
 use crate::updates::now;
-use crate::wchisp::{self, Probe, Stage};
 
 const EVENT_STATUS: &str = "firmware-status";
 
@@ -157,11 +155,6 @@ fn show<R: Runtime>(app: &AppHandle<R>, flash: Flash) {
     }
 }
 
-/// File name of the release build, as the release workflow names it.
-fn hex_name(version: &Version) -> String {
-    format!("disled-fw-{version}.hex")
-}
-
 /// The newest published firmware release whose release build is signed.
 /// The releases from before the signatures (up to 0.2.1) never qualify.
 fn newest(releases: &[GitHubRelease]) -> Option<Release> {
@@ -177,7 +170,7 @@ fn newest(releases: &[GitHubRelease]) -> Option<Release> {
                     .find(|asset| asset.name == name)
                     .map(|asset| asset.browser_download_url.clone())
             };
-            let hex = hex_name(&version);
+            let hex = file_name(&version);
             let source = Source::GitHub {
                 signature: url(format!("{hex}.sig"))?,
                 hex: url(hex)?,
@@ -196,12 +189,26 @@ fn local_release() -> Option<Release> {
         return None;
     }
     let path = PathBuf::from(std::env::var_os("DISLED_FIRMWARE_HEX")?);
-    let name = path.file_name()?.to_str()?;
-    let version = name.strip_prefix("disled-fw-")?.strip_suffix(".hex")?;
+    let version = files::version_of(path.file_name()?.to_str()?)?;
     Some(Release {
-        version: Version::parse(version).ok()?,
+        version,
         source: Source::Local(path),
     })
+}
+
+/// wchisp next to the app executable, where the installers put it. Debug
+/// builds fall back to the one on the PATH (`cargo install wchisp`).
+fn flasher() -> Result<Wchisp, String> {
+    let bundled = std::env::current_exe()
+        .map_err(|e| e.to_string())?
+        .with_file_name(wchisp::PROGRAM);
+    if bundled.is_file() {
+        Ok(Wchisp::new(bundled))
+    } else if cfg!(debug_assertions) {
+        Ok(Wchisp::new(wchisp::PROGRAM))
+    } else {
+        Err("wchisp is missing next to the app: reinstall DISLED".into())
+    }
 }
 
 /// Downloads a file; GitHub wants a user agent.
@@ -259,48 +266,6 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
     state.status()
 }
 
-/// The update key of the app updates (`plugins.updater.pubkey`).
-fn update_key<R: Runtime>(app: &AppHandle<R>) -> Result<String, String> {
-    app.config()
-        .plugins
-        .0
-        .get("updater")
-        .and_then(|updater| updater.get("pubkey"))
-        .and_then(|key| key.as_str())
-        .map(str::to_owned)
-        .ok_or_else(|| "this app has no update key".into())
-}
-
-/// Checks that `data` was signed with the update key as this firmware
-/// version. The release workflow puts the file name and the version in the
-/// signed comment, so an older signed file cannot pass for a newer one.
-fn verify(data: &[u8], signature: &str, key: &str, version: &Version) -> Result<(), String> {
-    let text = |base64: &str| {
-        BASE64
-            .decode(base64.trim())
-            .ok()
-            .and_then(|bytes| String::from_utf8(bytes).ok())
-    };
-    let key = text(key)
-        .and_then(|key| PublicKey::decode(&key).ok())
-        .ok_or("the update key of this app is unreadable")?;
-    let signature = text(signature)
-        .and_then(|signature| Signature::decode(&signature).ok())
-        .ok_or("the firmware signature is unreadable")?;
-    key.verify(data, &signature, false)
-        .map_err(|_| "the firmware is not signed with the update key")?;
-    let comment: Vec<&str> = signature.trusted_comment().split('\t').collect();
-    let file = format!("file:{}", hex_name(version));
-    let signed_version = format!("version:{version}");
-    if comment.contains(&file.as_str()) && comment.contains(&signed_version.as_str()) {
-        Ok(())
-    } else {
-        Err(format!(
-            "the firmware signature is not for version {version}"
-        ))
-    }
-}
-
 /// The release build, checked, in a file for wchisp.
 async fn download<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<PathBuf, String> {
     let (hex, signature) = match &release.source {
@@ -310,14 +275,14 @@ async fn download<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<P
     let data = get(app, hex).await?;
     let signature = String::from_utf8(get(app, signature).await?)
         .map_err(|_| "the firmware signature is unreadable")?;
-    verify(&data, &signature, &update_key(app)?, &release.version)?;
+    files::verify(&data, &signature, &release.version)?;
     let folder = app
         .path()
         .app_cache_dir()
         .map_err(|e| e.to_string())?
         .join("firmware");
     std::fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
-    let file = folder.join(hex_name(&release.version));
+    let file = folder.join(file_name(&release.version));
     std::fs::write(&file, &data).map_err(|e| e.to_string())?;
     Ok(file)
 }
@@ -403,6 +368,7 @@ pub fn clear_result<R: Runtime>(app: &AppHandle<R>) {
 /// The update itself; returns once the lamp runs the new firmware.
 fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop> {
     show(app, Flash::Downloading);
+    let flasher = flasher()?;
     let file = tauri::async_runtime::block_on(download(app, release))?;
 
     // Into the ROM bootloader. A lamp that announces ENTER_BOOTLOADER
@@ -411,9 +377,9 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
     let device = app.state::<DeviceHandle>();
     let by_command = device.info().is_some_and(|info| info.enter_bootloader)
         && device.send(Command::EnterBootloader).is_ok();
-    wait_for_bootloader(app, by_command)?;
+    wait_for_bootloader(app, &flasher, by_command)?;
 
-    wchisp::flash(&file, |stage| show(app, Flash::Flashing { stage }))?;
+    flasher.flash(&file, |stage| show(app, Flash::Flashing { stage }))?;
 
     show(app, Flash::WaitingForLamp);
     let since = Instant::now();
@@ -441,7 +407,11 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
 
 /// Waits until the lamp's bootloader can be flashed, showing what holds it
 /// up.
-fn wait_for_bootloader<R: Runtime>(app: &AppHandle<R>, by_command: bool) -> Result<(), Stop> {
+fn wait_for_bootloader<R: Runtime>(
+    app: &AppHandle<R>,
+    flasher: &Wchisp,
+    by_command: bool,
+) -> Result<(), Stop> {
     let state = app.state::<FirmwareState>();
     let since = Instant::now();
     let waiting = || Flash::WaitingForBootloader {
@@ -454,7 +424,7 @@ fn wait_for_bootloader<R: Runtime>(app: &AppHandle<R>, by_command: bool) -> Resu
         if state.cancel.load(Ordering::SeqCst) {
             return Err(Stop::Cancelled);
         }
-        let probe = match wchisp::probe() {
+        let probe = match flasher.probe() {
             Ok(probe) => {
                 failures = 0;
                 probe
@@ -579,49 +549,6 @@ mod tests {
         assert_eq!(
             newest(&releases).map(|r| r.version),
             Some(Version::new(0, 2, 2))
-        );
-    }
-
-    // `tauri signer sign --app-version 9.8.7 disled-fw-9.8.7.hex`, with a
-    // throwaway key.
-    const TEST_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUxM0IzMzY2MjQ4OTA3MTYKUldRV0I0a2taak03NFoydUxWY3JaZzRONWloUTBMVkJQem5XNmErS1dUQTNWUjYwZCtYcDNpeTQK";
-    const TEST_FILE: &[u8] = b":020000040800F2\n:00000001FF\n";
-    const TEST_SIGNATURE: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRV0I0a2taak03NGE0NE80MWlpQ0g4d1Q3MjNQYnJtRnA4dmFHaEMzcXl4K1lQTW04T1J3VWgwdng3SFVGU2o2aUR0TS9PRWtJeUNoYVFESUUwOGRVUVJ3R0RQWjRPUlFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTUzMTczCWZpbGU6ZGlzbGVkLWZ3LTkuOC43LmhleAl2ZXJzaW9uOjkuOC43CnAzN2RyZ2FZUVE0MXlZS1NRcStxYUFzUzN6WSthQU1GeXhrSlFCOVczUGFkekZkeXhtQ2ZBUVE0K0tjQndFNklNSTJDall0b0hYSlU5VWlQWThldENRPT0K";
-
-    #[test]
-    fn a_signed_firmware_passes() {
-        assert_eq!(
-            verify(TEST_FILE, TEST_SIGNATURE, TEST_KEY, &Version::new(9, 8, 7)),
-            Ok(())
-        );
-    }
-
-    #[test]
-    fn a_changed_firmware_fails() {
-        let mut changed = TEST_FILE.to_vec();
-        changed[1] = b'1';
-        assert!(verify(&changed, TEST_SIGNATURE, TEST_KEY, &Version::new(9, 8, 7)).is_err());
-    }
-
-    #[test]
-    fn a_signature_for_another_version_fails() {
-        assert_eq!(
-            verify(TEST_FILE, TEST_SIGNATURE, TEST_KEY, &Version::new(9, 8, 8)),
-            Err("the firmware signature is not for version 9.8.8".into())
-        );
-    }
-
-    #[test]
-    fn another_key_fails() {
-        // The real update key did not sign the test file.
-        let config: serde_json::Value =
-            serde_json::from_str(include_str!("../tauri.conf.json")).expect("config");
-        let key = config["plugins"]["updater"]["pubkey"]
-            .as_str()
-            .expect("pubkey");
-        assert_eq!(
-            verify(TEST_FILE, TEST_SIGNATURE, key, &Version::new(9, 8, 7)),
-            Err("the firmware is not signed with the update key".into())
         );
     }
 }

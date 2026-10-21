@@ -8,6 +8,21 @@
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// USB IDs of the lamp (pid.codes test PIDs during phase 1).
+pub const USB_VENDOR_ID: u16 = 0x1209;
+pub const USB_PRODUCT_ID_RELEASE: u16 = 0x0001;
+pub const USB_PRODUCT_ID_DEBUG: u16 = 0x0002;
+/// Usage page of the HID interface (vendor defined).
+pub const HID_USAGE_PAGE: u16 = 0xFF00;
+
+/// The HID interface of a lamp, from what hidapi lists. hidapi reports a
+/// usage page of 0 where the platform does not give it.
+pub fn is_lamp_interface(vendor_id: u16, product_id: u16, usage_page: u16) -> bool {
+    vendor_id == USB_VENDOR_ID
+        && (product_id == USB_PRODUCT_ID_RELEASE || product_id == USB_PRODUCT_ID_DEBUG)
+        && (usage_page == HID_USAGE_PAGE || usage_page == 0)
+}
+
 pub const REPORT_ID_COMMAND: u8 = 1;
 pub const REPORT_ID_MESSAGE: u8 = 2;
 /// Payload bytes of one report, after the report ID.
@@ -776,5 +791,15 @@ mod tests {
         assert_eq!(command, Command::SetAutoBias { bias: -20 });
         let command: Command = serde_json::from_str(r#"{"kind":"self_test"}"#).expect("self_test");
         assert_eq!(command, Command::SelfTest);
+    }
+
+    #[test]
+    fn only_the_lamp_hid_interface_matches() {
+        assert!(is_lamp_interface(0x1209, 0x0001, 0xFF00));
+        assert!(is_lamp_interface(0x1209, 0x0002, 0xFF00));
+        assert!(is_lamp_interface(0x1209, 0x0001, 0));
+        assert!(!is_lamp_interface(0x1209, 0x0003, 0xFF00));
+        assert!(!is_lamp_interface(0x4348, 0x55E0, 0xFF00));
+        assert!(!is_lamp_interface(0x1209, 0x0001, 0x0001));
     }
 }

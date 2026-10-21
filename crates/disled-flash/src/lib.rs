@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2026 The DISLED contributors
+
+//! Flashing a DISLED lamp, shared by the desktop app and the production
+//! tool (ADR 0010, 0016): the firmware files of the releases and their
+//! signatures, and the wchisp flasher.
+
+pub mod firmware;
+pub mod wchisp;

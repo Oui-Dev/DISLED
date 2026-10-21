@@ -184,9 +184,21 @@ object time), so it cannot drift under the hand and blunt the next touch.
   update key, then `wchisp probe` every second until the ROM bootloader
   shows up, `wchisp flash`, and the `INFO` of the restarted lamp. wchisp
   is a separate program next to the app, driven through its log lines
-  (`wchisp.rs`); the lamp update window follows `firmware-status`.
+  (`crates/disled-flash`, shared with the production tool); the lamp
+  update window follows `firmware-status`.
 - **Vue front end** (`app/src`). One reactive store per window
   (`lib/device.ts`) holds the connection, the lamp state, the settings and
   the telemetry history; the components only render it and send commands.
 - USB access stays in Rust: the macOS web view has no WebHID, and a
   backend-owned connection keeps working while every window is hidden.
+
+## Production tool
+
+`tools/disled-factory` is a command-line program for batches of lamps
+([production.md](production.md)). Board after board, it waits for the ROM
+bootloader, flashes the signed release build with wchisp, checks the
+`INFO` of the restarted lamp, runs `SELF_TEST` while the operator watches
+the colors and touches the lid, and appends a row to a CSV log. It shares
+the protocol codec and the USB IDs (`crates/disled-protocol`) and the
+flashing code, wchisp and the firmware signatures (`crates/disled-flash`),
+with the app.

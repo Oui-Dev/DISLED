@@ -1,0 +1,16 @@
+[package]
+name = "disled-factory"
+description = "DISLED production tool: flashes, checks and self-tests each board, and logs the results"
+authors = ["The DISLED contributors"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+disled-flash = { path = "../../crates/disled-flash" }
+disled-protocol = { path = "../../crates/disled-protocol" }
+hidapi = "2"
+semver = "1"
+time = { version = "0.3", features = ["formatting"] }

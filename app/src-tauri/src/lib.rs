@@ -10,7 +10,6 @@ mod firmware;
 mod settings;
 mod tray;
 mod updates;
-mod wchisp;
 mod windows;
 
 use device::{Connection, DeviceHandle};

@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Rust workspace: the protocol codec shared by the desktop app and the
-# production tool.
+# Rust workspace: the desktop app, the production tool, and the crates they
+# share (protocol codec, flashing).
 [workspace]
 resolver = "3"
-members = ["app/src-tauri", "crates/disled-protocol"]
+members = [
+    "app/src-tauri",
+    "crates/disled-flash",
+    "crates/disled-protocol",
+    "tools/disled-factory",
+]
 
 [workspace.package]
 edition = "2024"
