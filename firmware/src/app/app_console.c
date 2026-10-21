@@ -143,7 +143,7 @@ static void cmd_watch(int argc, char **argv)
     }
     s_watch_period_ms = period;
     s_watch_next_ms = 0;
-    console_printf("raw value baseline delta(permille) state | lux | mA\r\n");
+    console_printf("raw value baseline delta(permille) state | lux range count level | mA\r\n");
 }
 
 static void cmd_touch(int argc, char **argv)
@@ -220,6 +220,29 @@ static void cmd_pulse(int argc, char **argv)
         print_subticks(app.output_config.pulse_loss[i]);
     }
     console_printf("\r\n");
+}
+
+static void cmd_curve(int argc, char **argv)
+{
+    brightness_point_t *curve = app.brightness_curve;
+    uint32_t index = 0;
+    uint32_t lux = 0;
+    uint32_t level = 0;
+    if (argc == 4 && parse_u32(argv[1], &index) && index < APP_BRIGHTNESS_CURVE_POINTS &&
+        parse_u32(argv[2], &lux) && parse_u32(argv[3], &level) && level <= 1000u &&
+        (index == 0u || lux > curve[index - 1u].lux_milli) &&
+        (index + 1u == APP_BRIGHTNESS_CURVE_POINTS || lux < curve[index + 1u].lux_milli)) {
+        curve[index] = (brightness_point_t){ lux, (uint16_t)level };
+    } else if (argc != 1) {
+        console_printf("usage: curve [<0-%u> <millilux> <per mille>] (sorted by lux, RAM only)\r\n",
+                       (unsigned)(APP_BRIGHTNESS_CURVE_POINTS - 1u));
+        return;
+    }
+    for (size_t i = 0; i < APP_BRIGHTNESS_CURVE_POINTS; i++) {
+        console_printf(
+            "%u %lu.%03lu lx %u\r\n", (unsigned)i, (unsigned long)(curve[i].lux_milli / 1000u),
+            (unsigned long)(curve[i].lux_milli % 1000u), (unsigned)curve[i].level_permille);
+    }
 }
 
 static void cmd_cap(int argc, char **argv)
@@ -370,6 +393,7 @@ static const console_command_t commands[] = {
     { "touch", "phase|dither|recal", "touch sampling experiments (V4)", cmd_touch },
     { "palette", "[<i> <r> <g> <b>]", "show or tune the colors (RAM only)", cmd_palette },
     { "pulse", "[<r> <g> <b>]", "show or tune the PWM pulse loss (RAM only)", cmd_pulse },
+    { "curve", "[<i> <mlx> <l>]", "show or tune the automatic brightness (RAM only)", cmd_curve },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
     { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
     { "diag", "", "diagnostics counters (as sent to the host)", cmd_diag },
@@ -391,14 +415,16 @@ void app_console_task(uint32_t now_ms)
         return;
     }
     s_watch_next_ms = now_ms + s_watch_period_ms;
-    const uint32_t lux = app.als.lux_centi;
+    const uint32_t lux = app.als.lux_milli;
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
     console_printf(
-        "%u %u %u %d %u | %lu.%02lu | %lu.%lu\r\n", (unsigned)touch_detector_raw(&app.touch),
-        (unsigned)touch_detector_value(&app.touch), (unsigned)touch_detector_baseline(&app.touch),
+        "%u %u %u %d %u | %lu.%03lu %u %u %u | %lu.%lu\r\n",
+        (unsigned)touch_detector_raw(&app.touch), (unsigned)touch_detector_value(&app.touch),
+        (unsigned)touch_detector_baseline(&app.touch),
         (int)touch_detector_delta_permille(&app.touch), (unsigned)touch_detector_state(&app.touch),
-        (unsigned long)(lux / 100u), (unsigned long)(lux % 100u), (unsigned long)(estimate / 10u),
-        (unsigned long)(estimate % 10u));
+        (unsigned long)(lux / 1000u), (unsigned long)(lux % 1000u), (unsigned)app.als.step,
+        (unsigned)app.als.count, (unsigned)brightness_level_permille(&app.brightness),
+        (unsigned long)(estimate / 10u), (unsigned long)(estimate % 10u));
 }
 
 #endif

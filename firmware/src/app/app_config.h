@@ -13,7 +13,6 @@
 #include "brightness.h"
 #include "color.h"
 #include "drivers/tkey.h"
-#include "drivers/veml7700.h"
 #include "power_limiter.h"
 #include "self_test.h"
 #include "touch_detector.h"
@@ -25,7 +24,8 @@
 #define APP_LED_FADE_MS      300u
 #define APP_OUTPUT_PERIOD_MS 10u
 
-/* Light sensor: one reading per integration time. */
+/* Light sensor: the task runs as often as the shortest integration and
+ * reads once per integration (lib/disled_core/als_range.h). */
 #define APP_ALS_PERIOD_MS      100u
 #define APP_ALS_MAX_ERRORS     5u    /* consecutive failures before giving up */
 #define APP_ALS_RETRY_MS       5000u /* then retry the sensor this often */
@@ -42,7 +42,8 @@
 
 extern const tkey_config_t app_tkey_config;
 extern const touch_config_t app_touch_config;
-extern const veml7700_config_t app_veml7700_config;
+#define APP_BRIGHTNESS_CURVE_POINTS 6u
+extern const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
 extern const brightness_config_t app_brightness_config;
 extern const color_config_t app_color_config;
 extern const power_config_t app_power_config;

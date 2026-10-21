@@ -43,8 +43,10 @@ Each contact triggers at most one action. Releasing the touch re-arms it.
 ## Transitions
 
 Color and power changes fade over about 300 ms. In `AUTO` mode the level
-follows the room light through a slow filter (a few seconds) with
-hysteresis, so it never flickers.
+follows the room light on a logarithmic scale: a light switched on or off
+is followed in about 1.5 s, a hand or a shadow passing in front of the
+sensor is ignored, and small changes are followed gently without ever
+hunting ([ADR 0017](decisions/0017-automatic-brightness.md)).
 
 ## USB states and LED power limits
 

@@ -22,3 +22,4 @@ one.
 | [0014](0014-app-updates.md) | App updates through GitHub Releases, signed, version bound to the signature | Accepted |
 | [0015](0015-releases-published-complete.md) | Releases drafted at the merge, published once all binaries are attached; immutable | Accepted |
 | [0016](0016-lamp-updates.md) | Lamp updates: firmware signed with the update key, wchisp built and bundled by the release workflow | Accepted |
+| [0017](0017-automatic-brightness.md) | Automatic brightness: light sensor ranging, logarithmic filter, curve in the lux the sensor reads | Accepted |

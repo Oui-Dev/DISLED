@@ -275,8 +275,8 @@ static void send_telemetry(uint32_t now_ms)
         .touch_baseline = touch_detector_baseline(&app.touch),
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),
         .touch_state = (uint8_t)touch_detector_state(&app.touch),
-        .lux_centi = app.als.lux_centi,
-        .als_raw = app.als.raw,
+        .lux_centi = (app.als.lux_milli + 5u) / 10u,
+        .als_raw = app.als.count, /* at the sensor's current range */
         /* The protocol reports whole ticks. */
         .duty = { subticks_to_ticks(app.duty[LED_CHANNEL_RED]),
                   subticks_to_ticks(app.duty[LED_CHANNEL_GREEN]),

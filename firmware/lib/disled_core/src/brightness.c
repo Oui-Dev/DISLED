@@ -7,6 +7,12 @@
 
 #include <stddef.h>
 
+#include "time_utils.h"
+
+/* Readings further apart (the sensor changed its range, or measures slowly
+ * in the dark) catch up at most this many ticks. */
+#define MAX_TICKS 16u
+
 /* log2(x) in Q8 (x >= 1), Mitchell's approximation: exact at powers of two,
  * linear in between. The error stays below 0.09 (6 % in lux), which is
  * invisible on a brightness curve. */
@@ -24,31 +30,32 @@ static int32_t log2_q8(uint32_t x)
     return (int32_t)((msb << 8) | fraction);
 }
 
-uint16_t brightness_curve_permille(const brightness_config_t *config, uint32_t lux_centi)
+/* Curve level at a light given as log2_q8(lux x 1000). */
+static uint16_t curve_at(const brightness_config_t *config, int32_t light_q8)
 {
     const brightness_point_t *curve = config->curve;
-    const size_t last = (size_t)config->curve_points - 1u;
-
-    if (lux_centi <= curve[0].lux_centi) {
+    int32_t x0 = log2_q8(curve[0].lux_milli);
+    if (light_q8 <= x0) {
         return curve[0].level_permille;
     }
-    if (lux_centi >= curve[last].lux_centi) {
-        return curve[last].level_permille;
+    for (size_t i = 1; i < config->curve_points; i++) {
+        const int32_t x1 = log2_q8(curve[i].lux_milli);
+        if (light_q8 <= x1) {
+            const int32_t y0 = curve[i - 1u].level_permille;
+            const int32_t y1 = curve[i].level_permille;
+            if (x1 <= x0) {
+                return (uint16_t)y1;
+            }
+            return (uint16_t)(y0 + ((y1 - y0) * (light_q8 - x0)) / (x1 - x0));
+        }
+        x0 = x1;
     }
+    return curve[config->curve_points - 1u].level_permille;
+}
 
-    size_t i = 0;
-    while (lux_centi > curve[i + 1u].lux_centi) {
-        i++;
-    }
-    const int32_t x = log2_q8(lux_centi);
-    const int32_t x0 = log2_q8(curve[i].lux_centi);
-    const int32_t x1 = log2_q8(curve[i + 1u].lux_centi);
-    const int32_t y0 = curve[i].level_permille;
-    const int32_t y1 = curve[i + 1u].level_permille;
-    if (x1 <= x0) {
-        return (uint16_t)y1;
-    }
-    return (uint16_t)(y0 + ((y1 - y0) * (x - x0)) / (x1 - x0));
+uint16_t brightness_curve_permille(const brightness_config_t *config, uint32_t lux_milli)
+{
+    return curve_at(config, log2_q8(lux_milli));
 }
 
 void brightness_init(brightness_t *b, const brightness_config_t *config)
@@ -57,8 +64,10 @@ void brightness_init(brightness_t *b, const brightness_config_t *config)
     b->mode = BRIGHTNESS_MODE_AUTO;
     b->manual_percent = BRIGHTNESS_MANUAL_MAX;
     b->bias_percent = 0;
-    b->have_lux = false;
-    b->auto_q8 = (uint32_t)config->fallback_permille << 8;
+    b->light_q8 = 0;
+    b->last_ms = 0;
+    b->auto_permille = config->fallback_permille;
+    brightness_lux_lost(b);
 }
 
 /* Automatic level with the bias applied, 1..1000. */
@@ -74,13 +83,6 @@ static uint16_t biased(const brightness_t *b, uint32_t level_permille)
 
 void brightness_set_mode(brightness_t *b, brightness_mode_t mode, uint8_t manual_percent)
 {
-    if (mode == BRIGHTNESS_MODE_AUTO && b->mode == BRIGHTNESS_MODE_MANUAL) {
-        /* Start the automatic filter from the level in use, before the
-         * bias, so that the switch fades instead of jumping. */
-        const uint32_t factor = (uint32_t)(100 + (int32_t)b->bias_percent);
-        const uint32_t level = brightness_level_permille(b);
-        b->auto_q8 = ((level * 100u + factor / 2u) / factor) << 8;
-    }
     b->mode = mode;
     b->manual_percent = manual_percent;
 }
@@ -100,35 +102,74 @@ int8_t brightness_auto_bias(const brightness_t *b)
     return b->bias_percent;
 }
 
-void brightness_update_lux(brightness_t *b, uint32_t lux_centi)
+/* Moves the filtered light toward a reading. */
+static void follow(brightness_t *b, int32_t light_q8, uint32_t now_ms)
 {
     const brightness_config_t *cfg = b->config;
-    const uint32_t target_q8 = (uint32_t)brightness_curve_permille(cfg, lux_centi) << 8;
+    const int32_t difference = light_q8 - b->light_q8;
+    const int32_t size = (difference < 0) ? -difference : difference;
+    const int8_t sign = (int8_t)((difference < 0) ? -1 : 1);
 
-    if (!b->have_lux) {
+    if (size < (int32_t)cfg->large_q8) {
+        b->large_sign = 0;
+    } else if (!b->fast) {
+        /* Hold still until the change has lasted: a hand or a shadow in
+         * front of the sensor does not move the lamp. */
+        if (b->large_sign != sign) {
+            b->large_sign = sign;
+            b->large_since_ms = now_ms;
+            return;
+        }
+        if (time_elapsed_ms(now_ms, b->large_since_ms) < cfg->confirm_ms) {
+            return;
+        }
+        b->fast = true;
+    }
+    if (size < (int32_t)cfg->settled_q8) {
+        b->fast = false;
+    }
+    if (size < (int32_t)cfg->hold_q8) {
+        return;
+    }
+
+    uint32_t ticks = (time_elapsed_ms(now_ms, b->last_ms) + cfg->tick_ms / 2u) / cfg->tick_ms;
+    if (ticks < 1u) {
+        ticks = 1u;
+    } else if (ticks > MAX_TICKS) {
+        ticks = MAX_TICKS;
+    }
+    const int32_t divisor = b->fast ? cfg->fast_divisor : cfg->slow_divisor;
+    for (uint32_t i = 0; i < ticks; i++) {
+        /* Division instead of a shift keeps the rounding well defined for
+         * negative differences; the last steps are one unit each. */
+        const int32_t error = light_q8 - b->light_q8;
+        int32_t step = error / divisor;
+        if (step == 0) {
+            step = (error > 0) ? 1 : ((error < 0) ? -1 : 0);
+        }
+        b->light_q8 += step;
+    }
+}
+
+void brightness_update_lux(brightness_t *b, uint32_t lux_milli, uint32_t now_ms)
+{
+    const int32_t light_q8 = log2_q8(lux_milli);
+    if (b->have_lux) {
+        follow(b, light_q8, now_ms);
+    } else {
         /* First reading: start at the target instead of crawling to it. */
         b->have_lux = true;
-        b->auto_q8 = target_q8;
-        return;
+        b->light_q8 = light_q8;
     }
-
-    const int32_t error = (int32_t)target_q8 - (int32_t)b->auto_q8;
-    const int32_t deadband = (int32_t)((uint32_t)cfg->deadband_permille << 8);
-    if (error <= deadband && error >= -deadband) {
-        return;
-    }
-    const int32_t divisor = (int32_t)1 << cfg->filter_shift;
-    int32_t step = error / divisor;
-    if (step == 0) {
-        step = (error > 0) ? 1 : -1;
-    }
-    b->auto_q8 = (uint32_t)((int32_t)b->auto_q8 + step);
+    b->last_ms = now_ms;
+    b->auto_permille = curve_at(b->config, b->light_q8);
 }
 
 void brightness_lux_lost(brightness_t *b)
 {
     b->have_lux = false;
-    b->auto_q8 = (uint32_t)b->config->fallback_permille << 8;
+    b->fast = false;
+    b->large_sign = 0;
 }
 
 uint16_t brightness_level_permille(const brightness_t *b)
@@ -136,7 +177,7 @@ uint16_t brightness_level_permille(const brightness_t *b)
     if (b->mode == BRIGHTNESS_MODE_MANUAL) {
         return (uint16_t)(b->manual_percent * 10u);
     }
-    return biased(b, (b->auto_q8 + 128u) >> 8);
+    return biased(b, b->have_lux ? b->auto_permille : b->config->fallback_permille);
 }
 
 uint8_t brightness_level_percent(const brightness_t *b)

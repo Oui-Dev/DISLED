@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "app_config.h"
 #include "brightness.h"
 #include "bsp/bsp_fault.h"
 #include "disled_types.h"
@@ -25,11 +26,12 @@
 
 typedef struct {
     bool present;
-    uint8_t errors;     /* consecutive read failures */
-    uint32_t retry_ms;  /* next detection attempt while absent */
-    uint32_t settle_ms; /* first valid reading after (re)initialization */
-    uint16_t raw;
-    uint32_t lux_centi;
+    uint8_t errors;    /* consecutive failures */
+    uint32_t retry_ms; /* next detection attempt while absent */
+    uint32_t read_ms;  /* next reading: once per integration */
+    uint8_t step;      /* measuring range (als_range.h) */
+    uint16_t count;    /* last count, at that step */
+    uint32_t lux_milli;
     uint16_t probes; /* detection attempts since boot (diagnostics) */
 } app_als_t;
 
@@ -37,6 +39,10 @@ typedef struct {
     lamp_state_t lamp;
     change_source_t source; /* cause of the latest lamp change */
     brightness_t brightness;
+    /* RAM copy of the automatic brightness settings, the curve tunable from
+     * the console. */
+    brightness_config_t brightness_config;
+    brightness_point_t brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
     touch_detector_t touch;
     color_config_t colors; /* RAM copy of the palette, tunable from the console */
     led_output_config_t output_config;

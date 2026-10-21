@@ -27,7 +27,7 @@ change is notified. The behavior itself is specified in
 | USB | `src/usb/` | bsp, TinyUSB, core | descriptors, link state, HID queues, CDC stream |
 | Drivers | `src/drivers/` | bsp, SDK | LED PWM, TouchKey, I2C, VEML7700 |
 | Board support | `src/bsp/` | SDK | pin map, clocks, time base, watchdog, unique ID, faults |
-| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, brightness, color, power cap, PWM dithering, self-test, protocol codec, scheduler, formatter, assertions |
+| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, light sensor ranging, brightness, color, power cap, PWM dithering, self-test, protocol codec, scheduler, formatter, assertions |
 
 Only `src/bsp/ch32.h` includes the vendor device header. Includes are
 relative to `src/` (`#include "drivers/led_pwm.h"`), so every include shows
@@ -40,7 +40,8 @@ builds natively and runs under Unity in CI.
 TIM3 CC4 interrupt (1 kHz, fixed PWM phase) ─> TouchKey sample ─> queue
                                                                     │
 main loop ── touch task ─> touch_detector ─> short/long press ─> lamp_fsm
-          ── ALS task (100 ms) ─> VEML7700 ─> lux ─> brightness
+          ── ALS task (100 ms) ─> VEML7700 count ─> als_range: lux, next
+                                     range ─> brightness
           ── output task (10 ms) ─> led_output: palette, level, fade,
                                      power cap, pulse loss ─> duties in
                                      1/16 tick ─> led_pwm
