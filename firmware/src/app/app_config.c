@@ -7,7 +7,8 @@
 
 #include "bsp/ch32.h"
 
-#define LUX(x) ((uint32_t)(x) * 100u)
+#define LUX(x)  ((uint32_t)(x) * 1000u)
+#define MLUX(x) ((uint32_t)(x))
 
 /* TouchKey timing, measured on the first board (bring-up): the ADC sample
  * time sets the range, the charge time the position in it. With 1.5 cycles
@@ -48,23 +49,36 @@ const touch_config_t app_touch_config = {
     .rising_touch = false, /* a finger lowers the TouchKey reading */
 };
 
-/* Ambient light to brightness. Tune (V1): the review expects 30-100 %
- * during the day and 2-20 % in the evening. */
+/* Ambient light to brightness. The lux are those the sensor reads behind
+ * its notch in the side wall, a small fraction of the light of the room (a
+ * dim room reads under 0.01 lx there). First curve, tuned live on the first
+ * board with the console command `curve`, judged by eye with a phone
+ * flashlight at several distances (2026-10-21). The floor of 1.5 % is the
+ * level the user chose at night with the previous curve. Refine with daily
+ * use. */
 /* clang-format off */
-static const brightness_point_t brightness_curve[] = {
-    {    LUX(1),   30 }, /* raised x1.5 at bring-up: too dim through the PLA */
-    {   LUX(10),  120 },
-    {  LUX(100),  300 },
-    { LUX(1000),  800 },
-    { LUX(3000), 1000 },
+const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS] = {
+    { MLUX(100),   15 },
+    { MLUX(500),   95 },
+    {    LUX(2),  285 },
+    {    LUX(8),  550 },
+    {   LUX(25),  750 },
+    {  LUX(100), 1000 },
 };
 /* clang-format on */
 
+/* Speed chosen by the user: a light switched on or off is followed in about
+ * 1.5 s (0.4 s to confirm it, then a time constant of 0.25 s). */
 const brightness_config_t app_brightness_config = {
-    .curve = brightness_curve,
-    .curve_points = sizeof brightness_curve / sizeof brightness_curve[0],
-    .filter_shift = 5, /* 32 readings of 100 ms: about 3 s */
-    .deadband_permille = 10,
+    .curve = app_brightness_curve,
+    .curve_points = APP_BRIGHTNESS_CURVE_POINTS,
+    .tick_ms = 100,    /* the shortest integration of the sensor */
+    .slow_divisor = 8, /* small changes: time constant about 0.75 s */
+    .fast_divisor = 3, /* large ones: about 0.25 s */
+    .large_q8 = 256,   /* large: a factor of 2 */
+    .confirm_ms = 400, /* a hand or a shadow passes faster */
+    .settled_q8 = 32,  /* the fast filter ends within 9 % of the light */
+    .hold_q8 = 8,      /* about 2 %: the sensor noise never moves the lamp */
     .fallback_permille = 500,
 };
 

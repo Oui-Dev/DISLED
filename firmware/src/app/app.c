@@ -190,7 +190,7 @@ static void task_als(uint32_t now_ms)
         als->errors = 0;
         als->count = count;
         als->lux_milli = als_range_lux_milli(als->step, count);
-        brightness_update_lux(&app.brightness, (als->lux_milli + 5u) / 10u);
+        brightness_update_lux(&app.brightness, als->lux_milli, now_ms);
         const uint8_t step = als_range_next(als->step, count);
         const als_range_setting_t setting = als_range_setting(step);
         if (step == als->step) {
@@ -409,7 +409,12 @@ void app_init(const fault_record_t *fault)
     }
 #endif
     app.source = CHANGE_SOURCE_BOOT;
-    brightness_init(&app.brightness, &app_brightness_config);
+    app.brightness_config = app_brightness_config;
+    for (size_t i = 0; i < APP_BRIGHTNESS_CURVE_POINTS; i++) {
+        app.brightness_curve[i] = app_brightness_curve[i];
+    }
+    app.brightness_config.curve = app.brightness_curve;
+    brightness_init(&app.brightness, &app.brightness_config);
     self_test_init(&app.self_test, &app_self_test_config);
 
     i2c_bus_init(APP_I2C_SPEED_HZ);

@@ -42,6 +42,8 @@
 
 extern const tkey_config_t app_tkey_config;
 extern const touch_config_t app_touch_config;
+#define APP_BRIGHTNESS_CURVE_POINTS 6u
+extern const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
 extern const brightness_config_t app_brightness_config;
 extern const color_config_t app_color_config;
 extern const power_config_t app_power_config;

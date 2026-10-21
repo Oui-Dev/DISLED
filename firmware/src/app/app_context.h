@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "app_config.h"
 #include "brightness.h"
 #include "bsp/bsp_fault.h"
 #include "disled_types.h"
@@ -38,6 +39,10 @@ typedef struct {
     lamp_state_t lamp;
     change_source_t source; /* cause of the latest lamp change */
     brightness_t brightness;
+    /* RAM copy of the automatic brightness settings, the curve tunable from
+     * the console. */
+    brightness_config_t brightness_config;
+    brightness_point_t brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
     touch_detector_t touch;
     color_config_t colors; /* RAM copy of the palette, tunable from the console */
     led_output_config_t output_config;

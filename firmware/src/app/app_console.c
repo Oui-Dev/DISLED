@@ -222,6 +222,29 @@ static void cmd_pulse(int argc, char **argv)
     console_printf("\r\n");
 }
 
+static void cmd_curve(int argc, char **argv)
+{
+    brightness_point_t *curve = app.brightness_curve;
+    uint32_t index = 0;
+    uint32_t lux = 0;
+    uint32_t level = 0;
+    if (argc == 4 && parse_u32(argv[1], &index) && index < APP_BRIGHTNESS_CURVE_POINTS &&
+        parse_u32(argv[2], &lux) && parse_u32(argv[3], &level) && level <= 1000u &&
+        (index == 0u || lux > curve[index - 1u].lux_milli) &&
+        (index + 1u == APP_BRIGHTNESS_CURVE_POINTS || lux < curve[index + 1u].lux_milli)) {
+        curve[index] = (brightness_point_t){ lux, (uint16_t)level };
+    } else if (argc != 1) {
+        console_printf("usage: curve [<0-%u> <millilux> <per mille>] (sorted by lux, RAM only)\r\n",
+                       (unsigned)(APP_BRIGHTNESS_CURVE_POINTS - 1u));
+        return;
+    }
+    for (size_t i = 0; i < APP_BRIGHTNESS_CURVE_POINTS; i++) {
+        console_printf(
+            "%u %lu.%03lu lx %u\r\n", (unsigned)i, (unsigned long)(curve[i].lux_milli / 1000u),
+            (unsigned long)(curve[i].lux_milli % 1000u), (unsigned)curve[i].level_permille);
+    }
+}
+
 static void cmd_cap(int argc, char **argv)
 {
     uint32_t cap = 0;
@@ -370,6 +393,7 @@ static const console_command_t commands[] = {
     { "touch", "phase|dither|recal", "touch sampling experiments (V4)", cmd_touch },
     { "palette", "[<i> <r> <g> <b>]", "show or tune the colors (RAM only)", cmd_palette },
     { "pulse", "[<r> <g> <b>]", "show or tune the PWM pulse loss (RAM only)", cmd_pulse },
+    { "curve", "[<i> <mlx> <l>]", "show or tune the automatic brightness (RAM only)", cmd_curve },
     { "cap", "<mA>|off", "override the LED current cap (V2 only)", cmd_cap },
     { "i2c", "scan|<addr> <reg>", "probe the I2C bus (light sensor)", cmd_i2c },
     { "diag", "", "diagnostics counters (as sent to the host)", cmd_diag },
