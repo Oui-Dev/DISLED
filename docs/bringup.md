@@ -76,7 +76,10 @@ with a light-meter app, a flashlight.
 | Daylight near a window | | | | |
 
 Tune the brightness curve until the automatic level looks right in each
-situation.
+situation: the console command `curve` changes it live (RAM only), then
+copy the points into `firmware/src/app/app_config.c`. The lux to note are
+those of the lamp, as the sensor reads them behind its window
+([ADR 0017](decisions/0017-automatic-brightness.md)).
 
 ## 6. Touch (V4)
 
