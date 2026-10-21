@@ -26,7 +26,8 @@ pub struct Settings {
     pub auto_bias: i8,
     /// Start at login was turned on once, at the first launch.
     pub autostart_initialized: bool,
-    /// Look for a new version of the app at start-up and once a day.
+    /// Look for a new version of the app and of the lamp firmware at
+    /// start-up and once a day.
     pub check_updates: bool,
 }
 

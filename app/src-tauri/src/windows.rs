@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The two windows: the popup under the tray icon (daily use) and the
-//! Diagnostics window (telemetry, recordings, self-test), opened on demand.
+//! The windows: the popup under the tray icon (daily use), and two opened
+//! on demand, Diagnostics (telemetry, recordings, self-test) and the lamp
+//! update (firmware).
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -12,6 +13,7 @@ use tauri_plugin_positioner::{Position, WindowExt};
 
 pub const POPUP: &str = "popup";
 pub const DIAGNOSTICS: &str = "diagnostics";
+pub const LAMP_UPDATE: &str = "lamp-update";
 
 /// A click on the tray icon first takes the focus away from an open popup,
 /// which hides it; the click itself must then not reopen it.
@@ -76,18 +78,43 @@ pub fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
+/// Brings a window that is already open to the front.
+fn raise<R: Runtime>(app: &AppHandle<R>, label: &str) -> bool {
+    let Some(window) = app.get_webview_window(label) else {
+        return false;
+    };
+    let _ = window.unminimize();
+    let _ = window.show();
+    let _ = window.set_focus();
+    true
+}
+
 pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
     hide_popup(app);
-    if let Some(window) = app.get_webview_window(DIAGNOSTICS) {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
+    if raise(app, DIAGNOSTICS) {
         return;
     }
     let built = WebviewWindowBuilder::new(app, DIAGNOSTICS, WebviewUrl::App("index.html".into()))
         .title("DISLED diagnostics")
         .inner_size(1040.0, 760.0)
         .min_inner_size(760.0, 560.0)
+        .build();
+    if let Ok(window) = built {
+        let _ = window.set_focus();
+    }
+}
+
+/// The lamp update guide: a window rather than the popup, which hides as
+/// soon as the user turns to the lamp or to Zadig.
+pub fn open_lamp_update<R: Runtime>(app: &AppHandle<R>) {
+    hide_popup(app);
+    if raise(app, LAMP_UPDATE) {
+        return;
+    }
+    let built = WebviewWindowBuilder::new(app, LAMP_UPDATE, WebviewUrl::App("index.html".into()))
+        .title("DISLED lamp update")
+        .inner_size(460.0, 560.0)
+        .resizable(false)
         .build();
     if let Ok(window) = built {
         let _ = window.set_focus();

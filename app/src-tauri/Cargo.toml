@@ -30,3 +30,11 @@ hidapi = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
+tauri-plugin-opener = "2"
+# Lamp firmware updates: the crates the updater already uses (same HTTP
+# client and TLS stack, minisign signatures).
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+minisign-verify = "0.3"
+base64 = "0.22"
+semver = "1"

@@ -39,6 +39,14 @@ npm run tauri dev
 The app finds the lamp by itself (USB IDs `1209:0001` and `1209:0002`) and
 reconnects when it is plugged back in. No driver is needed.
 
+To try a lamp update from `tauri dev`, the app runs the wchisp on the PATH
+(`cargo install wchisp@0.3.0 --locked`). It finds published firmware
+signed with the update key only; a debug build can take a local file
+instead, unsigned: start it with `DISLED_FIRMWARE_HEX` set to the path of
+a `disled-fw-X.Y.Z.hex` (the version comes from the name), then use
+**Check for updates** in the settings. Release builds ignore that
+variable.
+
 ## Features
 
 - **Tray icon**: shows the lamp (a dot in its color, a ring when it is off,
@@ -47,7 +55,8 @@ reconnects when it is plugged back in. No driver is needed.
   way in: tray click events do not exist there.
 - **Popup**: power, the four colors, automatic brightness with a "darker /
   brighter" correction, or a fixed level; a settings page (start at login,
-  updates, diagnostics, versions). It hides when it loses the focus.
+  app and lamp updates, diagnostics, versions). It hides when it loses the
+  focus.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are
@@ -58,6 +67,14 @@ reconnects when it is plugged back in. No driver is needed.
   installed app looks for a new version at start-up and once a day (a
   setting turns it off); the popup offers it and installs it on request,
   then restarts. Updates are signed; `tauri dev` never checks by itself.
+- **Lamp updates** ([ADR 0016](../docs/decisions/0016-lamp-updates.md)):
+  with the app updates, the app looks for the newest firmware release and
+  the popup offers it when the lamp runs an older one. A window guides the
+  update (BOOT and RESET on the board, the WinUSB driver once on Windows),
+  while the backend downloads the firmware, checks its signature (the
+  update key), flashes it with [wchisp](https://github.com/ch32-rs/wchisp)
+  and checks the version the lamp reports. wchisp is a separate GPL-2.0
+  program that the installers put next to the app.
 - **Diagnostics window**: connection, firmware, serial number, last fault;
   lamp controls; diagnostics counters (resets, faults, stack margin,
   errors); the production self-test; telemetry at 50 ms to 1 s with live
@@ -72,14 +89,18 @@ reconnects when it is plugged back in. No driver is needed.
 | `src-tauri/src/device.rs`           | USB worker thread: discovery, reconnection, settings applied on INFO, tray updates |
 | `src-tauri/src/settings.rs`         | Settings saved on the computer (store plugin) and the commands that apply them     |
 | `src-tauri/src/tray.rs`             | Tray icon (drawn at run time), menu and clicks                                     |
-| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics window                                     |
+| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics and lamp update windows                    |
 | `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                   |
+| `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, signature check, update steps        |
+| `src-tauri/src/wchisp.rs`           | Runs wchisp and reads its log lines (bootloader search, flash stages)              |
 | `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                  |
 | `src/lib/protocol.ts`               | TypeScript mirror of the Rust message types                                        |
 | `src/lib/device.ts`                 | Store of one window (each window has its own), settings, CSV recorder              |
 | `src/lib/updates.ts`                | Update status shown in the popup                                                   |
-| `src/components/`                   | Popup and Diagnostics views and their panels                                       |
+| `src/lib/firmware.ts`               | Lamp update status, shown by the popup and the lamp update window                  |
+| `src/components/`                   | Popup, Diagnostics and lamp update views, and their panels                         |
 | `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                |
+| `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)    |
 | `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                           |
 
 The Rust code is one Cargo workspace at the repository root: this app

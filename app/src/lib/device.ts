@@ -30,7 +30,7 @@ export interface Settings {
   /** Automatic brightness bias, percent (-50 to +50). */
   auto_bias: number;
   autostart_initialized: boolean;
-  /** Look for a new version of the app at start-up and once a day. */
+  /** Look for a new version of the app and of the lamp firmware at start-up and once a day. */
   check_updates: boolean;
 }
 

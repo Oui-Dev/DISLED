@@ -23,6 +23,13 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  # The flasher shipped with the app for the lamp updates (ADR 0016). The
+  # app reads its messages (app/src-tauri/src/wchisp.rs), and its notice
+  # names the version (app/src-tauri/third-party/wchisp): check both
+  # before changing it.
+  WCHISP_VERSION: 0.3.0
+
 jobs:
   release-please:
     runs-on: ubuntu-24.04
@@ -70,8 +77,18 @@ jobs:
           uv run pio test -e native
           uv run pio run -e debug -e release
 
+      # For the signature below: the Tauri CLI of the app.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
       - name: Attach to the draft release
         working-directory: firmware
+        env:
+          # The app installs only firmware signed with the update key, the
+          # version included (ADR 0016).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           version="${TAG#fw-v}"
           mkdir dist
@@ -82,6 +99,8 @@ jobs:
             done
           done
           (cd dist && sha256sum * > SHA256SUMS)
+          cli=$(node -p 'require("../app/package-lock.json").packages["node_modules/@tauri-apps/cli"].version')
+          npx --yes "@tauri-apps/cli@$cli" signer sign --app-version "$version" "dist/disled-fw-$version.hex"
           gh release upload "$TAG" dist/* --clobber
 
       - name: Publish the release
@@ -134,6 +153,20 @@ jobs:
       # Rust workspace at the repository root.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
+      # The lamp updates flash with wchisp, a GPL-2.0 program shipped next
+      # to the app, never linked (ADR 0016). Tauri wants it named after the
+      # target.
+      - name: wchisp
+        env:
+          # Like the app: no dependency on the Visual C++ runtime DLLs.
+          RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
+        run: |
+          cargo install "wchisp@$WCHISP_VERSION" --locked --root "$RUNNER_TEMP/wchisp"
+          triple=$(rustc -vV | sed -n 's/^host: //p')
+          ext=$([ "$RUNNER_OS" = Windows ] && echo .exe || true)
+          mkdir -p src-tauri/binaries
+          cp "$RUNNER_TEMP/wchisp/bin/wchisp$ext" "src-tauri/binaries/wchisp-$triple$ext"
+
       - name: Build the installer
         env:
           # Signs the installers for the app updater (docs/releasing.md).
@@ -142,7 +175,8 @@ jobs:
         run: |
           npm ci
           npm run tauri build -- --bundles ${{ matrix.bundles }} \
-            --config src-tauri/tauri.updater.conf.json
+            --config src-tauri/tauri.updater.conf.json \
+            --config src-tauri/tauri.wchisp.conf.json
 
       - name: Attach to the draft release
         working-directory: target/release/bundle
@@ -175,6 +209,21 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+
+      - name: Attach the wchisp source and notice
+        # GPL-2.0: the source of the wchisp in the installers goes with
+        # them. The crates.io package that `cargo install` built, checked
+        # against the checksum of the crates.io index.
+        run: |
+          crate="wchisp-$WCHISP_VERSION.crate"
+          curl -fsSL -o "$crate" "https://static.crates.io/crates/wchisp/$crate"
+          checksum=$(curl -fsSL https://index.crates.io/wc/hi/wchisp |
+            jq -r --arg version "$WCHISP_VERSION" 'select(.vers == $version) | .cksum')
+          echo "$checksum  $crate" | sha256sum --check
+          mkdir wchisp
+          mv "$crate" "wchisp/wchisp-$WCHISP_VERSION-source.tar.gz"
+          cp app/src-tauri/third-party/wchisp/README.md wchisp/wchisp-NOTICE.md
+          gh release upload "$TAG" wchisp/* --clobber
 
       - name: Attach latest.json
         run: |

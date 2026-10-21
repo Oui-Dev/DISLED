@@ -1,6 +1,7 @@
 # 0010 — Firmware updates from the desktop app
 
-- Status: Accepted
+- Status: Accepted, amended by [0016](0016-lamp-updates.md) (signed
+  firmware instead of a SHA-256 check)
 - Date: 2026-10-21
 - Supersedes: [0004](0004-firmware-updates.md)
 
