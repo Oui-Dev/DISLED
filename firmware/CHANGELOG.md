@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/Oui-Dev/DISLED/compare/fw-v0.2.1...fw-v0.3.0) (2026-10-21)
+
+
+### Features
+
+* **firmware:** automatic brightness that follows the room in about 1.5 s ([e38c88f](https://github.com/Oui-Dev/DISLED/commit/e38c88f5b6492a8302e4f0e016ae0fe0b0c375f4))
+* **firmware:** read the light sensor over its whole range ([4d9f8fa](https://github.com/Oui-Dev/DISLED/commit/4d9f8fa44199fe1648507cecd7879120e8772e8c))
+
 ## [0.2.1](https://github.com/Oui-Dev/DISLED/compare/fw-v0.2.0...fw-v0.2.1) (2026-10-20)
 
 
