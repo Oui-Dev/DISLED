@@ -3,7 +3,8 @@
 
 //! App updates (ADR 0014): each app release publishes a signed
 //! `latest.json` on GitHub. The app checks it at start-up and then once a
-//! day; the popup offers the update, installed only when the user asks.
+//! day, along with the lamp firmware; the popup offers the update,
+//! installed only when the user asks.
 
 use std::sync::Mutex;
 use std::thread;
@@ -13,6 +14,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
+use crate::firmware::{self, FirmwareState};
 use crate::settings::SettingsState;
 
 const EVENT_STATUS: &str = "update-status";
@@ -53,11 +55,17 @@ impl UpdateState {
     }
 }
 
-fn now() -> u64 {
+/// Seconds since 1970-01-01 UTC.
+pub fn now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0)
+}
+
+/// No successful check yet, or the last one is a day old.
+fn due(checked_at: Option<u64>) -> bool {
+    checked_at.is_none_or(|at| now().saturating_sub(at) >= CHECK_INTERVAL.as_secs())
 }
 
 /// Changes the status and tells every window.
@@ -146,8 +154,9 @@ pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     }
 }
 
-/// Checks at start-up, then once a day while the setting allows it. Not in
-/// debug builds: `tauri dev` would offer to install the released app.
+/// Checks the app and the lamp firmware at start-up, then once a day while
+/// the setting allows it. Not in debug builds: `tauri dev` would offer to
+/// install the released app.
 pub fn spawn_automatic_checks<R: Runtime>(app: AppHandle<R>) {
     if cfg!(debug_assertions) {
         return;
@@ -157,14 +166,13 @@ pub fn spawn_automatic_checks<R: Runtime>(app: AppHandle<R>) {
         .spawn(move || {
             thread::sleep(FIRST_CHECK_DELAY);
             loop {
-                let enabled = app.state::<SettingsState>().get().check_updates;
-                let due = app
-                    .state::<UpdateState>()
-                    .status()
-                    .checked_at
-                    .is_none_or(|at| now().saturating_sub(at) >= CHECK_INTERVAL.as_secs());
-                if enabled && due {
-                    tauri::async_runtime::block_on(check(&app));
+                if app.state::<SettingsState>().get().check_updates {
+                    if due(app.state::<UpdateState>().status().checked_at) {
+                        tauri::async_runtime::block_on(check(&app));
+                    }
+                    if due(app.state::<FirmwareState>().status().checked_at) {
+                        tauri::async_runtime::block_on(firmware::check(&app));
+                    }
                 }
                 thread::sleep(TICK);
             }

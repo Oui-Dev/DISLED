@@ -2,20 +2,25 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 //! DISLED desktop app: a tray icon with a popup for daily use, a
-//! Diagnostics window for tuning, the USB worker behind both, and the app
-//! updates.
+//! Diagnostics window for tuning, the USB worker behind both, the app
+//! updates and the lamp firmware updates.
 
 mod device;
+mod firmware;
 mod settings;
 mod tray;
 mod updates;
+mod wchisp;
 mod windows;
 
 use device::{Connection, DeviceHandle};
 use disled_protocol::{Command, SetState};
+use firmware::{FirmwareState, FirmwareStatus};
+use serde::Deserialize;
 use settings::{Settings, SettingsPatch, SettingsState};
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WindowEvent};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_opener::OpenerExt;
 use updates::{UpdateState, UpdateStatus};
 
 /// Argument of the login item: started at login, the app stays in the tray.
@@ -111,11 +116,60 @@ async fn update_install(app: AppHandle) -> Result<(), String> {
     updates::install(&app).await
 }
 
+#[tauri::command]
+fn firmware_status(firmware: State<'_, FirmwareState>) -> FirmwareStatus {
+    firmware.status()
+}
+
+#[tauri::command]
+async fn firmware_check(app: AppHandle) -> FirmwareStatus {
+    firmware::check(&app).await
+}
+
+/// Starts a lamp update; `firmware-status` events follow it.
+#[tauri::command]
+fn firmware_install(app: AppHandle) -> Result<(), String> {
+    firmware::install(&app)
+}
+
+#[tauri::command]
+fn firmware_cancel(app: AppHandle) {
+    firmware::cancel(&app);
+}
+
 /// Async on purpose: a synchronous command that creates a window deadlocks
 /// on Windows (WebView2), leaving a blank window and a frozen app.
 #[tauri::command]
 async fn open_diagnostics(app: AppHandle) {
     windows::open_diagnostics(&app);
+}
+
+/// Async for the same reason as `open_diagnostics`.
+#[tauri::command]
+async fn open_lamp_update(app: AppHandle) {
+    firmware::clear_result(&app);
+    windows::open_lamp_update(&app);
+}
+
+/// Pages the windows may open in the browser.
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum Link {
+    /// The tool that installs the WinUSB driver of the lamp's bootloader.
+    Zadig,
+    /// Flashing by hand, when the app cannot.
+    FlashingGuide,
+}
+
+#[tauri::command]
+fn open_link(app: AppHandle, link: Link) -> Result<(), String> {
+    let url = match link {
+        Link::Zadig => "https://zadig.akeo.ie/",
+        Link::FlashingGuide => "https://github.com/Oui-Dev/DISLED/blob/main/docs/flashing.md",
+    };
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -152,9 +206,12 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        // Used from Rust only (open_link): no window permission.
+        .plugin(tauri_plugin_opener::init())
         .manage(SettingsState::default())
         .manage(windows::PopupState::default())
         .manage(UpdateState::default())
+        .manage(FirmwareState::default())
         .setup(move |app| {
             // No Dock icon: the app lives in the menu bar.
             #[cfg(target_os = "macos")]
@@ -189,7 +246,13 @@ pub fn run() {
             update_status,
             update_check,
             update_install,
+            firmware_status,
+            firmware_check,
+            firmware_install,
+            firmware_cancel,
             open_diagnostics,
+            open_lamp_update,
+            open_link,
             quit
         ])
         .build(tauri::generate_context!())

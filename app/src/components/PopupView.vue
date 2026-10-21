@@ -17,6 +17,7 @@ import {
   setLamp,
   updateSettings,
 } from "../lib/device";
+import { checkFirmware, firmware, firmwareUpdateFor, openLampUpdate } from "../lib/firmware";
 import { checkForUpdates, installUpdate, updates } from "../lib/updates";
 import BrightnessControl from "./BrightnessControl.vue";
 import ColorSwatches from "./ColorSwatches.vue";
@@ -36,14 +37,17 @@ const status = computed(() => {
   }
   return state.value.on ? "On" : "Off";
 });
-const firmware = computed(() => device.info?.firmware_version ?? "–");
+const firmwareVersion = computed(() => device.info?.firmware_version ?? "–");
+/** A newer firmware for the connected lamp. */
+const lampUpdate = computed(() => firmwareUpdateFor(device.info));
 
 const installing = computed(() => updates.progress !== null);
+const checking = computed(() => updates.checking || firmware.checking);
 const updateLine = computed(() => {
   if (installing.value) {
     return `Downloading ${updates.available}… ${updates.progress} %`;
   }
-  if (updates.checking) {
+  if (checking.value) {
     return "Checking for updates…";
   }
   if (updates.error) {
@@ -61,6 +65,29 @@ const updateLine = computed(() => {
   }
   return "";
 });
+const lampLine = computed(() => {
+  if (firmware.checking) {
+    return "";
+  }
+  if (firmware.error) {
+    return `Lamp firmware check error: ${firmware.error}`;
+  }
+  if (lampUpdate.value) {
+    return `Lamp firmware ${lampUpdate.value} is available.`;
+  }
+  return "";
+});
+/** The app first: a new firmware may need a new app. */
+const footerUpdate = computed(() => {
+  if (updates.available) {
+    return `Update to ${updates.available}`;
+  }
+  return lampUpdate.value ? "Update the lamp" : null;
+});
+
+function checkAll(): Promise<unknown> {
+  return Promise.all([checkForUpdates(), checkFirmware()]);
+}
 
 onMounted(async () => {
   appVersion.value = await getVersion();
@@ -127,13 +154,18 @@ function toggleUpdateChecks(event: Event): Promise<void> {
         >
           Install {{ updates.available }} and restart
         </button>
-        <button v-else type="button" :disabled="updates.checking" @click="checkForUpdates">
-          Check for updates
+        <button v-else-if="lampUpdate" type="button" class="install" @click="openLampUpdate">
+          Update the lamp to {{ lampUpdate }}…
         </button>
+        <button v-else type="button" :disabled="checking" @click="checkAll">Check for updates</button>
         <p v-if="updateLine" class="muted small">{{ updateLine }}</p>
+        <p v-if="lampLine" class="muted small">{{ lampLine }}</p>
+        <button v-if="!connected && firmware.latest" type="button" class="link small" @click="openLampUpdate">
+          Lamp not detected? Reinstall its firmware…
+        </button>
       </div>
       <button type="button" @click="openDiagnostics">Open diagnostics…</button>
-      <p class="muted small">App {{ appVersion }} · lamp firmware {{ firmware }}</p>
+      <p class="muted small">App {{ appVersion }} · lamp firmware {{ firmwareVersion }}</p>
     </section>
 
     <p v-if="device.lastError" class="warning">{{ device.lastError }}</p>
@@ -143,12 +175,12 @@ function toggleUpdateChecks(event: Event): Promise<void> {
         {{ page === "lamp" ? "Settings" : "Back" }}
       </button>
       <button
-        v-if="updates.available && page === 'lamp'"
+        v-if="footerUpdate && page === 'lamp'"
         type="button"
         class="link update"
         @click="page = 'settings'"
       >
-        Update to {{ updates.available }}
+        {{ footerUpdate }}
       </button>
       <button type="button" class="link" @click="quitApp">Quit</button>
     </footer>
