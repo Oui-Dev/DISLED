@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "externalBin": ["binaries/wchisp"],
+    "resources": {
+      "third-party/wchisp/LICENSE": "third-party/wchisp/LICENSE",
+      "third-party/wchisp/README.md": "third-party/wchisp/README.md"
+    }
+  }
+}

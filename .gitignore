@@ -29,3 +29,5 @@ app/dist/
 /target/
 app/src-tauri/target/
 app/src-tauri/gen/schemas/
+# The wchisp sidecar, built by the release workflow (or by hand)
+app/src-tauri/binaries/
