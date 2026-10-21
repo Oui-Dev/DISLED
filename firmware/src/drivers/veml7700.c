@@ -15,50 +15,49 @@
 #define DEVICE_ID_LSB 0x81u
 #define CONF_SHUTDOWN (1u << 0) /* ALS_SD */
 
-/* Resolution at gain x2 and 800 ms, in micro-lux per count (VEML7700
- * datasheet; to be confirmed against the revision in use). Other settings
- * scale it by (2 / gain) * (800 ms / integration time). */
-#define RESOLUTION_ULX_X2_800MS 4200u
+/* ALS_CONF_0 of the current setting, shutdown bit cleared. */
+static uint16_t s_conf;
 
-static veml7700_config_t s_config;
-
-static uint8_t gain_eighths(veml7700_gain_t gain)
+/* ALS_GAIN, bits 12:11. */
+static uint16_t gain_bits(uint8_t gain_eighths)
 {
-    switch (gain) {
-        case VEML7700_GAIN_X2:
-            return 16;
-        case VEML7700_GAIN_X1:
-            return 8;
-        case VEML7700_GAIN_X1_4:
-            return 2;
-        case VEML7700_GAIN_X1_8:
+    switch (gain_eighths) {
+        case 16:
+            return 0x1u; /* x2 */
+        case 8:
+            return 0x0u; /* x1 */
+        case 2:
+            return 0x3u; /* x1/4 */
+        case 1:
         default:
-            return 1;
+            return 0x2u; /* x1/8 */
     }
 }
 
-uint16_t veml7700_integration_ms(void)
+/* ALS_IT, bits 9:6. */
+static uint16_t integration_bits(uint16_t integration_ms)
 {
-    switch (s_config.integration) {
-        case VEML7700_IT_25MS:
-            return 25;
-        case VEML7700_IT_50MS:
-            return 50;
-        case VEML7700_IT_200MS:
-            return 200;
-        case VEML7700_IT_400MS:
-            return 400;
-        case VEML7700_IT_800MS:
-            return 800;
-        case VEML7700_IT_100MS:
+    switch (integration_ms) {
+        case 25:
+            return 0xCu;
+        case 50:
+            return 0x8u;
+        case 200:
+            return 0x1u;
+        case 400:
+            return 0x2u;
+        case 800:
+            return 0x3u;
+        case 100:
         default:
-            return 100;
+            return 0x0u;
     }
 }
 
-static uint16_t configuration(void)
+/* Persistence 1, interrupt off. */
+static uint16_t configuration(uint8_t gain_eighths, uint16_t integration_ms)
 {
-    return (uint16_t)(((uint16_t)s_config.gain << 11) | ((uint16_t)s_config.integration << 6));
+    return (uint16_t)((gain_bits(gain_eighths) << 11) | (integration_bits(integration_ms) << 6));
 }
 
 static bool write_register(uint8_t reg, uint16_t value)
@@ -77,36 +76,29 @@ static bool read_register(uint8_t reg, uint16_t *value)
     return true;
 }
 
-bool veml7700_init(const veml7700_config_t *config)
+bool veml7700_init(uint8_t gain_eighths, uint16_t integration_ms)
 {
-    s_config = *config;
-
     uint16_t id;
     if (!read_register(REG_ID, &id) || (id & 0xFFu) != DEVICE_ID_LSB) {
         return false;
     }
-    /* Persistence 1, interrupt off, shutdown bit cleared (powered on). */
-    return write_register(REG_ALS_CONF, configuration());
+    s_conf = configuration(gain_eighths, integration_ms);
+    return write_register(REG_ALS_CONF, s_conf); /* shutdown bit cleared: powered on */
+}
+
+bool veml7700_configure(uint8_t gain_eighths, uint16_t integration_ms)
+{
+    s_conf = configuration(gain_eighths, integration_ms);
+    return write_register(REG_ALS_CONF, (uint16_t)(s_conf | CONF_SHUTDOWN)) &&
+           write_register(REG_ALS_CONF, s_conf);
 }
 
 bool veml7700_shutdown(void)
 {
-    return write_register(REG_ALS_CONF, (uint16_t)(configuration() | CONF_SHUTDOWN));
+    return write_register(REG_ALS_CONF, (uint16_t)(s_conf | CONF_SHUTDOWN));
 }
 
-bool veml7700_read(uint16_t *als_raw)
+bool veml7700_read(uint16_t *count)
 {
-    return read_register(REG_ALS, als_raw);
-}
-
-/* lux x 100 = raw * resolution(uLx) * (16 / eighths) * (800 / it) / 10^4
- *           = raw * SCALE / (eighths * it), SCALE = resolution * 1.28. */
-#define LUX_CENTI_SCALE ((RESOLUTION_ULX_X2_800MS * 16u * 800u) / 10000u)
-_Static_assert((RESOLUTION_ULX_X2_800MS * 16u * 800u) % 10000u == 0u, "exact scale");
-_Static_assert(65535ull * LUX_CENTI_SCALE < (1ull << 32), "32-bit product");
-
-uint32_t veml7700_lux_centi(uint16_t als_raw)
-{
-    const uint32_t denominator = (uint32_t)gain_eighths(s_config.gain) * veml7700_integration_ms();
-    return ((uint32_t)als_raw * LUX_CENTI_SCALE + denominator / 2u) / denominator;
+    return read_register(REG_ALS, count);
 }

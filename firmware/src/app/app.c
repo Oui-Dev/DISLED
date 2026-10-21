@@ -7,7 +7,7 @@
  * cooperative scheduler.
  *
  *   TouchKey samples -> touch_detector -> lamp_fsm
- *   VEML7700 lux     -> brightness
+ *   VEML7700 counts  -> als_range (lux, next range) -> brightness
  *   lamp + level     -> led_output (fade, power cap) -> LED PWM
  *   USB link + HID   -> app_host (commands, notifications, telemetry)
  */
@@ -15,6 +15,7 @@
 
 #include <stddef.h>
 
+#include "als_range.h"
 #include "app_config.h"
 #include "app_console.h"
 #include "app_context.h"
@@ -141,14 +142,17 @@ static void task_touch(uint32_t now_ms)
     }
 }
 
-/* Starts (or wakes) the sensor. The first readings after power-on are not
- * valid until an integration completes, so they are skipped. */
+/* Starts (or wakes) the sensor at its least sensitive step, which nothing
+ * indoors saturates. The first readings after power-on are not valid until
+ * an integration completes, so they are skipped. */
 static void als_start(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
 {
-    als->present = veml7700_init(&app_veml7700_config);
+    const als_range_setting_t setting = als_range_setting(ALS_RANGE_FIRST);
+    als->present = veml7700_init(setting.gain_eighths, setting.integration_ms);
+    als->step = ALS_RANGE_FIRST;
     als->errors = 0;
     als->retry_ms = now_ms + retry_delay_ms;
-    als->settle_ms = now_ms + 2u * veml7700_integration_ms();
+    als->read_ms = now_ms + 2u * setting.integration_ms;
 }
 
 /* A detection attempt (start-up, sensor lost): counted for the diagnostics. */
@@ -177,17 +181,29 @@ static void task_als(uint32_t now_ms)
         }
         return;
     }
-    if (!time_reached(now_ms, als->settle_ms)) {
+    if (!time_reached(now_ms, als->read_ms)) {
         return;
     }
 
-    uint16_t raw;
-    if (veml7700_read(&raw)) {
+    uint16_t count;
+    if (veml7700_read(&count)) {
         als->errors = 0;
-        als->raw = raw;
-        als->lux_centi = veml7700_lux_centi(raw);
-        brightness_update_lux(&app.brightness, als->lux_centi);
-        return;
+        als->count = count;
+        als->lux_milli = als_range_lux_milli(als->step, count);
+        brightness_update_lux(&app.brightness, (als->lux_milli + 5u) / 10u);
+        const uint8_t step = als_range_next(als->step, count);
+        const als_range_setting_t setting = als_range_setting(step);
+        if (step == als->step) {
+            als->read_ms = now_ms + setting.integration_ms;
+            return;
+        }
+        if (veml7700_configure(setting.gain_eighths, setting.integration_ms)) {
+            als->step = step;
+            /* The integration under way may mix both settings: skip it. */
+            als->read_ms = now_ms + 2u * setting.integration_ms;
+            return;
+        }
+        /* Not reconfigured: the next reading tries again. */
     }
     if (++als->errors >= APP_ALS_MAX_ERRORS) {
         LOG_WARN("als: sensor lost, fixed brightness until it answers again");
@@ -203,7 +219,7 @@ static rgb16_t run_self_test(uint32_t now_ms)
 {
     const self_test_inputs_t measurements = {
         .light_present = app.als.present,
-        .lux_centi = app.als.lux_centi,
+        .lux_centi = (app.als.lux_milli + 5u) / 10u,
         .touch_ready = touch_detector_state(&app.touch) != TOUCH_STATE_CALIBRATING,
         .touch_baseline = touch_detector_baseline(&app.touch),
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),

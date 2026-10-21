@@ -48,12 +48,6 @@ const touch_config_t app_touch_config = {
     .rising_touch = false, /* a finger lowers the TouchKey reading */
 };
 
-/* Gain 1/8 and 100 ms: 0.54 lx per count, saturating near 35 klx. */
-const veml7700_config_t app_veml7700_config = {
-    .gain = VEML7700_GAIN_X1_8,
-    .integration = VEML7700_IT_100MS,
-};
-
 /* Ambient light to brightness. Tune (V1): the review expects 30-100 %
  * during the day and 2-20 % in the evening. */
 /* clang-format off */
