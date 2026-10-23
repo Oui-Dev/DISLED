@@ -178,6 +178,14 @@ jobs:
             --config src-tauri/tauri.updater.conf.json \
             --config src-tauri/tauri.wchisp.conf.json
 
+      # Apple Silicon calls an app downloaded without any signature
+      # "damaged" and offers only the bin (issue #19): the bundle, wchisp
+      # included, must carry the ad-hoc signature of tauri.conf.json.
+      - name: Check the macOS signature
+        if: runner.os == 'macOS'
+        working-directory: target/release/bundle/macos
+        run: codesign --verify --deep --strict --verbose=2 DISLED.app
+
       - name: Attach to the draft release
         working-directory: target/release/bundle
         run: |
