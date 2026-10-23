@@ -115,6 +115,8 @@ variable.
 | `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                 |
 | `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)     |
 | `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                            |
+| `branding/`                         | The logo and the script that draws it with the installer images                     |
+| `src-tauri/installer/`              | Windows installer bitmaps and macOS disk image background, made by that script      |
 
 The Rust code is one Cargo workspace at the repository root: this app
 (`src-tauri`) and the shared crates (`../crates`). Its build output goes to
@@ -122,6 +124,22 @@ The Rust code is one Cargo workspace at the repository root: this app
 
 The USB access stays in Rust: the macOS web view has no WebHID, and a
 backend-owned connection keeps working once the app runs in the background.
+
+## Logo
+
+The logo is the lamp in isometric view, at the enclosure's dimensions, lit
+green. `branding/render.py` draws it (`branding/logo.png`) with the
+installer images; the app icons come from that logo. After a change, from
+the repository root:
+
+```sh
+uv run --with numpy --with pillow python app/branding/render.py
+cd app && npx tauri icon branding/logo.png
+rm -r src-tauri/icons/android src-tauri/icons/ios src-tauri/icons/64x64.png
+```
+
+The tray icon is not an image: `src-tauri/src/tray.rs` draws it at run
+time in the color of the lamp.
 
 ## Checks
 
