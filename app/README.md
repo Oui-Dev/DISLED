@@ -1,8 +1,8 @@
 # DISLED desktop app
 
 Tauri 2 app that lives in the menu bar (macOS) or the notification area
-(Windows): a dot in the color of the lamp, and a popup under it to control
-the lamp. A Diagnostics window, opened on demand, keeps the tuning tools:
+(Windows): a square in the color of the lamp, and a popup under it to
+control the lamp. A Diagnostics window, opened on demand, keeps the tuning tools:
 live telemetry, CSV recordings, lamp diagnostics and the self-test.
 
 ## Install
@@ -62,14 +62,14 @@ variable.
 
 ## Features
 
-- **Tray icon**: shows the lamp (a dot in its color, a ring when it is off,
-  a faint ring without a lamp). Left click opens the popup; right click
-  opens a menu (Open, Diagnostics, Quit). On Linux the menu is the only
-  way in: tray click events do not exist there.
-- **Popup**: power, the four colors, automatic brightness with a "darker /
-  brighter" correction, or a fixed level; a settings page (start at login,
-  app and lamp updates, diagnostics, versions). It hides when it loses the
-  focus.
+- **Tray icon**: shows the lamp (a rounded square in its color, an outline
+  when it is off, a faint outline without a lamp). Left click opens the
+  popup; right click opens a menu (Open, Diagnostics, Quit). On Linux the
+  menu is the only way in: tray click events do not exist there.
+- **Popup**: off (black, struck through) and the four colors, as rounded
+  squares; automatic brightness with a "darker / brighter" correction, or a
+  fixed level; a settings page (start at login, app and lamp updates,
+  diagnostics, versions). It hides when it loses the focus.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are

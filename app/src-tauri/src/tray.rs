@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The menu bar (macOS) or notification area (Windows) icon: a dot in the
-//! color of the lamp, a short menu, and the click that opens the popup.
+//! The menu bar (macOS) or notification area (Windows) icon: a square in
+//! the color of the lamp, a short menu, and the click that opens the popup.
 
 use disled_protocol::LampColor;
 use tauri::image::Image;
@@ -14,7 +14,11 @@ use crate::windows;
 
 const TRAY_ID: &str = "disled";
 const SIZE: u32 = 32;
-const RADIUS: f32 = 12.0;
+/// Half the side of the square, in pixels.
+const HALF: f32 = 14.0;
+/// Corner radius, over a quarter of the side: smaller corners vanish once
+/// the system shows this icon at 16 px.
+const CORNER: f32 = 8.0;
 
 /// What the icon shows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,15 +56,24 @@ fn color_rgb(color: LampColor) -> [u8; 3] {
     }
 }
 
-/// Coverage (0..1) of a pixel by a disc of radius `r`, antialiased over one
-/// pixel.
-fn disc(distance: f32, r: f32) -> f32 {
-    (r + 0.5 - distance).clamp(0.0, 1.0)
+/// Signed distance (pixels, negative inside) from a point to the edge of a
+/// square centred on the origin, of half side `half` and corner radius `r`.
+fn square_distance(dx: f32, dy: f32, half: f32, r: f32) -> f32 {
+    let qx = dx.abs() - (half - r);
+    let qy = dy.abs() - (half - r);
+    qx.max(0.0).hypot(qy.max(0.0)) + qx.max(qy).min(0.0) - r
 }
 
-/// Renders the icon: a dot in the lamp color with a darker rim (so warm
-/// white shows on a light menu bar), a grey ring when the lamp is off, a
-/// faint ring when no lamp is connected.
+/// Coverage (0..1) of a pixel by the square shrunk by `inset`, antialiased
+/// over one pixel.
+fn square(dx: f32, dy: f32, inset: f32) -> f32 {
+    let distance = square_distance(dx, dy, HALF - inset, (CORNER - inset).max(0.0));
+    (0.5 - distance).clamp(0.0, 1.0)
+}
+
+/// Renders the icon: a square in the lamp color with a darker rim (so warm
+/// white shows on a light menu bar), a grey outline when the lamp is off, a
+/// faint outline when no lamp is connected.
 pub fn render(look: Look) -> Image<'static> {
     let mut rgba = vec![0u8; (SIZE * SIZE * 4) as usize];
     let center = (SIZE as f32 - 1.0) / 2.0;
@@ -68,15 +81,14 @@ pub fn render(look: Look) -> Image<'static> {
         for x in 0..SIZE {
             let dx = x as f32 - center;
             let dy = y as f32 - center;
-            let distance = (dx * dx + dy * dy).sqrt();
-            let outer = disc(distance, RADIUS);
+            let outer = square(dx, dy, 0.0);
             if outer == 0.0 {
                 continue;
             }
             let (rgb, alpha) = match look {
                 Look::On(color) => {
                     let fill = color_rgb(color);
-                    let inner = disc(distance, RADIUS - 1.5);
+                    let inner = square(dx, dy, 1.5);
                     // Blend the fill into a rim at 60 % brightness.
                     let rgb = fill.map(|c| {
                         let rim = f32::from(c) * 0.6;
@@ -85,7 +97,7 @@ pub fn render(look: Look) -> Image<'static> {
                     (rgb, outer)
                 }
                 Look::Off | Look::NoLamp => {
-                    let hole = disc(distance, RADIUS - 2.5);
+                    let hole = square(dx, dy, 2.5);
                     let ring = outer * (1.0 - hole);
                     let strength = if look == Look::Off { 1.0 } else { 0.55 };
                     ([0x9a, 0xa0, 0xa6], ring * strength)
@@ -153,18 +165,21 @@ mod tests {
     }
 
     #[test]
-    fn a_lit_lamp_is_a_full_dot_in_its_color() {
+    fn a_lit_lamp_is_a_full_square_in_its_color() {
         let image = render(Look::On(LampColor::Red));
         assert_eq!(pixel(&image, 16, 16), [0xe7, 0x4c, 0x3c, 255]);
-        assert_eq!(pixel(&image, 0, 0)[3], 0, "corners stay transparent");
+        assert_eq!(pixel(&image, 0, 0)[3], 0, "the margin stays transparent");
+        assert_eq!(pixel(&image, 5, 5)[3], 255, "a square, not a dot");
+        let corner = pixel(&image, 4, 4)[3];
+        assert!(corner > 0 && corner < 255, "the corners are rounded");
     }
 
     #[test]
-    fn an_unlit_lamp_is_a_ring() {
+    fn an_unlit_lamp_is_an_outline() {
         let image = render(Look::Off);
         assert_eq!(pixel(&image, 16, 16)[3], 0, "the middle is empty");
-        assert!(pixel(&image, 16, 4)[3] > 200, "the ring is drawn");
+        assert!(pixel(&image, 16, 3)[3] > 200, "the outline is drawn");
         let faint = render(Look::NoLamp);
-        assert!(pixel(&faint, 16, 4)[3] < pixel(&image, 16, 4)[3]);
+        assert!(pixel(&faint, 16, 3)[3] < pixel(&image, 16, 3)[3]);
     }
 }
