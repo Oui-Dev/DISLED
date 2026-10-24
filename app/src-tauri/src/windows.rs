@@ -172,8 +172,9 @@ pub fn open_lamp_update<R: Runtime>(app: &AppHandle<R>) {
     if raise(app, LAMP_UPDATE) {
         return;
     }
+    // The longest step, the Windows driver in French, fits without scrolling.
     let built = builder(app, LAMP_UPDATE)
-        .inner_size(460.0, 560.0)
+        .inner_size(480.0, 640.0)
         .resizable(false)
         .build();
     if let Ok(window) = built {

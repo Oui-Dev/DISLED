@@ -19,7 +19,6 @@ declare module 'vue' {
     DiagnosticsTelemetry: typeof import('./components/diagnostics/DiagnosticsTelemetry.vue')['default']
     LampBrightness: typeof import('./components/lamp/LampBrightness.vue')['default']
     LampColorPicker: typeof import('./components/lamp/LampColorPicker.vue')['default']
-    LampUpdateView: typeof import('./components/LampUpdateView.vue')['default']
     PopupSettings: typeof import('./components/popup/PopupSettings.vue')['default']
     PopupUpdates: typeof import('./components/popup/PopupUpdates.vue')['default']
     UAlert: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
@@ -31,9 +30,12 @@ declare module 'vue' {
     UFormField: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     UIcon: typeof import('./../node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UModal: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
+    UpdateStepDetail: typeof import('./components/update/UpdateStepDetail.vue')['default']
+    UpdateWaiting: typeof import('./components/update/UpdateWaiting.vue')['default']
     URadioGroup: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/RadioGroup.vue')['default']
     USelect: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USlider: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Slider.vue')['default']
     USwitch: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
+    UTimeline: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Timeline.vue')['default']
   }
 }

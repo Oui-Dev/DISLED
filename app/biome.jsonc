@@ -31,6 +31,14 @@
       "preset": "recommended"
     }
   },
+  "overrides": [
+    {
+      // The `scope` of vue-i18n's <i18n-t> is a prop, not the table header
+      // attribute this rule guards; the app has no data tables.
+      "includes": ["**/*.vue"],
+      "linter": { "rules": { "a11y": { "noHeaderScope": "off" } } }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single",

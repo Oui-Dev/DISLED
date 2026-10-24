@@ -33,7 +33,7 @@ const WINDOWS: Record<string, Window> = {
     stores: [useLampStore, useTelemetryStore, useDiagnosticsStore],
   },
   'lamp-update': {
-    view: defineAsyncComponent(() => import('./components/LampUpdateView.vue')),
+    view: defineAsyncComponent(() => import('@/views/LampUpdateView.vue')),
     stores: [useLampStore, useFirmwareStore],
   },
 };

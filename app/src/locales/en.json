@@ -154,6 +154,53 @@
     "lux": "{value} lx",
     "current": "{current} / {cap} mA"
   },
+  "lampUpdate": {
+    "title": "Lamp update",
+    "noFirmware": "No firmware to install.",
+    "notFound": "No firmware found: {detail}",
+    "noLamp": "No lamp connected. A lamp that does not start can still get firmware {version} through its update mode.",
+    "connecting": "Connecting to the lamp…",
+    "newer": "Firmware {current} → {next}",
+    "current": "The lamp runs firmware {version}.",
+    "already": "The lamp already runs firmware {version}.",
+    "intro": "It takes about a minute. You will open the lamp: its update mode starts with two buttons on its board, {boot} and {reset}. Keep the lamp plugged into this computer.",
+    "steps": {
+      "download": "Download the firmware",
+      "bootloader": "Put the lamp in update mode",
+      "install": "Install the firmware",
+      "restart": "Restart the lamp"
+    },
+    "downloading": "Downloading firmware {version} and checking its signature…",
+    "restartingInUpdateMode": "The lamp restarts in update mode…",
+    "buttons": "Open the lamp. Hold {boot}, press and release {reset}, then release {boot}.",
+    "waitingForBootloader": "Waiting for the lamp in update mode…",
+    "driver": {
+      "intro": "Windows needs a driver for the update mode, once:",
+      "download": "Download {zadig} and run it.",
+      "options": "In {options}, choose {listAll}.",
+      "select": "Select the device whose USB ID is {id} (or {otherId}).",
+      "install": "Choose {winusb}, then {install} (or {replace}).",
+      "waiting": "The update goes on by itself once the driver is installed."
+    },
+    "noPermission": "This computer does not let the app open the lamp in update mode. Reinstall the DISLED package (it adds the access rule), then start the update mode again.",
+    "severalBootloaders": "Several devices are in update mode. Unplug them all but the lamp.",
+    "otherChip": "A device that is not a DISLED lamp is in update mode ({chip}). Unplug it.",
+    "stages": {
+      "erasing": "Erasing the old firmware…",
+      "writing": "Writing the new firmware…",
+      "verifying": "Checking what was written…",
+      "restarting": "Restarting the lamp…"
+    },
+    "doNotUnplug": "Do not unplug the lamp.",
+    "waitingForLamp": "The lamp starts its new firmware: it takes a few seconds.",
+    "done": "Done: the lamp runs firmware {version}. You can put it back together.",
+    "failed": "The update stopped: {detail}",
+    "notDamaged": "The lamp is not damaged: its update mode always works. Try again, or follow the {guide}.",
+    "guide": "flashing guide",
+    "start": "Start the update",
+    "reinstall": "Install it again",
+    "retry": "Try again"
+  },
   "errors": {
     "backend": "Error: {detail}",
     "rejected": "The lamp rejected command {command}: {error}",

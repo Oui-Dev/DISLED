@@ -154,6 +154,53 @@
     "lux": "{value} lx",
     "current": "{current} / {cap} mA"
   },
+  "lampUpdate": {
+    "title": "Mise à jour de la lampe",
+    "noFirmware": "Aucun firmware à installer.",
+    "notFound": "Aucun firmware trouvé : {detail}",
+    "noLamp": "Aucune lampe connectée. Une lampe qui ne démarre plus peut quand même recevoir le firmware {version} par son mode mise à jour.",
+    "connecting": "Connexion à la lampe…",
+    "newer": "Firmware {current} → {next}",
+    "current": "La lampe utilise le firmware {version}.",
+    "already": "La lampe utilise déjà le firmware {version}.",
+    "intro": "Cela prend environ une minute. Vous allez ouvrir la lampe : son mode mise à jour se lance avec deux boutons de sa carte, {boot} et {reset}. Laissez la lampe branchée à cet ordinateur.",
+    "steps": {
+      "download": "Télécharger le firmware",
+      "bootloader": "Passer la lampe en mode mise à jour",
+      "install": "Installer le firmware",
+      "restart": "Redémarrer la lampe"
+    },
+    "downloading": "Téléchargement du firmware {version} et vérification de sa signature…",
+    "restartingInUpdateMode": "La lampe redémarre en mode mise à jour…",
+    "buttons": "Ouvrez la lampe. Maintenez {boot}, appuyez sur {reset} puis relâchez-le, et relâchez enfin {boot}.",
+    "waitingForBootloader": "En attente de la lampe en mode mise à jour…",
+    "driver": {
+      "intro": "Windows a besoin d’un pilote pour le mode mise à jour, une seule fois :",
+      "download": "Téléchargez {zadig} et lancez-le.",
+      "options": "Dans {options}, choisissez {listAll}.",
+      "select": "Sélectionnez le périphérique dont l’ID USB est {id} (ou {otherId}).",
+      "install": "Choisissez {winusb}, puis {install} (ou {replace}).",
+      "waiting": "La mise à jour reprend d’elle-même une fois le pilote installé."
+    },
+    "noPermission": "Cet ordinateur ne laisse pas l’app ouvrir la lampe en mode mise à jour. Réinstallez le paquet DISLED (il ajoute la règle d’accès), puis relancez le mode mise à jour.",
+    "severalBootloaders": "Plusieurs périphériques sont en mode mise à jour. Débranchez-les tous sauf la lampe.",
+    "otherChip": "Un périphérique qui n’est pas une lampe DISLED est en mode mise à jour ({chip}). Débranchez-le.",
+    "stages": {
+      "erasing": "Effacement de l’ancien firmware…",
+      "writing": "Écriture du nouveau firmware…",
+      "verifying": "Vérification de ce qui a été écrit…",
+      "restarting": "Redémarrage de la lampe…"
+    },
+    "doNotUnplug": "Ne débranchez pas la lampe.",
+    "waitingForLamp": "La lampe démarre son nouveau firmware : cela prend quelques secondes.",
+    "done": "Terminé : la lampe utilise le firmware {version}. Vous pouvez la refermer.",
+    "failed": "La mise à jour s’est arrêtée : {detail}",
+    "notDamaged": "La lampe n’est pas abîmée : son mode mise à jour fonctionne toujours. Réessayez, ou suivez le {guide}.",
+    "guide": "guide de flashage",
+    "start": "Lancer la mise à jour",
+    "reinstall": "Le réinstaller",
+    "retry": "Réessayer"
+  },
   "errors": {
     "backend": "Erreur : {detail}",
     "rejected": "La lampe a refusé la commande {command} : {error}",
