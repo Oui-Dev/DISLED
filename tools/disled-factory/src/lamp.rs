@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use disled_protocol::{
     self as protocol, Command, DecodeError, Message, PAYLOAD_SIZE, REPORT_ID_COMMAND,
-    REPORT_ID_MESSAGE,
+    REPORT_ID_MESSAGE, USB_VENDOR_ID,
 };
 use hidapi::{HidApi, HidDevice};
 
@@ -18,9 +18,16 @@ pub struct Lamp {
     seq: u8,
 }
 
+/// Lists the HID devices of the lamp's vendor only: hidapi skips the other
+/// devices before reading their strings, so a slow one (a sleeping wireless
+/// receiver took 15 s per request) cannot stall the scan.
+fn scan(api: &mut HidApi) -> bool {
+    api.reset_devices().is_ok() && api.add_devices(USB_VENDOR_ID, 0).is_ok()
+}
+
 /// A lamp is connected.
 pub fn present(api: &mut HidApi) -> bool {
-    api.refresh_devices().is_ok()
+    scan(api)
         && api
             .device_list()
             .any(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))
@@ -29,7 +36,9 @@ pub fn present(api: &mut HidApi) -> bool {
 impl Lamp {
     /// The connected lamp, if there is one.
     pub fn open(api: &mut HidApi) -> Option<Self> {
-        api.refresh_devices().ok()?;
+        if !scan(api) {
+            return None;
+        }
         let info = api
             .device_list()
             .find(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))?;
