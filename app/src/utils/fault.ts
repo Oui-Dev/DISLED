@@ -19,7 +19,7 @@ export type FaultSummary =
 const ASSERTION = 0x0a55;
 
 /** A 32-bit register value, as the RISC-V tools print it. */
-export function hex32(value: number): string {
+function hex32(value: number): string {
   return `0x${value.toString(16).padStart(8, '0')}`;
 }
 

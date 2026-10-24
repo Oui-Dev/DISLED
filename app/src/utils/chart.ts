@@ -15,7 +15,7 @@ export interface ChartSeries {
 export type ChartRow = Record<string, number | string>;
 
 /** The lamp's uptime as h:mm:ss.s, the x value of the charts. */
-export function formatUptime(ms: number): string {
+function formatUptime(ms: number): string {
   const tenths = Math.floor(ms / 100);
   const seconds = Math.floor(tenths / 10) % 60;
   const minutes = Math.floor(tenths / 600) % 60;
