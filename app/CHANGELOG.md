@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.4.0...app-v0.5.0) (2026-10-24)
+
+
+### Features
+
+* **app:** logo of the lamp on the app and its installers ([95b1244](https://github.com/Oui-Dev/DISLED/commit/95b124405ff349f470dd356b6d9a145634246b81))
+* **app:** rounded squares for the tray icon and swatches, and an off swatch ([64b92f5](https://github.com/Oui-Dev/DISLED/commit/64b92f58dba1b57e5b277a918e793dc490082d31))
+
+
+### Bug Fixes
+
+* **app:** ensure exported CSV ends with newline ([6650786](https://github.com/Oui-Dev/DISLED/commit/6650786ca43e8b4960111b30931f79798ba36723))
+* **app:** sign the macOS app ad hoc so that it opens on Apple Silicon ([74ba1b4](https://github.com/Oui-Dev/DISLED/commit/74ba1b47e7bb89746912503c918719d593f1a4d4)), closes [#19](https://github.com/Oui-Dev/DISLED/issues/19)
+
 ## [0.4.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.3.0...app-v0.4.0) (2026-10-21)
 
 
