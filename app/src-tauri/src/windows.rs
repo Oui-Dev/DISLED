@@ -8,11 +8,14 @@
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+use disled_protocol::Command;
 use tauri::{
     AppHandle, LogicalSize, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent,
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
+use crate::device::DeviceHandle;
 use crate::i18n::{Locale, LocaleState};
 use crate::settings::SettingsState;
 
@@ -168,6 +171,17 @@ pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
         .min_inner_size(760.0, 560.0)
         .build();
     if let Ok(window) = built {
+        // The window starts the telemetry: a lamp streams until told to
+        // stop, so the stream ends with the window.
+        let owner = app.clone();
+        window.on_window_event(move |event| {
+            if let WindowEvent::Destroyed = event
+                && let Some(device) = owner.try_state::<DeviceHandle>()
+            {
+                // Without a lamp, nothing streams.
+                let _ = device.send(Command::SetTelemetry { period_ms: 0 });
+            }
+        });
         let _ = window.set_focus();
     }
 }
