@@ -14,7 +14,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 use disled_protocol::{
     self as protocol, Command, DecodeError, Info, Message, PAYLOAD_SIZE, PROTOCOL_MAJOR,
-    REPORT_ID_COMMAND, REPORT_ID_MESSAGE, USB_PRODUCT_ID_DEBUG,
+    REPORT_ID_COMMAND, REPORT_ID_MESSAGE, USB_PRODUCT_ID_DEBUG, USB_VENDOR_ID,
 };
 
 use crate::settings::SettingsState;
@@ -141,7 +141,11 @@ impl Worker {
     }
 
     fn open(&mut self, api: &mut HidApi) -> Option<HidDevice> {
-        api.refresh_devices().ok()?;
+        // Only the lamp's vendor: hidapi skips the other devices before
+        // reading their strings, so a slow one (a sleeping wireless receiver
+        // took 15 s per request) cannot keep the lamp out of sight.
+        api.reset_devices().ok()?;
+        api.add_devices(USB_VENDOR_ID, 0).ok()?;
         let info = api
             .device_list()
             .find(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))?;
