@@ -6,10 +6,10 @@
   brightness, and the state details.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import { device } from "../lib/device";
-import BrightnessControl from "./BrightnessControl.vue";
-import ColorSwatches from "./ColorSwatches.vue";
+import { computed } from 'vue';
+import { device } from '../lib/device';
+import BrightnessControl from './BrightnessControl.vue';
+import ColorSwatches from './ColorSwatches.vue';
 
 const state = computed(() => device.state);
 </script>
@@ -24,7 +24,7 @@ const state = computed(() => device.state);
       </div>
       <BrightnessControl />
       <p class="muted status">
-        state #{{ state.state_seq }} · last change: {{ state.source.replace("_", " ") }} · USB
+        state #{{ state.state_seq }} · last change: {{ state.source.replace('_', ' ') }} · USB
         {{ state.link }}
       </p>
     </template>

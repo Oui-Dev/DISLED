@@ -6,8 +6,8 @@
   checks its light sensor and its touch, and reports.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import { device, startSelfTest } from "../lib/device";
+import { computed } from 'vue';
+import { device, startSelfTest } from '../lib/device';
 
 const supported = computed(() => device.info?.self_test ?? false);
 const test = computed(() => device.selfTest);
@@ -18,10 +18,18 @@ const checks = computed(() => {
     return [];
   }
   return [
-    { label: "Light sensor", ok: r.light_sensor_ok, detail: `${(r.lux_centi / 100).toFixed(1)} lx` },
-    { label: "Touch at rest", ok: r.touch_idle_ok, detail: `baseline ${r.touch_baseline}` },
-    { label: "Touch on the lid", ok: r.touch_pressed, detail: `largest drop ${r.touch_peak_permille} ‰` },
-    { label: "Test completed", ok: r.completed, detail: "" },
+    {
+      label: 'Light sensor',
+      ok: r.light_sensor_ok,
+      detail: `${(r.lux_centi / 100).toFixed(1)} lx`,
+    },
+    { label: 'Touch at rest', ok: r.touch_idle_ok, detail: `baseline ${r.touch_baseline}` },
+    {
+      label: 'Touch on the lid',
+      ok: r.touch_pressed,
+      detail: `largest drop ${r.touch_peak_permille} ‰`,
+    },
+    { label: 'Test completed', ok: r.completed, detail: '' },
   ];
 });
 </script>
@@ -33,15 +41,15 @@ const checks = computed(() => {
     <p v-else-if="!supported" class="muted">This lamp firmware has no self-test.</p>
     <template v-else>
       <p class="muted">
-        The lamp shows red, green, blue and warm white (check them), then glows blue: touch the lid within 10
-        s.
+        The lamp shows red, green, blue and warm white (check them), then glows blue: touch the lid
+        within 10 s.
       </p>
       <button type="button" :disabled="test.running" @click="startSelfTest">
-        {{ test.running ? "Running…" : "Run the self-test" }}
+        {{ test.running ? 'Running…' : 'Run the self-test' }}
       </button>
       <ul v-if="checks.length" class="checks">
         <li v-for="check in checks" :key="check.label" :class="check.ok ? 'ok' : 'fail'">
-          <span class="mark">{{ check.ok ? "✓" : "✗" }}</span>
+          <span class="mark">{{ check.ok ? '✓' : '✗' }}</span>
           {{ check.label }}
           <span class="muted">{{ check.detail }}</span>
         </li>

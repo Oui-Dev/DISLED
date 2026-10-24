@@ -4,9 +4,9 @@
 // App updates: the backend checks GitHub at start-up and then once a day;
 // the popup shows the result and installs the update when asked.
 
-import { reactive } from "vue";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import { reactive } from 'vue';
 
 export interface UpdateStatus {
   /** A check is running. */
@@ -30,13 +30,13 @@ export const updates = reactive<UpdateStatus>({
 });
 
 export async function checkForUpdates(): Promise<void> {
-  Object.assign(updates, await invoke<UpdateStatus>("update_check"));
+  Object.assign(updates, await invoke<UpdateStatus>('update_check'));
 }
 
 /** Downloads and installs the update; the app restarts when it is done. */
 export async function installUpdate(): Promise<void> {
   try {
-    await invoke("update_install");
+    await invoke('update_install');
   } catch {
     // The status event carries the error.
   }
@@ -44,8 +44,8 @@ export async function installUpdate(): Promise<void> {
 
 /** Subscribes to the backend events. Call once at start-up. */
 export async function startUpdates(): Promise<void> {
-  await listen<UpdateStatus>("update-status", (event) => {
+  await listen<UpdateStatus>('update-status', (event) => {
     Object.assign(updates, event.payload);
   });
-  Object.assign(updates, await invoke<UpdateStatus>("update_status"));
+  Object.assign(updates, await invoke<UpdateStatus>('update_status'));
 }

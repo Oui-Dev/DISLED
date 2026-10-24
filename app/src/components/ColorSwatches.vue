@@ -6,17 +6,17 @@
   reflects the last STATE message.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import { device, setLamp } from "../lib/device";
-import { LAMP_COLORS, type LampColor } from "../lib/protocol";
+import { computed } from 'vue';
+import { device, setLamp } from '../lib/device';
+import { LAMP_COLORS, type LampColor } from '../lib/protocol';
 
 defineProps<{ labels?: boolean }>();
 
 const SWATCHES: Record<LampColor, { label: string; css: string }> = {
-  green: { label: "Green", css: "#2ecc71" },
-  orange: { label: "Orange", css: "#f39c12" },
-  red: { label: "Red", css: "#e74c3c" },
-  warm_white: { label: "Warm white", css: "#ffe2b8" },
+  green: { label: 'Green', css: '#2ecc71' },
+  orange: { label: 'Orange', css: '#f39c12' },
+  red: { label: 'Red', css: '#e74c3c' },
+  warm_white: { label: 'Warm white', css: '#ffe2b8' },
 };
 
 const state = computed(() => device.state);

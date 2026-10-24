@@ -7,11 +7,11 @@
   applied to the lamp at every connection.
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { device, updateSettings, type SettingsPatch } from "../lib/device";
+import { computed, ref, watch } from 'vue';
+import { device, type SettingsPatch, updateSettings } from '../lib/device';
 
 const settings = computed(() => device.settings);
-const auto = computed(() => settings.value?.brightness_mode !== "manual");
+const auto = computed(() => settings.value?.brightness_mode !== 'manual');
 /* Unknown until INFO arrives: assume support rather than flash a warning. */
 const biasSupported = computed(() => device.info?.auto_bias ?? true);
 
@@ -44,13 +44,15 @@ function toggleAuto(): void {
   if (auto.value) {
     // Keep the brightness the eye sees: manual starts at the applied level.
     const applied = device.state?.applied_level ?? level.value;
-    void updateSettings({ brightness_mode: "manual", manual_level: Math.max(1, applied) });
+    void updateSettings({ brightness_mode: 'manual', manual_level: Math.max(1, applied) });
   } else {
-    void updateSettings({ brightness_mode: "auto" });
+    void updateSettings({ brightness_mode: 'auto' });
   }
 }
 
-const biasLabel = computed(() => (bias.value === 0 ? "none" : `${bias.value > 0 ? "+" : ""}${bias.value} %`));
+const biasLabel = computed(() =>
+  bias.value === 0 ? 'none' : `${bias.value > 0 ? '+' : ''}${bias.value} %`,
+);
 </script>
 
 <template>
@@ -123,7 +125,7 @@ const biasLabel = computed(() => (bias.value === 0 ? "none" : `${bias.value > 0 
   align-items: center;
   gap: 6px;
 }
-input[type="range"] {
+input[type='range'] {
   flex: 1;
   min-width: 0;
 }

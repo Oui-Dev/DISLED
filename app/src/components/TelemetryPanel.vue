@@ -6,33 +6,40 @@
   thermal V2) and CSV recordings of it.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import LineChart from "./LineChart.vue";
-import { device, exportRecording, history, setTelemetry, startRecording, stopRecording } from "../lib/device";
+import { computed } from 'vue';
+import {
+  device,
+  exportRecording,
+  history,
+  setTelemetry,
+  startRecording,
+  stopRecording,
+} from '../lib/device';
+import LineChart from './LineChart.vue';
 
 const PERIODS = [
-  { label: "Off", ms: 0 },
-  { label: "50 ms", ms: 50 },
-  { label: "100 ms", ms: 100 },
-  { label: "250 ms", ms: 250 },
-  { label: "1 s", ms: 1000 },
+  { label: 'Off', ms: 0 },
+  { label: '50 ms', ms: 50 },
+  { label: '100 ms', ms: 100 },
+  { label: '250 ms', ms: 250 },
+  { label: '1 s', ms: 1000 },
 ];
 
 const t = computed(() => device.telemetry);
 
 const touchSeries = computed(() => [
-  { label: "touch average", color: "#3498db", values: history.value.map((s) => s.touch_value) },
-  { label: "baseline", color: "#95a5a6", values: history.value.map((s) => s.touch_baseline) },
+  { label: 'touch average', color: '#3498db', values: history.value.map((s) => s.touch_value) },
+  { label: 'baseline', color: '#95a5a6', values: history.value.map((s) => s.touch_baseline) },
 ]);
 const deltaSeries = computed(() => [
   {
-    label: "drop below baseline",
-    color: "#e67e22",
+    label: 'drop below baseline',
+    color: '#e67e22',
     values: history.value.map((s) => s.touch_delta_permille),
   },
 ]);
 const lightSeries = computed(() => [
-  { label: "ambient light", color: "#f1c40f", values: history.value.map((s) => s.lux_centi / 100) },
+  { label: 'ambient light', color: '#f1c40f', values: history.value.map((s) => s.lux_centi / 100) },
 ]);
 
 function onPeriod(event: Event): void {
@@ -44,7 +51,11 @@ function onPeriod(event: Event): void {
   <section class="panel">
     <div class="heading">
       <h2>Telemetry</h2>
-      <select :value="device.telemetryPeriodMs" :disabled="!device.connection.connected" @change="onPeriod">
+      <select
+        :value="device.telemetryPeriodMs"
+        :disabled="!device.connection.connected"
+        @change="onPeriod"
+      >
         <option v-for="p in PERIODS" :key="p.ms" :value="p.ms">{{ p.label }}</option>
       </select>
     </div>
@@ -70,7 +81,7 @@ function onPeriod(event: Event): void {
         </div>
         <div>
           <dt>Duty R/G/B</dt>
-          <dd>{{ t.duty.join(" / ") }}</dd>
+          <dd>{{ t.duty.join(' / ') }}</dd>
         </div>
       </dl>
 
@@ -80,7 +91,9 @@ function onPeriod(event: Event): void {
     </template>
 
     <div class="recording">
-      <button v-if="!device.recording" type="button" :disabled="!t" @click="startRecording">Record</button>
+      <button v-if="!device.recording" type="button" :disabled="!t" @click="startRecording">
+        Record
+      </button>
       <button v-else type="button" class="stop" @click="stopRecording">Stop</button>
       <span class="muted">{{ device.recordedRows }} rows</span>
       <button

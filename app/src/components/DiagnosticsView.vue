@@ -6,11 +6,11 @@
   self-test, live telemetry and recordings.
 -->
 <script setup lang="ts">
-import DeviceHeader from "./DeviceHeader.vue";
-import DiagnosticsPanel from "./DiagnosticsPanel.vue";
-import LampPanel from "./LampPanel.vue";
-import SelfTestPanel from "./SelfTestPanel.vue";
-import TelemetryPanel from "./TelemetryPanel.vue";
+import DeviceHeader from './DeviceHeader.vue';
+import DiagnosticsPanel from './DiagnosticsPanel.vue';
+import LampPanel from './LampPanel.vue';
+import SelfTestPanel from './SelfTestPanel.vue';
+import TelemetryPanel from './TelemetryPanel.vue';
 </script>
 
 <template>
