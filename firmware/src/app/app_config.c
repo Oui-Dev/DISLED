@@ -15,17 +15,25 @@
  * and charge 3 the reading sits mid-scale (about 2600 of 4095, noise about
  * +-6 per mille). The WCH example values (charge 16, 7.5 cycles) saturate.
  *
- * Closed enclosure, Windows PC on an earthed monitor hub: a finger on the
- * lid lowers the reading by 44-57 per mille; a hand approaching the lid by
- * up to 11; holding the USB plug with the other hand doubles the drop (64-91),
- * as the body then shares the board ground. The thresholds sit between the
- * hand approaching and a one-hand touch.
+ * Thresholds, measured on the final board (second board, ring 28.5/17.5 mm,
+ * closed enclosure, desktop PC USB, 2026-10-24). Idle reading about 2100,
+ * noise about 4.5 per mille (single windows up to 25); the LED, off to
+ * 125 mA, shifts nothing. A light touch lowers the reading by 77-188 per
+ * mille at its peak (least on the center, over the hole of the ring), a
+ * firm one by 120-200, a held one by about 170. A hand
+ * held 1 cm above the lid lowers it by 60-80 (peaks to 100), at 2 cm by
+ * 40-55, at 5 cm by about 3; a hand passing 1 cm above peaks at 33-58.
  *
- * A hand resting near the lid between light taps holds the signal at
- * 20-30 per mille, with the taps peaking at 40-80 on top: the rise above
- * the floor separates them. Replayed on a 33 s recording of such taps
- * (20 ms windows), it found 22 taps where the fixed thresholds merged them
- * into 17, without any false long press. */
+ * The first board's thresholds (press 28, rise 18) took a hand at 1-2 cm
+ * and every pass for a touch, and a hand held 2 s over the lid for a long
+ * press. A hand nears the lid more slowly than a finger lands on it, so the
+ * floor follows the hand and its rise stays small: the rise above the floor
+ * now does most of the sorting. Replayed on two labelled recordings (20 ms
+ * windows: the calibration, then a check after flashing; 21 taps, 3 long
+ * presses, hands held at 1 and 2 cm, 6 passes), these settings found every
+ * tap and long press, and no hand held or passing; idle and the LED steps
+ * gave nothing. Press 55-70 and rise 45-55 gave the same result; a 60 ms
+ * debounce missed light taps on the center, where the ring has its hole. */
 const tkey_config_t app_tkey_config = {
     .charge_time = 3,
     .discharge_time = 8,
@@ -37,10 +45,10 @@ const touch_config_t app_touch_config = {
     .calibration_windows = 8,                   /* 160 ms */
     .baseline_shift = 8,                        /* about 5 s time constant */
     .press_permille = APP_TOUCH_PRESS_PERMILLE, /* see the TouchKey note; recheck on the Mac (V4) */
-    .release_permille = 16,
-    .press_rise_permille = 18, /* a hand resting near the lid reads 20-30 */
+    .release_permille = 34,
+    .press_rise_permille = 50, /* a hand nearing the lid rises less: see the note */
     .proximity_permille = 10,  /* rest noise and the LED on/off shift stay below */
-    .debounce_ms = 40,         /* 60 missed light 60 ms taps; noise stays far below */
+    .debounce_ms = 40,         /* 60 missed light taps on the center; noise stays far below */
     .rearm_ms = 100,           /* fast taps came 260 ms apart */
     .long_press_ms = 2000,
     .object_ms = 10000,
@@ -116,8 +124,8 @@ const power_config_t app_power_config = {
 /* Self-test: colors at 50 % and the blue glow at 20 % perceived, in linear
  * light (the CIE table of color.c). The white step is the palette's warm
  * white at 50 % (63000/58000/1600 x 12071/65535): equal channels looked
- * pink. Idle TouchKey reading: about 2600 counts on the first board, 4095
- * when saturated. */
+ * pink. Idle TouchKey reading: about 2600 counts on the first board, 2100
+ * on the final one, 4095 when saturated. */
 const self_test_config_t app_self_test_config = {
     .color_ms = 1500,
     .touch_wait_ms = 10000,

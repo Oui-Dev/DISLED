@@ -52,6 +52,6 @@ extern const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT];
 extern const self_test_config_t app_self_test_config;
 
 /* Touch press threshold, shared by the detector and the self-test. */
-#define APP_TOUCH_PRESS_PERMILLE 28u
+#define APP_TOUCH_PRESS_PERMILLE 60u
 
 #endif /* DISLED_APP_CONFIG_H */
