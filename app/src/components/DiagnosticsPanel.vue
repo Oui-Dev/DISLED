@@ -5,8 +5,8 @@
   Lamp diagnostics (protocol 1.1 GET_DIAGNOSTICS), refreshed every 2 s.
 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
-import { device, requestDiagnostics } from "../lib/device";
+import { computed, onMounted, onUnmounted } from 'vue';
+import { device, requestDiagnostics } from '../lib/device';
 
 const REFRESH_MS = 2000;
 
@@ -14,7 +14,7 @@ const supported = computed(() => device.info?.diagnostics ?? false);
 const d = computed(() => device.diagnostics);
 
 function hex(value: number): string {
-  return `0x${value.toString(16).padStart(8, "0")}`;
+  return `0x${value.toString(16).padStart(8, '0')}`;
 }
 
 /** mcause 0x0A55nnnn: a failed assertion at source line nnnn. */
@@ -50,18 +50,18 @@ onUnmounted(() => window.clearInterval(timer));
       <dt>Since power-up</dt>
       <dd>{{ d.boots }} boots, {{ d.watchdog_resets }} watchdog resets, {{ d.faults }} faults</dd>
       <dt>Last fault</dt>
-      <dd>{{ lastFault ?? "none" }}</dd>
+      <dd>{{ lastFault ?? 'none' }}</dd>
       <dt>Stack margin</dt>
       <dd>{{ d.stack_free_min }} bytes never used</dd>
       <dt>Light sensor</dt>
       <dd>
-        {{ d.light_sensor_present ? "present" : "absent" }}, {{ d.light_sensor_probes }} probes,
+        {{ d.light_sensor_present ? 'present' : 'absent' }}, {{ d.light_sensor_probes }} probes,
         {{ d.i2c_errors }} I2C errors
       </dd>
       <dt>Touch</dt>
       <dd>{{ d.touch_samples_lost }} samples lost, {{ d.touch_recalibrations }} re-baselines</dd>
       <dt>USB</dt>
-      <dd>{{ d.usb_suspends }} suspends{{ d.crystal_running ? "" : ", crystal FAILED" }}</dd>
+      <dd>{{ d.usb_suspends }} suspends{{ d.crystal_running ? '' : ', crystal FAILED' }}</dd>
       <dt>Brightness correction</dt>
       <dd>{{ d.auto_bias }} %</dd>
       <dt>Uptime</dt>

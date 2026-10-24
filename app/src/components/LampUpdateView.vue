@@ -7,49 +7,49 @@
   checks and flashes the firmware.
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { device } from "../lib/device";
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { computed, ref, watch } from 'vue';
+import { device } from '../lib/device';
 import {
   cancelFirmware,
   checkFirmware,
+  type Flash,
   firmware,
   firmwareUpdateFor,
   installFirmware,
   openLink,
-  type Flash,
-} from "../lib/firmware";
+} from '../lib/firmware';
 
 const STEPS = [
-  "Download the firmware",
-  "Put the lamp in update mode",
-  "Install the firmware",
-  "Restart the lamp",
+  'Download the firmware',
+  'Put the lamp in update mode',
+  'Install the firmware',
+  'Restart the lamp',
 ] as const;
 
 const STAGES = {
-  erasing: "Erasing the old firmware…",
-  writing: "Writing the new firmware…",
-  verifying: "Checking what was written…",
-  restarting: "Restarting the lamp…",
+  erasing: 'Erasing the old firmware…',
+  writing: 'Writing the new firmware…',
+  verifying: 'Checking what was written…',
+  restarting: 'Restarting the lamp…',
 } as const;
 
 /** Index in STEPS of the step an update is at; STEPS.length once done. */
 function stepOf(flash: Flash): number | null {
   switch (flash.step) {
-    case "downloading":
+    case 'downloading':
       return 0;
-    case "waiting_for_bootloader":
-    case "driver_missing":
-    case "no_permission":
-    case "several_bootloaders":
-    case "other_chip":
+    case 'waiting_for_bootloader':
+    case 'driver_missing':
+    case 'no_permission':
+    case 'several_bootloaders':
+    case 'other_chip':
       return 1;
-    case "flashing":
+    case 'flashing':
       return 2;
-    case "waiting_for_lamp":
+    case 'waiting_for_lamp':
       return 3;
-    case "done":
+    case 'done':
       return STEPS.length;
     default:
       return null;
@@ -58,8 +58,8 @@ function stepOf(flash: Flash): number | null {
 
 const flash = computed(() => firmware.flash);
 const step = computed(() => stepOf(flash.value));
-const failed = computed(() => flash.value.step === "failed");
-const idle = computed(() => flash.value.step === "idle");
+const failed = computed(() => flash.value.step === 'failed');
+const idle = computed(() => flash.value.step === 'idle');
 
 /** The step a failed update stopped at. */
 const reached = ref(-1);
@@ -81,18 +81,18 @@ const lampVersion = computed(() => device.info?.firmware_version ?? null);
 const newer = computed(() => firmwareUpdateFor(device.info));
 const summary = computed(() => {
   if (!firmware.latest) {
-    return firmware.error ? `No firmware found: ${firmware.error}` : "No firmware to install.";
+    return firmware.error ? `No firmware found: ${firmware.error}` : 'No firmware to install.';
   }
   if (!device.connection.connected) {
     return `No lamp connected. A lamp that does not start can still get firmware ${firmware.latest} through its update mode.`;
   }
   if (!lampVersion.value) {
-    return "Connecting to the lamp…";
+    return 'Connecting to the lamp…';
   }
   if (newer.value) {
     return `Firmware ${lampVersion.value} → ${newer.value}`;
   }
-  return flash.value.step === "done"
+  return flash.value.step === 'done'
     ? `The lamp runs firmware ${lampVersion.value}.`
     : `The lamp already runs firmware ${lampVersion.value}.`;
 });
@@ -112,8 +112,10 @@ function close(): Promise<void> {
     </header>
 
     <p v-if="idle && firmware.latest" class="intro">
-      It takes about a minute. You will open the lamp: its update mode starts with two buttons on its board,
-      <strong>BOOT</strong> and <strong>RESET</strong>. Keep the lamp plugged into this computer.
+      It takes about a minute. You will open the lamp: its update mode starts with two buttons on
+      its board,
+      <strong>BOOT</strong>
+      and <strong>RESET</strong>. Keep the lamp plugged into this computer.
     </p>
 
     <ol class="steps">
@@ -126,7 +128,9 @@ function close(): Promise<void> {
           stopped: index === shown && failed,
         }"
       >
-        <span class="mark">{{ index < shown ? "✓" : index === shown && failed ? "✗" : index + 1 }}</span>
+        <span class="mark">{{
+          index < shown ? '✓' : index === shown && failed ? '✗' : index + 1
+        }}</span>
         <div class="body">
           <strong>{{ title }}</strong>
 
@@ -140,8 +144,8 @@ function close(): Promise<void> {
             </template>
             <template v-else-if="flash.step === 'waiting_for_bootloader'">
               <p>
-                Open the lamp. Hold <strong>BOOT</strong>, press and release <strong>RESET</strong>, then
-                release <strong>BOOT</strong>.
+                Open the lamp. Hold <strong>BOOT</strong>, press and release <strong>RESET</strong>,
+                then release <strong>BOOT</strong>.
               </p>
               <p class="muted waiting">Waiting for the lamp in update mode…</p>
             </template>
@@ -150,19 +154,27 @@ function close(): Promise<void> {
               <p>Windows needs a driver for the update mode, once:</p>
               <ol class="howto">
                 <li>
-                  Download <button type="button" class="link" @click="openLink('zadig')">Zadig</button>
+                  Download
+                  <button type="button" class="link" @click="openLink('zadig')">Zadig</button>
                   and run it.
                 </li>
                 <li>In <em>Options</em>, choose <em>List All Devices</em>.</li>
-                <li>Select the device whose USB ID is <code>4348 55E0</code> (or <code>1A86 55E0</code>).</li>
-                <li>Choose <em>WinUSB</em>, then <em>Install Driver</em> (or <em>Replace Driver</em>).</li>
+                <li>
+                  Select the device whose USB ID is <code>4348 55E0</code> (or
+                  <code>1A86 55E0</code>).
+                </li>
+                <li>
+                  Choose <em>WinUSB</em>, then <em>Install Driver</em> (or <em>Replace Driver</em>).
+                </li>
               </ol>
-              <p class="muted waiting">The update goes on by itself once the driver is installed.</p>
+              <p class="muted waiting">
+                The update goes on by itself once the driver is installed.
+              </p>
             </template>
 
             <p v-else-if="flash.step === 'no_permission'">
-              This computer does not let the app open the lamp in update mode. Reinstall the DISLED package
-              (it adds the access rule), then start the update mode again.
+              This computer does not let the app open the lamp in update mode. Reinstall the DISLED
+              package (it adds the access rule), then start the update mode again.
             </p>
 
             <p v-else-if="flash.step === 'several_bootloaders'">
@@ -194,21 +206,31 @@ function close(): Promise<void> {
       <p>The update stopped: {{ flash.error }}</p>
       <p class="muted">
         The lamp is not damaged: its update mode always works. Try again, or follow the
-        <button type="button" class="link" @click="openLink('flashing_guide')">flashing guide</button>.
+        <button type="button" class="link" @click="openLink('flashing_guide')">
+          flashing guide
+        </button
+        >.
       </p>
     </div>
 
     <footer class="actions">
       <template v-if="idle">
-        <button v-if="!firmware.latest" type="button" :disabled="firmware.checking" @click="checkFirmware">
-          {{ firmware.checking ? "Checking…" : "Check for updates" }}
+        <button
+          v-if="!firmware.latest"
+          type="button"
+          :disabled="firmware.checking"
+          @click="checkFirmware"
+        >
+          {{ firmware.checking ? 'Checking…' : 'Check for updates' }}
         </button>
         <button v-else type="button" class="primary" @click="installFirmware">
-          {{ device.connection.connected && !newer ? "Install it again" : "Start the update" }}
+          {{ device.connection.connected && !newer ? 'Install it again' : 'Start the update' }}
         </button>
       </template>
       <button v-if="waiting" type="button" @click="cancelFirmware">Cancel</button>
-      <button v-if="failed" type="button" class="primary" @click="installFirmware">Try again</button>
+      <button v-if="failed" type="button" class="primary" @click="installFirmware">
+        Try again
+      </button>
       <button v-if="flash.step === 'done' || failed" type="button" @click="close">Close</button>
     </footer>
   </main>
@@ -291,7 +313,7 @@ header p,
   gap: 4px;
 }
 .waiting::before {
-  content: "";
+  content: '';
   display: inline-block;
   width: 8px;
   height: 8px;

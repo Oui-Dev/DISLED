@@ -9,35 +9,37 @@
 // <download URL> is where the installers are, such as
 // https://github.com/Oui-Dev/DISLED/releases/download/app-v0.2.0.
 
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Installer name ending → updater target. The app looks for
 // `{os}-{arch}-{bundle}` first, then `{os}-{arch}`.
 const TARGETS = [
-  { ending: "_x64-setup.exe", os: "windows", arch: "x86_64", bundle: "nsis" },
-  { ending: "_aarch64.app.tar.gz", os: "darwin", arch: "aarch64", bundle: "app" },
-  { ending: "_amd64.deb", os: "linux", arch: "x86_64", bundle: "deb" },
+  { ending: '_x64-setup.exe', os: 'windows', arch: 'x86_64', bundle: 'nsis' },
+  { ending: '_aarch64.app.tar.gz', os: 'darwin', arch: 'aarch64', bundle: 'app' },
+  { ending: '_amd64.deb', os: 'linux', arch: 'x86_64', bundle: 'deb' },
 ];
 
 const [version, downloadUrl, signatureDir, notesFile] = process.argv.slice(2);
 if (!version || !downloadUrl || !signatureDir) {
-  console.error("usage: updater-manifest.mjs <version> <download URL> <signature dir> [notes file]");
+  console.error(
+    'usage: updater-manifest.mjs <version> <download URL> <signature dir> [notes file]',
+  );
   process.exit(2);
 }
 
 const platforms = {};
 for (const file of readdirSync(signatureDir).sort()) {
-  if (!file.endsWith(".sig")) {
+  if (!file.endsWith('.sig')) {
     continue;
   }
-  const installer = file.slice(0, -".sig".length);
+  const installer = file.slice(0, -'.sig'.length);
   const target = TARGETS.find((t) => installer.endsWith(t.ending));
   if (!target) {
     continue;
   }
   const entry = {
-    signature: readFileSync(join(signatureDir, file), "utf8").trim(),
+    signature: readFileSync(join(signatureDir, file), 'utf8').trim(),
     url: `${downloadUrl}/${encodeURIComponent(installer)}`,
   };
   platforms[`${target.os}-${target.arch}`] = entry;
@@ -50,7 +52,7 @@ if (Object.keys(platforms).length === 0) {
 
 const manifest = {
   version,
-  notes: notesFile ? readFileSync(notesFile, "utf8").trim() : "",
+  notes: notesFile ? readFileSync(notesFile, 'utf8').trim() : '',
   pub_date: new Date().toISOString(),
   platforms,
 };

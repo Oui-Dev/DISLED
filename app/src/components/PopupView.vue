@@ -6,27 +6,34 @@
   settings page.
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { getVersion } from "@tauri-apps/api/app";
-import { device, getAutostart, openDiagnostics, quitApp, setAutostart, updateSettings } from "../lib/device";
-import { checkFirmware, firmware, firmwareUpdateFor, openLampUpdate } from "../lib/firmware";
-import { checkForUpdates, installUpdate, updates } from "../lib/updates";
-import BrightnessControl from "./BrightnessControl.vue";
-import ColorSwatches from "./ColorSwatches.vue";
+import { getVersion } from '@tauri-apps/api/app';
+import { computed, onMounted, ref } from 'vue';
+import {
+  device,
+  getAutostart,
+  openDiagnostics,
+  quitApp,
+  setAutostart,
+  updateSettings,
+} from '../lib/device';
+import { checkFirmware, firmware, firmwareUpdateFor, openLampUpdate } from '../lib/firmware';
+import { checkForUpdates, installUpdate, updates } from '../lib/updates';
+import BrightnessControl from './BrightnessControl.vue';
+import ColorSwatches from './ColorSwatches.vue';
 
-const page = ref<"lamp" | "settings">("lamp");
+const page = ref<'lamp' | 'settings'>('lamp');
 const autostart = ref(false);
-const appVersion = ref("");
+const appVersion = ref('');
 
 const connected = computed(() => device.connection.connected);
 const state = computed(() => device.state);
 const status = computed(() => {
   if (!connected.value) {
-    return "No lamp connected";
+    return 'No lamp connected';
   }
-  return state.value ? "Lamp connected" : "Connecting…";
+  return state.value ? 'Lamp connected' : 'Connecting…';
 });
-const firmwareVersion = computed(() => device.info?.firmware_version ?? "–");
+const firmwareVersion = computed(() => device.info?.firmware_version ?? '–');
 /** A newer firmware for the connected lamp. */
 const lampUpdate = computed(() => firmwareUpdateFor(device.info));
 
@@ -37,7 +44,7 @@ const updateLine = computed(() => {
     return `Downloading ${updates.available}… ${updates.progress} %`;
   }
   if (checking.value) {
-    return "Checking for updates…";
+    return 'Checking for updates…';
   }
   if (updates.error) {
     return `Update error: ${updates.error}`;
@@ -47,16 +54,16 @@ const updateLine = computed(() => {
   }
   if (updates.checked_at) {
     const at = new Date(updates.checked_at * 1000).toLocaleString([], {
-      dateStyle: "short",
-      timeStyle: "short",
+      dateStyle: 'short',
+      timeStyle: 'short',
     });
     return `Up to date (checked ${at}).`;
   }
-  return "";
+  return '';
 });
 const lampLine = computed(() => {
   if (firmware.checking) {
-    return "";
+    return '';
   }
   if (firmware.error) {
     return `Lamp firmware check error: ${firmware.error}`;
@@ -64,14 +71,14 @@ const lampLine = computed(() => {
   if (lampUpdate.value) {
     return `Lamp firmware ${lampUpdate.value} is available.`;
   }
-  return "";
+  return '';
 });
 /** The app first: a new firmware may need a new app. */
 const footerUpdate = computed(() => {
   if (updates.available) {
     return `Update to ${updates.available}`;
   }
-  return lampUpdate.value ? "Update the lamp" : null;
+  return lampUpdate.value ? 'Update the lamp' : null;
 });
 
 function checkAll(): Promise<unknown> {
@@ -136,10 +143,17 @@ function toggleUpdateChecks(event: Event): Promise<void> {
         <button v-else-if="lampUpdate" type="button" class="install" @click="openLampUpdate">
           Update the lamp to {{ lampUpdate }}…
         </button>
-        <button v-else type="button" :disabled="checking" @click="checkAll">Check for updates</button>
+        <button v-else type="button" :disabled="checking" @click="checkAll">
+          Check for updates
+        </button>
         <p v-if="updateLine" class="muted small">{{ updateLine }}</p>
         <p v-if="lampLine" class="muted small">{{ lampLine }}</p>
-        <button v-if="!connected && firmware.latest" type="button" class="link small" @click="openLampUpdate">
+        <button
+          v-if="!connected && firmware.latest"
+          type="button"
+          class="link small"
+          @click="openLampUpdate"
+        >
           Lamp not detected? Reinstall its firmware…
         </button>
       </div>
@@ -151,7 +165,7 @@ function toggleUpdateChecks(event: Event): Promise<void> {
 
     <footer class="foot">
       <button type="button" class="link" @click="page = page === 'lamp' ? 'settings' : 'lamp'">
-        {{ page === "lamp" ? "Settings" : "Back" }}
+        {{ page === 'lamp' ? 'Settings' : 'Back' }}
       </button>
       <button
         v-if="footerUpdate && page === 'lamp'"

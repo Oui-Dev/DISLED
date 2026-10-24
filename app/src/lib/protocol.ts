@@ -5,13 +5,13 @@
 // crates/disled-protocol (serde, snake_case), itself specified by
 // protocol/README.md.
 
-export type LampColor = "green" | "orange" | "red" | "warm_white";
-export type BrightnessMode = "auto" | "manual";
-export type UsbLink = "unconfigured" | "configured" | "suspended";
-export type ChangeSource = "boot" | "touch" | "host" | "auto_brightness" | "usb";
-export type TouchState = "calibrating" | "idle" | "pressed";
+export type LampColor = 'green' | 'orange' | 'red' | 'warm_white';
+export type BrightnessMode = 'auto' | 'manual';
+export type UsbLink = 'unconfigured' | 'configured' | 'suspended';
+export type ChangeSource = 'boot' | 'touch' | 'host' | 'auto_brightness' | 'usb';
+export type TouchState = 'calibrating' | 'idle' | 'pressed';
 
-export const LAMP_COLORS: readonly LampColor[] = ["green", "orange", "red", "warm_white"];
+export const LAMP_COLORS: readonly LampColor[] = ['green', 'orange', 'red', 'warm_white'];
 
 export interface SetState {
   on?: boolean;
@@ -22,16 +22,16 @@ export interface SetState {
 }
 
 export type Command =
-  | { kind: "get_info" }
-  | { kind: "get_state" }
-  | ({ kind: "set_state" } & SetState)
-  | { kind: "set_telemetry"; period_ms: number }
-  | { kind: "reset" }
+  | { kind: 'get_info' }
+  | { kind: 'get_state' }
+  | ({ kind: 'set_state' } & SetState)
+  | { kind: 'set_telemetry'; period_ms: number }
+  | { kind: 'reset' }
   /** Percent, -50 to +50 (protocol 1.1, capability `auto_bias`). */
-  | { kind: "set_auto_bias"; bias: number }
-  | { kind: "get_diagnostics" }
-  | { kind: "self_test" }
-  | { kind: "enter_bootloader" };
+  | { kind: 'set_auto_bias'; bias: number }
+  | { kind: 'get_diagnostics' }
+  | { kind: 'self_test' }
+  | { kind: 'enter_bootloader' };
 
 export interface Info {
   protocol: [number, number];
@@ -110,13 +110,13 @@ export interface SelfTestResult {
 }
 
 export type Message =
-  | ({ kind: "info" } & Info)
-  | ({ kind: "state" } & LampState)
-  | ({ kind: "telemetry" } & Telemetry)
-  | ({ kind: "diagnostics" } & Diagnostics)
-  | ({ kind: "self_test_result" } & SelfTestResult)
-  | { kind: "ack"; command: number }
-  | { kind: "error"; command: number; error: string };
+  | ({ kind: 'info' } & Info)
+  | ({ kind: 'state' } & LampState)
+  | ({ kind: 'telemetry' } & Telemetry)
+  | ({ kind: 'diagnostics' } & Diagnostics)
+  | ({ kind: 'self_test_result' } & SelfTestResult)
+  | { kind: 'ack'; command: number }
+  | { kind: 'error'; command: number; error: string };
 
 export interface Frame {
   seq: number;

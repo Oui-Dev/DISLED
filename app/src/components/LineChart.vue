@@ -6,7 +6,7 @@
   auto-scaled Y axis, newest sample on the right.
 -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 export interface Series {
   label: string;
@@ -23,7 +23,7 @@ let observer: ResizeObserver | null = null;
 function draw(): void {
   frame = 0;
   const element = canvas.value;
-  const context = element?.getContext("2d");
+  const context = element?.getContext('2d');
   if (!element || !context) {
     return;
   }
@@ -54,9 +54,9 @@ function draw(): void {
   const plotWidth = width - left - 8;
   const y = (v: number) => 8 + (1 - (v - min) / (max - min)) * (height - 16);
 
-  context.font = "11px system-ui, sans-serif";
-  context.fillStyle = style.getPropertyValue("--muted") || "#888";
-  context.strokeStyle = style.getPropertyValue("--grid") || "#8883";
+  context.font = '11px system-ui, sans-serif';
+  context.fillStyle = style.getPropertyValue('--muted') || '#888';
+  context.strokeStyle = style.getPropertyValue('--grid') || '#8883';
   context.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const value = min + ((max - min) * i) / 4;

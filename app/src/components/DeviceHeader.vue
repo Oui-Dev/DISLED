@@ -5,18 +5,20 @@
   Connection status and device identity.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
-import { device, send } from "../lib/device";
+import { computed } from 'vue';
+import { device, send } from '../lib/device';
 
-const firmware = computed(() => device.info?.firmware_version || "…");
+const firmware = computed(() => device.info?.firmware_version || '…');
 const fault = computed(() => {
   const f = device.info?.fault;
-  return f ? `mcause 0x${f.mcause.toString(16)}, mepc 0x${f.mepc.toString(16).padStart(8, "0")}` : null;
+  return f
+    ? `mcause 0x${f.mcause.toString(16)}, mepc 0x${f.mepc.toString(16).padStart(8, '0')}`
+    : null;
 });
 
 function reset(): void {
-  if (window.confirm("Restart the lamp firmware?")) {
-    void send({ kind: "reset" });
+  if (window.confirm('Restart the lamp firmware?')) {
+    void send({ kind: 'reset' });
   }
 }
 </script>
@@ -33,7 +35,7 @@ function reset(): void {
       </template>
     </div>
     <div v-if="device.connection.connected" class="details">
-      <span class="muted">serial {{ device.connection.serial ?? "?" }}</span>
+      <span class="muted">serial {{ device.connection.serial ?? '?' }}</span>
       <span v-if="device.info" class="muted">reset cause: {{ device.info.reset_cause }}</span>
       <button type="button" @click="reset">Restart</button>
     </div>

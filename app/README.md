@@ -145,8 +145,7 @@ time in the color of the lamp.
 
 ```sh
 npm run typecheck      # vue-tsc
-npm run lint           # ESLint
-npm run format:check   # Prettier
+npm run check          # Biome: lint, format, import order (npm run fix applies the fixes)
 cd ..                  # the Rust workspace root
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
