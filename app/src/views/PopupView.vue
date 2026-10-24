@@ -28,7 +28,7 @@ const errors = useErrorStore();
 const errorText = useErrorText();
 
 // The page, then the footer: the window fits both, and the footer stays at
-// the bottom while the window catches up with the content.
+// the bottom of a window taller than the content.
 usePopupAutoSize(useTemplateRef<HTMLElement>('body'), useTemplateRef<HTMLElement>('footer'));
 
 const page = ref<Page>('lamp');

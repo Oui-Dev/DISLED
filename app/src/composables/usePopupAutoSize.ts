@@ -6,10 +6,10 @@ import type { Ref } from 'vue';
 import { popupResize } from '@/ipc/commands';
 
 /**
- * Makes the popup window as tall as its parts stacked (their natural
+ * Asks for a popup window as tall as its parts stacked (their natural
  * heights, margins aside), whatever the page, the language or the message
- * on show. The backend keeps the window within the screen and against the
- * tray icon.
+ * on show. The backend keeps the window within its minimum and the screen,
+ * against the tray icon.
  */
 export function usePopupAutoSize(...parts: Readonly<Ref<HTMLElement | null>>[]): void {
   let sent = 0;

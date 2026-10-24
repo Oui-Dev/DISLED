@@ -33,6 +33,9 @@ const REOPEN_GUARD: Duration = Duration::from_millis(300);
 /// The width of the popup, as in tauri.conf.json; its height follows its
 /// content.
 const POPUP_WIDTH: f64 = 320.0;
+/// The popup is never shorter, as in tauri.conf.json: the lamp page gets
+/// some room, the footer staying at the bottom.
+const POPUP_MIN_HEIGHT: f64 = 360.0;
 /// Room kept on the screen around a popup taller than the screen, whose
 /// content then scrolls.
 const SCREEN_MARGIN: f64 = 48.0;
@@ -79,8 +82,8 @@ pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// Fits the popup to the height of its content (logical pixels), within
-/// the screen, and keeps it against the tray icon.
+/// Fits the popup to the height of its content (logical pixels), from its
+/// minimum up to the screen, and keeps it against the tray icon.
 pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) {
     let Some(window) = popup(app) else { return };
     let screen = window
@@ -89,7 +92,11 @@ pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) {
         .flatten()
         .map(|monitor| f64::from(monitor.work_area().size.height) / monitor.scale_factor())
         .unwrap_or(f64::INFINITY);
-    let height = height.min(screen - SCREEN_MARGIN).max(1.0);
+    // On a screen too small for the minimum, the screen wins.
+    let height = height
+        .max(POPUP_MIN_HEIGHT)
+        .min(screen - SCREEN_MARGIN)
+        .max(1.0);
     let resized = window.set_size(LogicalSize::new(POPUP_WIDTH, height));
     if resized.is_ok() && window.is_visible().unwrap_or(false) {
         place(&window);

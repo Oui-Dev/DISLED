@@ -32,47 +32,55 @@ function restart(): Promise<void> {
 
 <template>
   <header class="flex flex-col gap-3">
-    <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-      <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-xl font-bold tracking-wide text-highlighted">DISLED</h1>
-        <UBadge
-          :color="connected ? 'primary' : 'neutral'"
-          variant="subtle"
-          :icon="connected ? 'i-lucide-usb' : 'i-lucide-unplug'"
-          :label="connected ? t('diagnostics.connected') : t('status.noLamp')"
-        />
-        <template v-if="connected">
-          <span class="text-sm text-muted">
-            {{ t('diagnostics.firmware', { version: lamp.info?.firmware_version ?? '…' }) }}
-          </span>
-          <!-- Neutral text: amber text on its tint is not readable; the icon carries the color. -->
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-xl font-bold tracking-wide text-highlighted">DISLED</h1>
           <UBadge
-            v-if="lamp.connection.debug_build"
-            color="neutral"
+            :color="connected ? 'primary' : 'neutral'"
             variant="subtle"
-            icon="i-lucide-bug"
-            :label="t('diagnostics.debugBuild')"
-            :ui="{ leadingIcon: 'text-warning' }"
+            :icon="connected ? 'i-lucide-usb' : 'i-lucide-unplug'"
+            :label="connected ? t('diagnostics.connected') : t('status.noLamp')"
           />
-        </template>
+          <template v-if="connected">
+            <span class="text-sm text-muted">
+              {{ t('diagnostics.firmware', { version: lamp.info?.firmware_version ?? '…' }) }}
+            </span>
+            <!-- Neutral text: amber text on its tint is not readable; the icon carries the color. -->
+            <UBadge
+              v-if="lamp.connection.debug_build"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-bug"
+              :label="t('diagnostics.debugBuild')"
+              :ui="{ leadingIcon: 'text-warning' }"
+            />
+          </template>
+        </div>
+        <p v-if="connected" class="text-sm text-muted">
+          {{ t('diagnostics.serial', { serial: lamp.connection.serial ?? '?' }) }}
+          <template v-if="lamp.info">
+            ·
+            {{
+              t('diagnostics.resetCause', {
+                cause: t(`enums.resetCause.${lamp.info.reset_cause}`),
+              })
+            }}
+          </template>
+        </p>
       </div>
 
-      <div v-if="connected" class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-        <span>{{ t('diagnostics.serial', { serial: lamp.connection.serial ?? '?' }) }}</span>
-        <span v-if="lamp.info">
-          {{
-            t('diagnostics.resetCause', { cause: t(`enums.resetCause.${lamp.info.reset_cause}`) })
-          }}
-        </span>
-        <UButton
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-rotate-ccw"
-          @click="confirmingRestart = true"
-        >
-          {{ t('diagnostics.restart') }}
-        </UButton>
-      </div>
+      <UButton
+        v-if="connected"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        icon="i-lucide-rotate-ccw"
+        class="shrink-0"
+        @click="confirmingRestart = true"
+      >
+        {{ t('diagnostics.restart') }}
+      </UButton>
     </div>
 
     <UAlert

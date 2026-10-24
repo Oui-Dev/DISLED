@@ -58,6 +58,8 @@ const checks = computed(() => {
     <div v-else class="flex flex-col items-start gap-3">
       <p class="text-sm text-muted">{{ t('selfTest.instructions') }}</p>
       <UButton
+        color="neutral"
+        variant="outline"
         icon="i-lucide-play"
         :loading="diagnostics.selfTestRunning"
         @click="diagnostics.startSelfTest"

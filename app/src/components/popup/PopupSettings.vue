@@ -47,12 +47,14 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
       <USwitch
         :model-value="settingsStore.autostart"
         :label="t('settings.autostart')"
+        size="sm"
         @update:model-value="settingsStore.setAutostart"
       />
       <USwitch
         :model-value="settings?.check_updates ?? true"
         :label="t('settings.checkUpdates')"
         :disabled="!settings"
+        size="sm"
         @update:model-value="settingsStore.update({ check_updates: $event })"
       />
     </div>
@@ -85,7 +87,13 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
     <PopupUpdates />
 
     <div class="flex flex-col items-start gap-1.5">
-      <UButton color="neutral" variant="outline" icon="i-lucide-activity" @click="openDiagnostics">
+      <UButton
+        color="neutral"
+        variant="outline"
+        size="sm"
+        icon="i-lucide-activity"
+        @click="openDiagnostics"
+      >
         {{ t('settings.diagnostics') }}
       </UButton>
       <p class="text-xs text-muted">

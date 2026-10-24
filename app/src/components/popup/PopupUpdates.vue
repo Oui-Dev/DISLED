@@ -67,19 +67,26 @@ function checkAll(): Promise<unknown> {
   <div class="flex flex-col items-start gap-1.5">
     <UButton
       v-if="app.available"
+      size="sm"
       icon="i-lucide-download"
       :loading="installing"
       @click="updates.install"
     >
       {{ t('updates.install', { version: app.available }) }}
     </UButton>
-    <UButton v-else-if="firmware.updateForLamp" icon="i-lucide-lightbulb" @click="openLampUpdate">
+    <UButton
+      v-else-if="firmware.updateForLamp"
+      size="sm"
+      icon="i-lucide-lightbulb"
+      @click="openLampUpdate"
+    >
       {{ t('updates.updateLamp', { version: firmware.updateForLamp }) }}
     </UButton>
     <UButton
       v-else
       color="neutral"
       variant="outline"
+      size="sm"
       icon="i-lucide-refresh-cw"
       :loading="checking"
       @click="checkAll"

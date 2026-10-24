@@ -44,7 +44,10 @@ let origin: { applied: number; bias: number } | null = null;
 let settle: number | undefined;
 
 const shown = computed(() => held.value ?? lampLevel.value);
-const levelText = computed(() => (shown.value === null ? '–' : n(shown.value / 100, 'percent')));
+/** Unknown while no lamp answers in automatic mode: nothing is shown then. */
+const levelText = computed(() =>
+  shown.value === null ? undefined : n(shown.value / 100, 'percent'),
+);
 
 /** Automatic mode needs the level in use, and a lamp that takes a correction. */
 const disabled = computed(
@@ -126,7 +129,9 @@ const hint = computed(() => {
         {{ t('lamp.brightness.title') }}
       </span>
       <div class="flex items-center gap-3">
-        <span aria-hidden="true" class="text-sm text-muted tabular-nums">{{ levelText }}</span>
+        <span v-if="levelText" aria-hidden="true" class="text-sm text-muted tabular-nums">
+          {{ levelText }}
+        </span>
         <USwitch
           :model-value="auto"
           :label="t('lamp.brightness.auto')"
