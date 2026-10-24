@@ -2,12 +2,12 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  One page for every window: the window label picks the view and the
-  stores it follows. main.ts has started the settings.
+  One page for every window: the window label picks the view, loaded on its
+  own, and the stores it follows. main.ts has started the settings.
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { computed, onMounted } from 'vue';
+import { type Component, computed, defineAsyncComponent, onMounted } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { nuxtUiLocales } from '@/i18n';
 import { useDiagnosticsStore } from '@/stores/diagnostics';
@@ -16,35 +16,43 @@ import { useLampStore } from '@/stores/lamp';
 import { useSettingsStore } from '@/stores/settings';
 import { useTelemetryStore } from '@/stores/telemetry';
 import { useUpdatesStore } from '@/stores/updates';
-import PopupView from '@/views/PopupView.vue';
-import DiagnosticsView from './components/DiagnosticsView.vue';
-import LampUpdateView from './components/LampUpdateView.vue';
 
-const label = getCurrentWebviewWindow().label;
+interface Window {
+  view: Component;
+  stores: (() => { start(): Promise<void> })[];
+}
+
+/** The windows of src-tauri/src/windows.rs. */
+const WINDOWS: Record<string, Window> = {
+  popup: {
+    view: defineAsyncComponent(() => import('@/views/PopupView.vue')),
+    stores: [useLampStore, useFirmwareStore, useUpdatesStore],
+  },
+  diagnostics: {
+    view: defineAsyncComponent(() => import('@/views/DiagnosticsView.vue')),
+    stores: [useLampStore, useTelemetryStore, useDiagnosticsStore],
+  },
+  'lamp-update': {
+    view: defineAsyncComponent(() => import('./components/LampUpdateView.vue')),
+    stores: [useLampStore, useFirmwareStore],
+  },
+};
+
+const current = WINDOWS[getCurrentWebviewWindow().label] ?? WINDOWS.diagnostics;
 const settings = useSettingsStore();
 const nuxtUiLocale = computed(() => nuxtUiLocales[settings.locale]);
 
 useAppearance();
 
 onMounted(() => {
-  void useLampStore().start();
-  if (label === 'popup' || label === 'lamp-update') {
-    void useFirmwareStore().start();
-  }
-  if (label === 'popup') {
-    void useUpdatesStore().start();
-  }
-  if (label === 'diagnostics') {
-    void useTelemetryStore().start();
-    void useDiagnosticsStore().start();
+  for (const useStore of current.stores) {
+    void useStore().start();
   }
 });
 </script>
 
 <template>
   <UApp :locale="nuxtUiLocale" :toaster="null">
-    <PopupView v-if="label === 'popup'" />
-    <LampUpdateView v-else-if="label === 'lamp-update'" />
-    <DiagnosticsView v-else />
+    <component :is="current.view" />
   </UApp>
 </template>

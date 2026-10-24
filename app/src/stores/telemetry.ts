@@ -6,7 +6,7 @@
 
 import { save } from '@tauri-apps/plugin-dialog';
 import { defineStore } from 'pinia';
-import { ref, shallowRef, triggerRef } from 'vue';
+import { ref, shallowRef } from 'vue';
 import type { Telemetry } from '@/bindings/Telemetry';
 import { saveCsv } from '@/ipc/commands';
 import { on } from '@/ipc/events';
@@ -24,8 +24,11 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   /** 0: no stream. */
   const periodMs = ref(0);
   const latest = ref<Telemetry | null>(null);
-  /** Outside deep reactivity: it changes many times per second. */
-  const history = shallowRef<Telemetry[]>([]);
+  /**
+   * The last samples, oldest first. A new array at each sample, outside
+   * deep reactivity: it changes up to 20 times per second.
+   */
+  const history = shallowRef<readonly Telemetry[]>([]);
   const recording = ref(false);
   const recordedRows = ref(0);
   let rows: string[] = [];
@@ -37,12 +40,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
 
   function receive(sample: Telemetry): void {
     latest.value = sample;
-    const samples = history.value;
-    samples.push(sample);
-    if (samples.length > HISTORY_LENGTH) {
-      samples.splice(0, samples.length - HISTORY_LENGTH);
-    }
-    triggerRef(history);
+    history.value = [...history.value.slice(1 - HISTORY_LENGTH), sample];
     if (recording.value) {
       rows.push(telemetryRow(sample, lamp.state));
       recordedRows.value = rows.length;

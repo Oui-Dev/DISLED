@@ -5,7 +5,7 @@
 // failed assertion that the firmware encodes in mcause.
 
 /** A fault, from INFO (mcause, mepc) or from DIAGNOSTICS (with mtval). */
-interface Registers {
+export interface FaultRegisters {
   mcause: number;
   mepc: number;
   mtval?: number;
@@ -23,7 +23,7 @@ export function hex32(value: number): string {
   return `0x${value.toString(16).padStart(8, '0')}`;
 }
 
-export function describeFault({ mcause, mepc, mtval }: Registers): FaultSummary {
+export function describeFault({ mcause, mepc, mtval }: FaultRegisters): FaultSummary {
   if (mcause >>> 16 === ASSERTION) {
     return { kind: 'assertion', line: mcause & 0xffff, caller: hex32(mepc) };
   }
