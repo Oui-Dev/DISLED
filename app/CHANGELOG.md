@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/Oui-Dev/DISLED/compare/app-v0.5.0...app-v0.5.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **app:** rolldown to tauri 2.11 to prevent update issue ([b3a22af](https://github.com/Oui-Dev/DISLED/commit/b3a22afc5d4497cc8beb9538678c99f2aa908247))
+
 ## [0.5.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.4.0...app-v0.5.0) (2026-10-24)
 
 
