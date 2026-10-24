@@ -26,15 +26,11 @@
     },
     "brightness": {
       "title": "Brightness",
-      "automatic": "Automatic",
-      "darker": "Darker",
-      "brighter": "Brighter",
-      "correctionLabel": "Correction of the automatic brightness",
-      "levelLabel": "Brightness",
+      "auto": "Auto",
       "fixed": "Fixed level",
       "follows": "Follows the room light",
-      "followsNow": "Follows the room light, now {level}",
       "correction": "correction {value}",
+      "correctionLimit": "correction {value} (limit)",
       "noCorrection": "no correction",
       "needsFirmware": "Follows the room light; the correction needs a lamp firmware update"
     }

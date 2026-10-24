@@ -66,10 +66,12 @@ variable.
   when it is off, a faint outline without a lamp). Left click opens the
   popup; right click opens a menu (Open, Diagnostics, Quit). On Linux the
   menu is the only way in: tray click events do not exist there.
-- **Popup**: off (black, struck through) and the four colors, as rounded
-  squares; automatic brightness with a "darker / brighter" correction, or a
-  fixed level; a settings page (start at login, color mode, language, app
-  and lamp updates, diagnostics, versions). It takes the height of its
+- **Popup**: off (grey, struck through) and the four colors, as rounded
+  squares; the brightness as on a phone, one slider that shows the level of
+  the lamp and an Auto switch: in automatic mode the level follows the room
+  light and moving the slider corrects the curve, otherwise it sets a fixed
+  level; a settings page (start at login, color mode, language, app and
+  lamp updates, diagnostics, versions). It takes the height of its
   content, and hides when it loses the focus or on Escape.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
@@ -121,7 +123,7 @@ functions are imported explicitly, through the `@/` alias of `src/`.
 `src/assets/css/main.css` brings Tailwind, Nuxt UI, the Montserrat font
 (self-hosted) and the token overrides. The two palettes, `ink` (neutral:
 from the brand white `#fefcf7`, the light background, to the brand black
-`#020f05`, the dark one) and `brand` (primary, on the logo green
+`#050a06`, the dark one) and `brand` (primary, on the logo green
 `#2ecc71`), come from a script that also checks their contrast. Edit the
 script, never `palettes.css`:
 

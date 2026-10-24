@@ -21,3 +21,20 @@ export const SWATCH_COLORS: Record<LampColor, string> = {
   red: '#e74c3c',
   warm_white: '#ffe2b8',
 };
+
+/** Limits of the automatic brightness correction, percent (AUTO_BIAS_MIN/MAX of the protocol crate). */
+export const AUTO_BIAS_MIN = -50;
+export const AUTO_BIAS_MAX = 50;
+
+/**
+ * The automatic brightness correction that brings the lamp to `target`
+ * percent. The lamp shows the level of its curve times (100 + bias) / 100
+ * (protocol SET_AUTO_BIAS), here `applied` percent under `bias`; the
+ * correction stays within its limits.
+ */
+export function correctionFor(target: number, applied: number, bias: number): number {
+  // The curve, at least the 0.1 % floor of the lamp.
+  const curve = Math.max((applied * 100) / (100 + bias), 0.1);
+  const wanted = Math.round((target / curve) * 100 - 100);
+  return Math.min(AUTO_BIAS_MAX, Math.max(AUTO_BIAS_MIN, wanted));
+}
