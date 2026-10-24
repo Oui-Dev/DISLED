@@ -27,8 +27,8 @@ work with a keyboard and with a screen reader.
 - **Design system.** Montserrat, self-hosted, and two palettes that
   `app/branding/palette.mjs` generates in OKLCH at the hue of the logo:
   - `ink`, the neutral palette, from the brand white (`#fefcf7`, the light
-    background) to the brand black (`#020f05`, the dark background,
-    tinted with the green of the logo);
+    background) to the brand black (`#050a06`, the dark background, with
+    a hint of the green of the logo; the greys keep a faint tint only);
   - `brand`, the primary palette. The logo green (`#2ecc71`) is the
     primary of dark mode; a darker 500 serves light mode at about 4:1,
     the level of Nuxt UI's own palettes. Neutral text keeps 4.5:1. The

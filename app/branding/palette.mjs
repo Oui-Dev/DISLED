@@ -5,8 +5,10 @@
 // for Tailwind and Nuxt UI:
 //
 // - `ink`, the neutral palette (backgrounds, text, borders): from the brand
-//   white (50, a warm off-white) to the brand black (900, a black tinted
-//   with the green of the logo). Light mode sits on 50, dark mode on 900.
+//   white (50, a warm off-white) to the brand black (900, a black with a
+//   hint of the green of the logo). Light mode sits on 50, dark mode on 900.
+//   The greys keep a faint tint only: green weighs more in the eye than the
+//   violet of the first brand black, #060010.
 // - `brand`, the primary palette, on the green of the logo (400, the
 //   primary of dark mode). Its 500, the primary of light mode, is a darker
 //   green that keeps about 4:1 against the background and under white text,
@@ -26,7 +28,7 @@ import { fileURLToPath } from 'node:url';
 const OUTPUT = fileURLToPath(new URL('../src/assets/css/palettes.css', import.meta.url));
 
 const WHITE = '#fefcf7';
-const BLACK = '#020f05';
+const BLACK = '#050a06';
 const LOGO_GREEN = '#2ecc71';
 
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
@@ -107,19 +109,19 @@ function palette(sources, curve) {
   return Object.fromEntries(SHADES.map((shade, i) => [shade, sources[shade] ?? hex(...curve[i])]));
 }
 
-// Warm at the white end, green from the middle greys to the black.
+// Warm at the white end, a trace of green from the middle greys to the black.
 const ink = palette({ 50: WHITE, 900: BLACK }, [
   null,
-  [96.9, 0.006, 100],
-  [92.3, 0.007, 125],
-  [87.1, 0.01, 145],
-  [71, 0.017, GREEN_HUE],
-  [53.6, 0.021, GREEN_HUE],
-  [44, 0.02, GREEN_HUE],
-  [36.5, 0.019, GREEN_HUE],
-  [25.5, 0.018, GREEN_HUE],
+  [96.9, 0.005, 100],
+  [92.3, 0.005, 125],
+  [87.1, 0.006, 145],
+  [71, 0.006, GREEN_HUE],
+  [53.6, 0.006, GREEN_HUE],
+  [44, 0.006, GREEN_HUE],
+  [36.5, 0.006, GREEN_HUE],
+  [25.5, 0.007, GREEN_HUE],
   null,
-  [8.3, 0.012, GREEN_HUE],
+  [7.5, 0.006, GREEN_HUE],
 ]);
 
 const brand = palette({ 400: LOGO_GREEN }, [

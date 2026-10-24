@@ -73,15 +73,24 @@ function select(choice: Choice): void {
 </template>
 
 <style scoped>
-/* Off: the brand black, struck through in the color of the borders. */
+/* Off: an unlit grey square, struck through; light grey in light mode,
+   dark grey in dark mode. */
 .off {
+  --off-fill: var(--ui-color-neutral-200);
+  --off-line: var(--ui-color-neutral-400);
   background:
     linear-gradient(
       to top right,
       transparent calc(50% - 0.75px),
-      var(--ui-border-accented) calc(50% - 0.75px) calc(50% + 0.75px),
+      var(--off-line) calc(50% - 0.75px) calc(50% + 0.75px),
       transparent calc(50% + 0.75px)
     ),
-    var(--color-ink-900);
+    var(--off-fill);
+}
+
+/* Whole selector global: Vue keeps only the class of `:global(.dark) .off`. */
+:global(.dark .off) {
+  --off-fill: var(--ui-color-neutral-800);
+  --off-line: var(--ui-color-neutral-600);
 }
 </style>
