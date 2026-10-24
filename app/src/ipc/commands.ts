@@ -91,8 +91,11 @@ export function openLampUpdate(): Promise<void> {
   return invoke('open_lamp_update');
 }
 
-/** Fits the popup to this height (CSS pixels), against the tray icon. */
-export function popupResize(height: number): Promise<void> {
+/**
+ * Fits the popup to this height (CSS pixels), against the tray icon;
+ * resolves with the height it got, shorter on a small screen.
+ */
+export function popupResize(height: number): Promise<number> {
   return invoke('popup_resize', { height });
 }
 

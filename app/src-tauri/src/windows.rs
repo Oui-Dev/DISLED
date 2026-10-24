@@ -86,9 +86,12 @@ pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// Fits the popup to the height of its content (logical pixels), from its
-/// minimum up to the screen, and keeps it against the tray icon.
-pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) {
-    let Some(window) = popup(app) else { return };
+/// minimum up to the screen, and keeps it against the tray icon. Returns
+/// the height it took: when shorter than the content, the content scrolls.
+pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) -> f64 {
+    let Some(window) = popup(app) else {
+        return height;
+    };
     let screen = window
         .current_monitor()
         .ok()
@@ -104,6 +107,7 @@ pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) {
     if resized.is_ok() && window.is_visible().unwrap_or(false) {
         place(&window);
     }
+    height
 }
 
 pub fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {

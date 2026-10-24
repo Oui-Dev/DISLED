@@ -178,10 +178,11 @@ async fn open_lamp_update(app: AppHandle) {
     windows::open_lamp_update(&app);
 }
 
-/// The popup measures its content and asks for that height.
+/// The popup measures its content and asks for that height; it gets the
+/// height that fits its minimum and the screen.
 #[tauri::command]
-fn popup_resize(app: AppHandle, height: f64) {
-    windows::resize_popup(&app, height);
+fn popup_resize(app: AppHandle, height: f64) -> f64 {
+    windows::resize_popup(&app, height)
 }
 
 /// Escape in the popup.

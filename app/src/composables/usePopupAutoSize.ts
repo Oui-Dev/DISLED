@@ -10,19 +10,36 @@ import { popupResize } from '@/ipc/commands';
  * heights, margins aside), whatever the page, the language or the message
  * on show. The backend keeps the window within its minimum and the screen,
  * against the tray icon.
+ *
+ * The page scrolls only when the screen is too short for it: otherwise a
+ * scrollbar would flash while the window catches up with taller content.
+ * `fit` measures again at once, for a page changed while hidden, when no
+ * resize is observed.
  */
-export function usePopupAutoSize(...parts: Readonly<Ref<HTMLElement | null>>[]): void {
+export function usePopupAutoSize(...parts: Readonly<Ref<HTMLElement | null>>[]): {
+  fit: () => Promise<void>;
+} {
+  const page = document.documentElement;
+  page.style.overflowY = 'hidden';
   let sent = 0;
-  const fit = () => {
+
+  async function fit(): Promise<void> {
     const height = Math.ceil(
       parts.reduce((sum, part) => sum + (part.value?.getBoundingClientRect().height ?? 0), 0),
     );
-    if (height > 0 && height !== sent) {
-      sent = height;
-      void popupResize(height);
+    if (height <= 0 || height === sent) {
+      return;
     }
-  };
-  for (const part of parts) {
-    useResizeObserver(part, fit);
+    sent = height;
+    const got = await popupResize(height);
+    // A later request has the last word.
+    if (height === sent) {
+      page.style.overflowY = got < height ? 'auto' : 'hidden';
+    }
   }
+
+  for (const part of parts) {
+    useResizeObserver(part, () => void fit());
+  }
+  return { fit };
 }
