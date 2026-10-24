@@ -245,7 +245,8 @@ export async function exportRecording(): Promise<void> {
     return;
   }
   try {
-    await invoke('save_csv', { path, contents: [CSV_HEADER, ...rows].join('\n') + '\n' });
+    // The empty last item ends the file with a newline.
+    await invoke('save_csv', { path, contents: [CSV_HEADER, ...rows, ''].join('\n') });
   } catch (error) {
     device.lastError = String(error);
   }
