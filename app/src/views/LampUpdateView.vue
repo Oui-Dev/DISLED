@@ -96,6 +96,7 @@ function close(): Promise<void> {
       v-if="idle && firmware.status.latest"
       keypath="lampUpdate.intro"
       tag="p"
+      scope="global"
       class="text-sm"
     >
       <template #boot><strong>BOOT</strong></template>

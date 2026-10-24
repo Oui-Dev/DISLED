@@ -31,6 +31,12 @@ export default defineConfig(() => ({
           // (src/assets/css/palettes.css).
           neutral: 'ink' as 'neutral',
         },
+        // The alerts (all subtle) keep their color on the icon, the
+        // background and the border, and their text in the neutral tokens:
+        // amber or green text on a tinted background is not readable.
+        alert: {
+          slots: { title: 'text-highlighted', description: 'text-default opacity-100' },
+        },
       },
       // The app works offline and its CSP forbids other origins: the icons
       // it uses are bundled, never fetched.

@@ -36,7 +36,7 @@ function restart(): Promise<void> {
       <div class="flex flex-wrap items-center gap-3">
         <h1 class="text-xl font-bold tracking-wide text-highlighted">DISLED</h1>
         <UBadge
-          :color="connected ? 'success' : 'neutral'"
+          :color="connected ? 'primary' : 'neutral'"
           variant="subtle"
           :icon="connected ? 'i-lucide-usb' : 'i-lucide-unplug'"
           :label="connected ? t('diagnostics.connected') : t('status.noLamp')"
@@ -45,11 +45,14 @@ function restart(): Promise<void> {
           <span class="text-sm text-muted">
             {{ t('diagnostics.firmware', { version: lamp.info?.firmware_version ?? '…' }) }}
           </span>
+          <!-- Neutral text: amber text on its tint is not readable; the icon carries the color. -->
           <UBadge
             v-if="lamp.connection.debug_build"
-            color="warning"
+            color="neutral"
             variant="subtle"
+            icon="i-lucide-bug"
             :label="t('diagnostics.debugBuild')"
+            :ui="{ leadingIcon: 'text-warning' }"
           />
         </template>
       </div>

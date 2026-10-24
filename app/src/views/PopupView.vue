@@ -65,7 +65,7 @@ const footerUpdate = computed(() => {
 </script>
 
 <template>
-  <div ref="root" class="flex flex-col gap-4 p-4">
+  <main ref="root" class="flex flex-col gap-4 p-4">
     <header>
       <h1 class="text-base font-bold tracking-wide text-highlighted">DISLED</h1>
       <p role="status" class="text-xs text-muted">{{ status }}</p>
@@ -122,5 +122,5 @@ const footerUpdate = computed(() => {
         {{ t('common.quit') }}
       </UButton>
     </footer>
-  </div>
+  </main>
 </template>
