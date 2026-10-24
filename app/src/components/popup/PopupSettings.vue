@@ -36,6 +36,9 @@ const languages = computed(() => [
   { value: 'en', label: 'English' },
   { value: 'fr', label: 'Français' },
 ]);
+
+/** A few short choices side by side, as cards sharing the width. */
+const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0 flex-1' };
 </script>
 
 <template>
@@ -54,26 +57,30 @@ const languages = computed(() => [
       />
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <UFormField :label="t('settings.colorMode')">
-        <USelect
-          :model-value="settings?.color_mode"
-          :items="colorModes"
-          :disabled="!settings"
-          class="w-full"
-          @update:model-value="settingsStore.update({ color_mode: $event as ColorMode })"
-        />
-      </UFormField>
-      <UFormField :label="t('settings.language')">
-        <USelect
-          :model-value="settings?.language"
-          :items="languages"
-          :disabled="!settings"
-          class="w-full"
-          @update:model-value="settingsStore.update({ language: $event as Language })"
-        />
-      </UFormField>
-    </div>
+    <URadioGroup
+      :model-value="settings?.color_mode"
+      :items="colorModes"
+      :legend="t('settings.colorMode')"
+      variant="card"
+      orientation="horizontal"
+      indicator="hidden"
+      size="sm"
+      :disabled="!settings"
+      :ui="cards"
+      @update:model-value="settingsStore.update({ color_mode: $event as ColorMode })"
+    />
+    <URadioGroup
+      :model-value="settings?.language"
+      :items="languages"
+      :legend="t('settings.language')"
+      variant="card"
+      orientation="horizontal"
+      indicator="hidden"
+      size="sm"
+      :disabled="!settings"
+      :ui="cards"
+      @update:model-value="settingsStore.update({ language: $event as Language })"
+    />
 
     <PopupUpdates />
 

@@ -27,7 +27,9 @@ const firmware = useFirmwareStore();
 const errors = useErrorStore();
 const errorText = useErrorText();
 
-usePopupAutoSize(useTemplateRef<HTMLElement>('root'));
+// The page, then the footer: the window fits both, and the footer stays at
+// the bottom while the window catches up with the content.
+usePopupAutoSize(useTemplateRef<HTMLElement>('body'), useTemplateRef<HTMLElement>('footer'));
 
 const page = ref<Page>('lamp');
 const pageHeading = useTemplateRef<HTMLElement>('pageHeading');
@@ -39,12 +41,8 @@ async function show(next: Page): Promise<void> {
   pageHeading.value?.focus();
 }
 
-onKeyStroke('Escape', (event) => {
-  // In an open list (a select), Escape closes the list first.
-  const target = event.target instanceof Element ? event.target : null;
-  if (!event.defaultPrevented && !target?.closest('[role="listbox"], [role="dialog"]')) {
-    void popupHide();
-  }
+onKeyStroke('Escape', () => {
+  void popupHide();
 });
 
 const status = computed(() => {
@@ -65,45 +63,48 @@ const footerUpdate = computed(() => {
 </script>
 
 <template>
-  <main ref="root" class="flex flex-col gap-4 p-4">
-    <header>
-      <h1 class="text-base font-bold tracking-wide text-highlighted">DISLED</h1>
-      <p role="status" class="text-xs text-muted">{{ status }}</p>
-    </header>
+  <main class="flex min-h-screen flex-col">
+    <div ref="body" class="flex flex-col gap-4 p-4 pb-3">
+      <header>
+        <h1 class="text-base font-bold tracking-wide text-highlighted">DISLED</h1>
+        <p role="status" class="text-xs text-muted">{{ status }}</p>
+      </header>
 
-    <section v-if="page === 'lamp'" class="flex flex-col gap-4">
-      <h2 ref="pageHeading" tabindex="-1" class="sr-only">{{ t('popup.lampPage') }}</h2>
-      <p v-if="!lamp.connection.connected" class="text-xs text-muted">
-        {{ t('lamp.unplugged') }}
-      </p>
-      <LampColorPicker labels />
-      <LampBrightness />
-    </section>
+      <section v-if="page === 'lamp'" class="flex flex-col gap-4">
+        <h2 ref="pageHeading" tabindex="-1" class="sr-only">{{ t('popup.lampPage') }}</h2>
+        <p v-if="!lamp.connection.connected" class="text-xs text-muted">
+          {{ t('lamp.unplugged') }}
+        </p>
+        <LampColorPicker labels />
+        <LampBrightness />
+      </section>
 
-    <section v-else class="flex flex-col gap-3">
-      <h2
-        ref="pageHeading"
-        tabindex="-1"
-        class="text-sm font-semibold text-highlighted focus:outline-none"
-      >
-        {{ t('common.settings') }}
-      </h2>
-      <PopupSettings />
-    </section>
+      <section v-else class="flex flex-col gap-3">
+        <h2
+          ref="pageHeading"
+          tabindex="-1"
+          class="text-sm font-semibold text-highlighted focus:outline-none"
+        >
+          {{ t('common.settings') }}
+        </h2>
+        <PopupSettings />
+      </section>
 
-    <UAlert
-      v-if="errors.last"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-triangle-alert"
-      :description="errorText(errors.last)"
-      :ui="{ description: 'break-words' }"
-    />
+      <UAlert
+        v-if="errors.last"
+        color="error"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+        :description="errorText(errors.last)"
+        :ui="{ root: 'gap-2 p-3', icon: 'size-4', description: 'text-xs break-words' }"
+      />
+    </div>
 
-    <footer class="flex items-center justify-between gap-2">
+    <footer ref="footer" class="mt-auto flex items-center justify-between gap-2 px-4 pb-3">
       <UButton
         color="neutral"
         variant="link"
+        size="sm"
         class="px-0"
         :icon="page === 'lamp' ? 'i-lucide-settings' : 'i-lucide-arrow-left'"
         @click="show(page === 'lamp' ? 'settings' : 'lamp')"
@@ -113,12 +114,20 @@ const footerUpdate = computed(() => {
       <UButton
         v-if="footerUpdate && page === 'lamp'"
         variant="link"
+        size="sm"
         class="px-0 font-semibold"
         @click="show('settings')"
       >
         {{ footerUpdate }}
       </UButton>
-      <UButton color="neutral" variant="link" class="px-0" icon="i-lucide-power" @click="quit">
+      <UButton
+        color="neutral"
+        variant="link"
+        size="sm"
+        class="px-0"
+        icon="i-lucide-power"
+        @click="quit"
+      >
         {{ t('common.quit') }}
       </UButton>
     </footer>
