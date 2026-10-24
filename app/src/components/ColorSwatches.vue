@@ -2,8 +2,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  The four lamp colors. The lamp owns the state: the selection reflects the
-  last STATE message.
+  Off, then the four lamp colors. The lamp owns the state: the selection
+  reflects the last STATE message.
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -23,7 +23,19 @@ const state = computed(() => device.state);
 </script>
 
 <template>
-  <div class="colors">
+  <div class="colors" :class="{ labelled: labels }">
+    <button
+      type="button"
+      class="color"
+      :disabled="!state"
+      title="Off"
+      aria-label="Off"
+      :aria-pressed="state?.on === false"
+      @click="setLamp({ on: false })"
+    >
+      <span class="swatch off" :class="{ selected: state?.on === false }" />
+      <span v-if="labels" class="name">Off</span>
+    </button>
     <button
       v-for="color in LAMP_COLORS"
       :key="color"
@@ -32,12 +44,12 @@ const state = computed(() => device.state);
       :disabled="!state"
       :title="SWATCHES[color].label"
       :aria-label="SWATCHES[color].label"
-      :aria-pressed="state?.color === color"
+      :aria-pressed="state?.on === true && state.color === color"
       @click="setLamp({ color, on: true })"
     >
       <span
         class="swatch"
-        :class="{ selected: state?.color === color }"
+        :class="{ selected: state?.on === true && state.color === color }"
         :style="{ background: SWATCHES[color].css }"
       />
       <span v-if="labels" class="name">{{ SWATCHES[color].label }}</span>
@@ -59,11 +71,29 @@ const state = computed(() => device.state);
   background: none;
   padding: 0;
 }
+/* With their names, the swatches share the width in equal columns: the
+   gaps between the squares stay even whatever the length of the names. */
+.labelled .color {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .swatch {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 20%;
   border: 2px solid transparent;
+}
+/* Off: black, struck through in the grey of its outline. */
+.swatch.off {
+  border-color: var(--border);
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 0.75px),
+      var(--border) calc(50% - 0.75px) calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    ),
+    #16181c;
 }
 .swatch.selected {
   border-color: var(--text);
@@ -72,5 +102,6 @@ const state = computed(() => device.state);
 .name {
   font-size: 11px;
   color: var(--muted);
+  white-space: nowrap;
 }
 </style>

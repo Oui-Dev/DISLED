@@ -8,15 +8,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { getVersion } from "@tauri-apps/api/app";
-import {
-  device,
-  getAutostart,
-  openDiagnostics,
-  quitApp,
-  setAutostart,
-  setLamp,
-  updateSettings,
-} from "../lib/device";
+import { device, getAutostart, openDiagnostics, quitApp, setAutostart, updateSettings } from "../lib/device";
 import { checkFirmware, firmware, firmwareUpdateFor, openLampUpdate } from "../lib/firmware";
 import { checkForUpdates, installUpdate, updates } from "../lib/updates";
 import BrightnessControl from "./BrightnessControl.vue";
@@ -32,10 +24,7 @@ const status = computed(() => {
   if (!connected.value) {
     return "No lamp connected";
   }
-  if (!state.value) {
-    return "Connecting…";
-  }
-  return state.value.on ? "On" : "Off";
+  return state.value ? "Lamp connected" : "Connecting…";
 });
 const firmwareVersion = computed(() => device.info?.firmware_version ?? "–");
 /** A newer firmware for the connected lamp. */
@@ -110,23 +99,13 @@ function toggleUpdateChecks(event: Event): Promise<void> {
         <strong>DISLED</strong>
         <span class="muted">{{ status }}</span>
       </div>
-      <button
-        type="button"
-        class="power"
-        :class="{ active: state?.on }"
-        :disabled="!state"
-        :aria-pressed="state?.on ?? false"
-        @click="state && setLamp({ on: !state.on })"
-      >
-        {{ state?.on ? "On" : "Off" }}
-      </button>
     </header>
 
     <template v-if="page === 'lamp'">
       <p v-if="!connected" class="muted note">
         Plug the lamp into this computer. The settings below still apply then.
       </p>
-      <ColorSwatches labels class="swatches" />
+      <ColorSwatches labels />
       <BrightnessControl />
     </template>
 
@@ -213,19 +192,9 @@ function toggleUpdateChecks(event: Event): Promise<void> {
 .title .muted {
   font-size: 12px;
 }
-.power {
-  min-width: 64px;
-}
-.power.active {
-  background: var(--accent);
-  color: var(--on-accent);
-}
 .note {
   margin: 0;
   font-size: 12px;
-}
-.swatches {
-  justify-content: space-between;
 }
 .settings {
   display: flex;

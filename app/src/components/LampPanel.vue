@@ -2,12 +2,12 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Lamp controls of the Diagnostics window: power, the four colors and the
-  brightness, with the state details.
+  Lamp controls of the Diagnostics window: the four colors and off, the
+  brightness, and the state details.
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { device, setLamp } from "../lib/device";
+import { device } from "../lib/device";
 import BrightnessControl from "./BrightnessControl.vue";
 import ColorSwatches from "./ColorSwatches.vue";
 
@@ -20,9 +20,6 @@ const state = computed(() => device.state);
     <p v-if="!state" class="muted">Waiting for the lamp…</p>
     <template v-else>
       <div class="row">
-        <button type="button" class="power" :class="{ active: state.on }" @click="setLamp({ on: !state.on })">
-          {{ state.on ? "On" : "Off" }}
-        </button>
         <ColorSwatches />
       </div>
       <BrightnessControl />
@@ -40,13 +37,6 @@ const state = computed(() => device.state);
   align-items: center;
   gap: 16px;
   margin: 12px 0;
-}
-.power {
-  min-width: 72px;
-}
-.power.active {
-  background: var(--accent);
-  color: var(--on-accent);
 }
 .status {
   margin: 12px 0 0;
