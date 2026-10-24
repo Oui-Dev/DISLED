@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import ui from '@nuxt/ui/vite';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
@@ -31,6 +32,9 @@ export default defineConfig(() => ({
       // it uses are bundled, never fetched.
       icon: { clientBundle: { scan: true } },
     }),
+    // The messages are compiled at build time: no message compiler at run
+    // time, nothing for the CSP to block.
+    VueI18nPlugin({ include: [path('./src/locales/**')] }),
   ],
 
   resolve: {

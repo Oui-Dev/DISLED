@@ -11,9 +11,18 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_positioner::{Position, WindowExt};
 
+use crate::i18n::{Locale, LocaleState};
+use crate::settings::SettingsState;
+
 pub const POPUP: &str = "popup";
 pub const DIAGNOSTICS: &str = "diagnostics";
 pub const LAMP_UPDATE: &str = "lamp-update";
+
+/// The windows opened on demand, with the message key of their title.
+const TITLED: [(&str, &str); 2] = [
+    (DIAGNOSTICS, "window.diagnostics"),
+    (LAMP_UPDATE, "window.lampUpdate"),
+];
 
 /// A click on the tray icon first takes the focus away from an open popup,
 /// which hides it; the click itself must then not reopen it.
@@ -89,13 +98,39 @@ fn raise<R: Runtime>(app: &AppHandle<R>, label: &str) -> bool {
     true
 }
 
+fn title(label: &str, locale: Locale) -> String {
+    TITLED
+        .iter()
+        .find(|(titled, _)| *titled == label)
+        .map(|(_, key)| locale.t(key))
+        .unwrap_or_default()
+}
+
+/// A window opened on demand, in the language and the color mode in force.
+fn builder<'a, R: Runtime>(
+    app: &'a AppHandle<R>,
+    label: &str,
+) -> WebviewWindowBuilder<'a, R, AppHandle<R>> {
+    WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
+        .title(title(label, app.state::<LocaleState>().get()))
+        .theme(app.state::<SettingsState>().get().color_mode.theme())
+}
+
+/// Titles the open windows in another language.
+pub fn retitle<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+    for (label, key) in TITLED {
+        if let Some(window) = app.get_webview_window(label) {
+            let _ = window.set_title(&locale.t(key));
+        }
+    }
+}
+
 pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
     hide_popup(app);
     if raise(app, DIAGNOSTICS) {
         return;
     }
-    let built = WebviewWindowBuilder::new(app, DIAGNOSTICS, WebviewUrl::App("index.html".into()))
-        .title("DISLED diagnostics")
+    let built = builder(app, DIAGNOSTICS)
         .inner_size(1040.0, 760.0)
         .min_inner_size(760.0, 560.0)
         .build();
@@ -111,8 +146,7 @@ pub fn open_lamp_update<R: Runtime>(app: &AppHandle<R>) {
     if raise(app, LAMP_UPDATE) {
         return;
     }
-    let built = WebviewWindowBuilder::new(app, LAMP_UPDATE, WebviewUrl::App("index.html".into()))
-        .title("DISLED lamp update")
+    let built = builder(app, LAMP_UPDATE)
         .inner_size(460.0, 560.0)
         .resizable(false)
         .build();

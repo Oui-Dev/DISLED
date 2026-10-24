@@ -9,6 +9,7 @@ import type { Command } from '@/bindings/Command';
 import type { Connection } from '@/bindings/Connection';
 import type { FirmwareStatus } from '@/bindings/FirmwareStatus';
 import type { Link } from '@/bindings/Link';
+import type { Locale } from '@/bindings/Locale';
 import type { Settings } from '@/bindings/Settings';
 import type { SettingsPatch } from '@/bindings/SettingsPatch';
 import type { UpdateStatus } from '@/bindings/UpdateStatus';
@@ -32,9 +33,14 @@ export function settingsGet(): Promise<Settings> {
   return invoke('settings_get');
 }
 
-/** Saves settings; the backend applies what changed to the lamp. */
+/** Saves settings; the backend applies what changed to the app and to the lamp. */
 export function settingsSet(patch: SettingsPatch): Promise<Settings> {
   return invoke('settings_set', { patch });
+}
+
+/** The language of the app now: the setting, or the system's. */
+export function localeGet(): Promise<Locale> {
+  return invoke('locale_get');
 }
 
 export function autostartGet(): Promise<boolean> {

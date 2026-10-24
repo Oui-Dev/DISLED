@@ -1,0 +1,19 @@
+{
+  "tray": {
+    "open": "Open DISLED",
+    "diagnostics": "Diagnostics…",
+    "quit": "Quit DISLED",
+    "tooltip": {
+      "noLamp": "DISLED: no lamp",
+      "off": "DISLED: off",
+      "green": "DISLED: green",
+      "orange": "DISLED: orange",
+      "red": "DISLED: red",
+      "warmWhite": "DISLED: warm white"
+    }
+  },
+  "window": {
+    "diagnostics": "DISLED diagnostics",
+    "lampUpdate": "DISLED lamp update"
+  }
+}

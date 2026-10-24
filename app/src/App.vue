@@ -3,11 +3,13 @@
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
   One page for every window: the window label picks the view and the
-  stores it follows.
+  stores it follows. main.ts has started the settings.
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useAppearance } from '@/composables/useAppearance';
+import { nuxtUiLocales } from '@/i18n';
 import { useDiagnosticsStore } from '@/stores/diagnostics';
 import { useFirmwareStore } from '@/stores/firmware';
 import { useLampStore } from '@/stores/lamp';
@@ -19,9 +21,12 @@ import LampUpdateView from './components/LampUpdateView.vue';
 import PopupView from './components/PopupView.vue';
 
 const label = getCurrentWebviewWindow().label;
+const settings = useSettingsStore();
+const nuxtUiLocale = computed(() => nuxtUiLocales[settings.locale]);
+
+useAppearance();
 
 onMounted(() => {
-  void useSettingsStore().start();
   void useLampStore().start();
   if (label === 'popup' || label === 'lamp-update') {
     void useFirmwareStore().start();
@@ -37,7 +42,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <PopupView v-if="label === 'popup'" />
-  <LampUpdateView v-else-if="label === 'lamp-update'" />
-  <DiagnosticsView v-else />
+  <UApp :locale="nuxtUiLocale" :toaster="null">
+    <PopupView v-if="label === 'popup'" />
+    <LampUpdateView v-else-if="label === 'lamp-update'" />
+    <DiagnosticsView v-else />
+  </UApp>
 </template>

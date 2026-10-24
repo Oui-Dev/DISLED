@@ -1,20 +1,54 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Settings kept on this computer and applied to the lamp at every
-//! connection: the lamp starts in automatic brightness after each power-up
-//! and forgets its bias, so the app re-applies them. Power and color are
-//! not settings: the lamp always starts green (available).
+//! Settings kept on this computer. The brightness settings are applied to
+//! the lamp at every connection: the lamp starts in automatic brightness
+//! after each power-up and forgets its bias, so the app re-applies them.
+//! Power and color are not settings: the lamp always starts green
+//! (available). The color mode and the language are the app's own.
 
 use std::sync::Mutex;
 
 use disled_protocol::{AUTO_BIAS_MAX, AUTO_BIAS_MIN, BrightnessMode, Command, SetState};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Runtime, Theme};
 use tauri_plugin_store::StoreExt;
 
 const STORE_FILE: &str = "settings.json";
 const KEY: &str = "settings";
+
+/// Light or dark windows, or as the system.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
+#[serde(rename_all = "snake_case")]
+pub enum ColorMode {
+    #[default]
+    System,
+    Light,
+    Dark,
+}
+
+impl ColorMode {
+    /// The theme to force on the windows; `None` follows the system.
+    pub fn theme(self) -> Option<Theme> {
+        match self {
+            ColorMode::System => None,
+            ColorMode::Light => Some(Theme::Light),
+            ColorMode::Dark => Some(Theme::Dark),
+        }
+    }
+}
+
+/// The language of the app, or the system's (`i18n::Locale::of`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
+#[serde(rename_all = "snake_case")]
+pub enum Language {
+    #[default]
+    System,
+    En,
+    Fr,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(test, derive(ts_rs::TS), ts(export))]
@@ -30,6 +64,8 @@ pub struct Settings {
     /// Look for a new version of the app and of the lamp firmware at
     /// start-up and once a day.
     pub check_updates: bool,
+    pub color_mode: ColorMode,
+    pub language: Language,
 }
 
 impl Default for Settings {
@@ -40,6 +76,8 @@ impl Default for Settings {
             auto_bias: 0,
             autostart_initialized: false,
             check_updates: true,
+            color_mode: ColorMode::System,
+            language: Language::System,
         }
     }
 }
@@ -52,6 +90,8 @@ pub struct SettingsPatch {
     pub manual_level: Option<u8>,
     pub auto_bias: Option<i8>,
     pub check_updates: Option<bool>,
+    pub color_mode: Option<ColorMode>,
+    pub language: Option<Language>,
 }
 
 impl Settings {
@@ -68,6 +108,12 @@ impl Settings {
         }
         if let Some(check) = patch.check_updates {
             self.check_updates = check;
+        }
+        if let Some(mode) = patch.color_mode {
+            self.color_mode = mode;
+        }
+        if let Some(language) = patch.language {
+            self.language = language;
         }
     }
 
@@ -144,8 +190,7 @@ mod tests {
             brightness_mode: BrightnessMode::Manual,
             manual_level: 30,
             auto_bias: 20,
-            autostart_initialized: true,
-            check_updates: true,
+            ..Settings::default()
         };
         assert_eq!(settings.commands(false).len(), 1);
         let commands = settings.commands(true);
@@ -171,5 +216,13 @@ mod tests {
         assert_eq!(settings.auto_bias, 0);
         assert!(!settings.autostart_initialized);
         assert!(settings.check_updates);
+        assert_eq!(settings.color_mode, ColorMode::System);
+        assert_eq!(settings.language, Language::System);
+    }
+
+    #[test]
+    fn the_system_color_mode_forces_no_theme() {
+        assert_eq!(ColorMode::System.theme(), None);
+        assert_eq!(ColorMode::Dark.theme(), Some(Theme::Dark));
     }
 }

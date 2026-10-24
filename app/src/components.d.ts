@@ -22,5 +22,6 @@ declare module 'vue' {
     PopupView: typeof import('./components/PopupView.vue')['default']
     SelfTestPanel: typeof import('./components/SelfTestPanel.vue')['default']
     TelemetryPanel: typeof import('./components/TelemetryPanel.vue')['default']
+    UApp: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
   }
 }

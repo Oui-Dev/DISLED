@@ -2,14 +2,16 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 // Settings saved on this computer by the backend, which applies the
-// brightness settings to the lamp at every connection, and start at login.
-// Every window keeps a copy, refreshed by `settings-changed`.
+// brightness settings to the lamp at every connection, and the color mode
+// and language to the app; start at login. Every window keeps a copy,
+// refreshed by `settings-changed`.
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import type { Locale } from '@/bindings/Locale';
 import type { Settings } from '@/bindings/Settings';
 import type { SettingsPatch } from '@/bindings/SettingsPatch';
-import { autostartGet, autostartSet, settingsGet, settingsSet } from '@/ipc/commands';
+import { autostartGet, autostartSet, localeGet, settingsGet, settingsSet } from '@/ipc/commands';
 import { on } from '@/ipc/events';
 import { useErrorStore } from './errors';
 
@@ -18,6 +20,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /** Null until the backend answers. */
   const settings = ref<Settings | null>(null);
+  /** The language in force: the setting, or the system's when it says so. */
+  const locale = ref<Locale>('en');
   const autostart = ref(false);
 
   async function update(patch: SettingsPatch): Promise<void> {
@@ -38,14 +42,20 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  /** Follows the backend events. Call once per window. */
+  /** Follows the backend events. Call once per window, before showing it. */
   async function start(): Promise<void> {
     await on('settings-changed', (next) => {
       settings.value = next;
     });
-    settings.value = await settingsGet();
-    autostart.value = await autostartGet();
+    await on('locale-changed', (next) => {
+      locale.value = next;
+    });
+    [settings.value, locale.value, autostart.value] = await Promise.all([
+      settingsGet(),
+      localeGet(),
+      autostartGet(),
+    ]);
   }
 
-  return { settings, autostart, update, setAutostart, start };
+  return { settings, locale, autostart, update, setAutostart, start };
 });
