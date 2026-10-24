@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
+import { useI18n } from 'vue-i18n';
 import type { AppError } from '@/stores/errors';
 
-/** Words an error for the user. */
+/** Words an error: the cause in the user's language, the backend's detail as it came. */
 export function useErrorText(): (error: AppError) => string {
+  const { t } = useI18n();
   return (error) => {
     switch (error.kind) {
       case 'backend':
-        return error.detail;
+        return t('errors.backend', { detail: error.detail });
       case 'rejected':
-        return `the lamp rejected command 0x${error.command.toString(16)}: ${error.error}`;
+        return t('errors.rejected', {
+          command: `0x${error.command.toString(16).padStart(2, '0')}`,
+          error: t(`enums.protocolError.${error.error}`),
+        });
       case 'unreadable':
-        return `unreadable message: ${error.detail}`;
+        return t('errors.unreadable', { detail: error.detail });
     }
   };
 }

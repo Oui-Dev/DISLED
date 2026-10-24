@@ -15,11 +15,15 @@ export default defineConfig(() => ({
     ui({
       // Each window picks its view from its label: no router.
       router: false,
-      // Components are auto-imported (Nuxt UI and src/components, named after
-      // their folder: lamp/ColorPicker.vue is <LampColorPicker>); functions
-      // are imported explicitly.
+      // Components are auto-imported (Nuxt UI and src/components, where a
+      // file starts with its folder: lamp/LampColorPicker.vue is
+      // <LampColorPicker>); functions are imported explicitly.
       autoImport: false,
-      components: { dts: 'src/components.d.ts', directoryAsNamespace: true },
+      components: {
+        dts: 'src/components.d.ts',
+        directoryAsNamespace: true,
+        collapseSamePrefixes: true,
+      },
       ui: {
         colors: {
           primary: 'brand',

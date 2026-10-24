@@ -85,7 +85,7 @@ function close(): Promise<void> {
 </script>
 
 <template>
-  <main class="update">
+  <main class="update legacy">
     <header>
       <h1>Lamp update</h1>
       <p class="muted">{{ summary }}</p>

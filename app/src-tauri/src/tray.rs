@@ -40,7 +40,7 @@ impl Look {
             Look::On(LampColor::Green) => "green",
             Look::On(LampColor::Orange) => "orange",
             Look::On(LampColor::Red) => "red",
-            Look::On(LampColor::WarmWhite) => "warmWhite",
+            Look::On(LampColor::WarmWhite) => "warm_white",
         };
         locale.t(&format!("tray.tooltip.{key}"))
     }

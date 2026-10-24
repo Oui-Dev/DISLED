@@ -91,6 +91,15 @@ export function openLampUpdate(): Promise<void> {
   return invoke('open_lamp_update');
 }
 
+/** Fits the popup to this height (CSS pixels), against the tray icon. */
+export function popupResize(height: number): Promise<void> {
+  return invoke('popup_resize', { height });
+}
+
+export function popupHide(): Promise<void> {
+  return invoke('popup_hide');
+}
+
 /** Opens one of the pages the app links to in the browser. */
 export function openLink(link: Link): Promise<void> {
   return invoke('open_link', { link });

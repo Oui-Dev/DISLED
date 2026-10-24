@@ -178,6 +178,18 @@ async fn open_lamp_update(app: AppHandle) {
     windows::open_lamp_update(&app);
 }
 
+/// The popup measures its content and asks for that height.
+#[tauri::command]
+fn popup_resize(app: AppHandle, height: f64) {
+    windows::resize_popup(&app, height);
+}
+
+/// Escape in the popup.
+#[tauri::command]
+fn popup_hide(app: AppHandle) {
+    windows::hide_popup(&app);
+}
+
 /// Pages the windows may open in the browser.
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(ts_rs::TS), ts(export))]
@@ -287,6 +299,8 @@ pub fn run() {
             firmware_cancel,
             open_diagnostics,
             open_lamp_update,
+            popup_resize,
+            popup_hide,
             open_link,
             quit
         ])

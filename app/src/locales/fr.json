@@ -1,4 +1,84 @@
 {
+  "common": {
+    "settings": "Réglages",
+    "back": "Retour",
+    "quit": "Quitter"
+  },
+  "status": {
+    "noLamp": "Aucune lampe connectée",
+    "connecting": "Connexion…",
+    "connected": "Lampe connectée"
+  },
+  "popup": {
+    "lampPage": "Lampe"
+  },
+  "lamp": {
+    "unplugged": "Branchez la lampe à cet ordinateur. Les réglages ci-dessous lui seront appliqués.",
+    "colors": {
+      "legend": "Couleur de la lampe",
+      "off": "Éteinte",
+      "green": "Vert",
+      "orange": "Orange",
+      "red": "Rouge",
+      "warm_white": "Blanc chaud"
+    },
+    "brightness": {
+      "title": "Luminosité",
+      "automatic": "Automatique",
+      "darker": "Plus sombre",
+      "brighter": "Plus clair",
+      "correctionLabel": "Correction de la luminosité automatique",
+      "levelLabel": "Luminosité",
+      "fixed": "Niveau fixe",
+      "follows": "Suit la lumière de la pièce",
+      "followsNow": "Suit la lumière de la pièce, actuellement {level}",
+      "correction": "correction {value}",
+      "noCorrection": "sans correction",
+      "needsFirmware": "Suit la lumière de la pièce ; la correction demande une mise à jour du firmware de la lampe"
+    }
+  },
+  "settings": {
+    "autostart": "Lancer DISLED à l’ouverture de session",
+    "checkUpdates": "Rechercher les mises à jour chaque jour",
+    "colorMode": "Apparence",
+    "colorModes": {
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "language": "Langue",
+    "systemLanguage": "Système",
+    "diagnostics": "Ouvrir les diagnostics…",
+    "versions": "App {app} · firmware de la lampe {firmware}"
+  },
+  "updates": {
+    "install": "Installer {version} et redémarrer",
+    "updateLamp": "Mettre à jour la lampe en {version}…",
+    "check": "Rechercher les mises à jour",
+    "downloading": "Téléchargement de {version}… {progress}",
+    "checking": "Recherche des mises à jour…",
+    "error": "Erreur de mise à jour : {detail}",
+    "available": "DISLED {version} est disponible.",
+    "upToDate": "À jour (vérifié le {date}).",
+    "lampError": "Erreur de recherche du firmware de la lampe : {detail}",
+    "lampAvailable": "Le firmware {version} de la lampe est disponible.",
+    "reinstall": "Lampe non détectée ? Réinstaller son firmware…",
+    "toApp": "Mettre à jour en {version}",
+    "toLamp": "Mettre à jour la lampe"
+  },
+  "errors": {
+    "backend": "Erreur : {detail}",
+    "rejected": "La lampe a refusé la commande {command} : {error}",
+    "unreadable": "Message illisible de la lampe : {detail}"
+  },
+  "enums": {
+    "protocolError": {
+      "unknown_command": "commande inconnue",
+      "bad_length": "longueur incorrecte",
+      "bad_value": "valeur invalide",
+      "busy": "occupée"
+    }
+  },
   "tray": {
     "open": "Ouvrir DISLED",
     "diagnostics": "Diagnostics…",
@@ -9,7 +89,7 @@
       "green": "DISLED : vert",
       "orange": "DISLED : orange",
       "red": "DISLED : rouge",
-      "warmWhite": "DISLED : blanc chaud"
+      "warm_white": "DISLED : blanc chaud"
     }
   },
   "window": {

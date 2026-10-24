@@ -14,7 +14,7 @@ import TelemetryPanel from './TelemetryPanel.vue';
 </script>
 
 <template>
-  <main class="layout">
+  <main class="layout legacy">
     <DeviceHeader />
     <div class="columns">
       <div class="stack">

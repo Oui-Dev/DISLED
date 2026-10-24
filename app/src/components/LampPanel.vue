@@ -8,8 +8,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useLampStore } from '@/stores/lamp';
-import BrightnessControl from './BrightnessControl.vue';
-import ColorSwatches from './ColorSwatches.vue';
 
 const lamp = useLampStore();
 const state = computed(() => lamp.state);
@@ -21,9 +19,9 @@ const state = computed(() => lamp.state);
     <p v-if="!state" class="muted">Waiting for the lamp…</p>
     <template v-else>
       <div class="row">
-        <ColorSwatches />
+        <LampColorPicker />
       </div>
-      <BrightnessControl />
+      <LampBrightness />
       <p class="muted status">
         state #{{ state.state_seq }} · last change: {{ state.source.replace('_', ' ') }} · USB
         {{ state.link }}

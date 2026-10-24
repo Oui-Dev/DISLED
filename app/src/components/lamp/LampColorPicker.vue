@@ -1,0 +1,87 @@
+<!--
+  SPDX-License-Identifier: GPL-3.0-or-later
+  SPDX-FileCopyrightText: 2026 The DISLED contributors
+
+  Off, then the four lamp colors, as a radio group (arrow keys move the
+  choice). The lamp owns its state: the selection is its last STATE
+  message.
+-->
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { LampColor } from '@/bindings/LampColor';
+import { useLampStore } from '@/stores/lamp';
+import { LAMP_COLORS, SWATCH_COLORS } from '@/utils/lamp';
+
+/** Names under the swatches; without them, only screen readers get the names. */
+defineProps<{ labels?: boolean }>();
+
+type Choice = LampColor | 'off';
+
+const { t } = useI18n();
+const lamp = useLampStore();
+
+const items = computed(() => [
+  { value: 'off', label: t('lamp.colors.off') },
+  ...LAMP_COLORS.map((color) => ({ value: color, label: t(`lamp.colors.${color}`) })),
+]);
+
+const selected = computed<Choice | undefined>(() => {
+  const state = lamp.state;
+  if (!state) {
+    return undefined;
+  }
+  return state.on ? state.color : 'off';
+});
+
+function select(choice: Choice): void {
+  void lamp.setLamp(choice === 'off' ? { on: false } : { on: true, color: choice });
+}
+</script>
+
+<template>
+  <URadioGroup
+    :model-value="selected"
+    :items="items"
+    :legend="t('lamp.colors.legend')"
+    orientation="horizontal"
+    indicator="hidden"
+    :disabled="!lamp.state"
+    :ui="{
+      legend: 'sr-only',
+      fieldset: 'flex-nowrap gap-x-1',
+      item: 'group min-w-0 flex-1 rounded-lg p-1',
+      wrapper: 'w-full',
+      label: 'flex cursor-pointer flex-col items-center gap-1.5 text-xs font-normal text-muted',
+    }"
+    @update:model-value="select($event as Choice)"
+  >
+    <template #label="{ item }">
+      <span
+        aria-hidden="true"
+        class="block size-9 rounded-[20%] border border-accented ring-2 ring-transparent ring-offset-2 ring-offset-bg transition-shadow group-has-data-[state=checked]:ring-inverted"
+        :class="{ off: item.value === 'off' }"
+        :style="
+          item.value === 'off' ? undefined : { background: SWATCH_COLORS[item.value as LampColor] }
+        "
+      />
+      <span :class="labels ? 'max-w-full text-center leading-tight' : 'sr-only'">
+        {{ item.label }}
+      </span>
+    </template>
+  </URadioGroup>
+</template>
+
+<style scoped>
+/* Off: the brand black, struck through in the color of the borders. */
+.off {
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 0.75px),
+      var(--ui-border-accented) calc(50% - 0.75px) calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    ),
+    var(--color-ink-900);
+}
+</style>

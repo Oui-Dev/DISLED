@@ -8,7 +8,9 @@
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, LogicalSize, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::i18n::{Locale, LocaleState};
@@ -27,6 +29,13 @@ const TITLED: [(&str, &str); 2] = [
 /// A click on the tray icon first takes the focus away from an open popup,
 /// which hides it; the click itself must then not reopen it.
 const REOPEN_GUARD: Duration = Duration::from_millis(300);
+
+/// The width of the popup, as in tauri.conf.json; its height follows its
+/// content.
+const POPUP_WIDTH: f64 = 320.0;
+/// Room kept on the screen around a popup taller than the screen, whose
+/// content then scrolls.
+const SCREEN_MARGIN: f64 = 48.0;
 
 #[derive(Default)]
 pub struct PopupState {
@@ -67,6 +76,23 @@ pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
         if let Ok(mut hidden_at) = app.state::<PopupState>().hidden_at.lock() {
             *hidden_at = Some(Instant::now());
         }
+    }
+}
+
+/// Fits the popup to the height of its content (logical pixels), within
+/// the screen, and keeps it against the tray icon.
+pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) {
+    let Some(window) = popup(app) else { return };
+    let screen = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map(|monitor| f64::from(monitor.work_area().size.height) / monitor.scale_factor())
+        .unwrap_or(f64::INFINITY);
+    let height = height.min(screen - SCREEN_MARGIN).max(1.0);
+    let resized = window.set_size(LogicalSize::new(POPUP_WIDTH, height));
+    if resized.is_ok() && window.is_visible().unwrap_or(false) {
+        place(&window);
     }
 }
 

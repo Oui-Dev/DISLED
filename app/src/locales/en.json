@@ -1,4 +1,84 @@
 {
+  "common": {
+    "settings": "Settings",
+    "back": "Back",
+    "quit": "Quit"
+  },
+  "status": {
+    "noLamp": "No lamp connected",
+    "connecting": "Connecting…",
+    "connected": "Lamp connected"
+  },
+  "popup": {
+    "lampPage": "Lamp"
+  },
+  "lamp": {
+    "unplugged": "Plug the lamp into this computer. The settings below will apply to it.",
+    "colors": {
+      "legend": "Lamp color",
+      "off": "Off",
+      "green": "Green",
+      "orange": "Orange",
+      "red": "Red",
+      "warm_white": "Warm white"
+    },
+    "brightness": {
+      "title": "Brightness",
+      "automatic": "Automatic",
+      "darker": "Darker",
+      "brighter": "Brighter",
+      "correctionLabel": "Correction of the automatic brightness",
+      "levelLabel": "Brightness",
+      "fixed": "Fixed level",
+      "follows": "Follows the room light",
+      "followsNow": "Follows the room light, now {level}",
+      "correction": "correction {value}",
+      "noCorrection": "no correction",
+      "needsFirmware": "Follows the room light; the correction needs a lamp firmware update"
+    }
+  },
+  "settings": {
+    "autostart": "Start DISLED when I log in",
+    "checkUpdates": "Check for updates every day",
+    "colorMode": "Appearance",
+    "colorModes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": "Language",
+    "systemLanguage": "System",
+    "diagnostics": "Open diagnostics…",
+    "versions": "App {app} · lamp firmware {firmware}"
+  },
+  "updates": {
+    "install": "Install {version} and restart",
+    "updateLamp": "Update the lamp to {version}…",
+    "check": "Check for updates",
+    "downloading": "Downloading {version}… {progress}",
+    "checking": "Checking for updates…",
+    "error": "Update error: {detail}",
+    "available": "DISLED {version} is available.",
+    "upToDate": "Up to date (checked {date}).",
+    "lampError": "Lamp firmware check error: {detail}",
+    "lampAvailable": "Lamp firmware {version} is available.",
+    "reinstall": "Lamp not detected? Reinstall its firmware…",
+    "toApp": "Update to {version}",
+    "toLamp": "Update the lamp"
+  },
+  "errors": {
+    "backend": "Error: {detail}",
+    "rejected": "The lamp rejected command {command}: {error}",
+    "unreadable": "Unreadable message from the lamp: {detail}"
+  },
+  "enums": {
+    "protocolError": {
+      "unknown_command": "unknown command",
+      "bad_length": "wrong length",
+      "bad_value": "invalid value",
+      "busy": "busy"
+    }
+  },
   "tray": {
     "open": "Open DISLED",
     "diagnostics": "Diagnostics…",
@@ -9,7 +89,7 @@
       "green": "DISLED: green",
       "orange": "DISLED: orange",
       "red": "DISLED: red",
-      "warmWhite": "DISLED: warm white"
+      "warm_white": "DISLED: warm white"
     }
   },
   "window": {

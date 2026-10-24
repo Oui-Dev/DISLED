@@ -11,17 +11,25 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    BrightnessControl: typeof import('./components/BrightnessControl.vue')['default']
-    ColorSwatches: typeof import('./components/ColorSwatches.vue')['default']
     DeviceHeader: typeof import('./components/DeviceHeader.vue')['default']
     DiagnosticsPanel: typeof import('./components/DiagnosticsPanel.vue')['default']
     DiagnosticsView: typeof import('./components/DiagnosticsView.vue')['default']
+    LampBrightness: typeof import('./components/lamp/LampBrightness.vue')['default']
+    LampColorPicker: typeof import('./components/lamp/LampColorPicker.vue')['default']
     LampPanel: typeof import('./components/LampPanel.vue')['default']
     LampUpdateView: typeof import('./components/LampUpdateView.vue')['default']
     LineChart: typeof import('./components/LineChart.vue')['default']
-    PopupView: typeof import('./components/PopupView.vue')['default']
+    PopupSettings: typeof import('./components/popup/PopupSettings.vue')['default']
+    PopupUpdates: typeof import('./components/popup/PopupUpdates.vue')['default']
     SelfTestPanel: typeof import('./components/SelfTestPanel.vue')['default']
     TelemetryPanel: typeof import('./components/TelemetryPanel.vue')['default']
+    UAlert: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
     UApp: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
+    UButton: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UFormField: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
+    URadioGroup: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/RadioGroup.vue')['default']
+    USelect: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    USlider: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Slider.vue')['default']
+    USwitch: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
   }
 }

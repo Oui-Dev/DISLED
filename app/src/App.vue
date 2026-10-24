@@ -16,9 +16,9 @@ import { useLampStore } from '@/stores/lamp';
 import { useSettingsStore } from '@/stores/settings';
 import { useTelemetryStore } from '@/stores/telemetry';
 import { useUpdatesStore } from '@/stores/updates';
+import PopupView from '@/views/PopupView.vue';
 import DiagnosticsView from './components/DiagnosticsView.vue';
 import LampUpdateView from './components/LampUpdateView.vue';
-import PopupView from './components/PopupView.vue';
 
 const label = getCurrentWebviewWindow().label;
 const settings = useSettingsStore();
