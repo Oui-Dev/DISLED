@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Oui-Dev/DISLED/compare/fw-v0.3.0...fw-v0.3.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **firmware:** recalibrate touch so a hovering hand is ignored ([04ed44c](https://github.com/Oui-Dev/DISLED/commit/04ed44ca8c7e0974ba93d202bb0a9a5399bb492d))
+
 ## [0.3.0](https://github.com/Oui-Dev/DISLED/compare/fw-v0.2.1...fw-v0.3.0) (2026-10-21)
 
 
