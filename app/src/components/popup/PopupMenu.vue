@@ -12,12 +12,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUpdateStatus } from '@/composables/useUpdateStatus';
 import { openDiagnostics, openLampUpdate } from '@/ipc/commands';
-import { useFirmwareStore } from '@/stores/firmware';
-import { useLampStore } from '@/stores/lamp';
 
 const { t } = useI18n();
-const lamp = useLampStore();
-const firmware = useFirmwareStore();
 const { checking, appLine, lampLine, checkAll } = useUpdateStatus();
 
 const items = computed(() => {
@@ -37,15 +33,14 @@ const items = computed(() => {
       icon: 'i-lucide-activity',
       onSelect: () => void openDiagnostics(),
     },
-  ];
-  // A lamp that no longer starts can still take the firmware, in its update mode.
-  if (!lamp.connection.connected && firmware.status.latest) {
-    actions.push({
+    // The lamp update window takes every case: a lamp up to date, one
+    // that no longer starts (its update mode), no firmware known yet.
+    {
       label: t('updates.reinstall'),
       icon: 'i-lucide-hard-drive-download',
       onSelect: () => void openLampUpdate(),
-    });
-  }
+    },
+  ];
   const status = [appLine.value, lampLine.value]
     .filter((line) => line !== null)
     // A literal slot name types the item in the status slot.
