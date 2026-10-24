@@ -22,6 +22,9 @@ const faultText = useFaultText();
 const connected = computed(() => lamp.connection.connected);
 const crash = computed(() => (lamp.info?.fault ? faultText(lamp.info.fault) : null));
 
+/** Compact alerts, as in the popup: the header stays a bar. */
+const alert = { root: 'gap-2 p-3', icon: 'size-4', description: 'text-sm break-words' };
+
 const confirmingRestart = ref(false);
 
 function restart(): Promise<void> {
@@ -35,7 +38,7 @@ function restart(): Promise<void> {
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-xl font-bold tracking-wide text-highlighted">DISLED</h1>
+          <h1 class="text-lg font-bold tracking-wide text-highlighted">DISLED</h1>
           <UBadge
             :color="connected ? 'primary' : 'neutral'"
             variant="subtle"
@@ -57,7 +60,7 @@ function restart(): Promise<void> {
             />
           </template>
         </div>
-        <p v-if="connected" class="text-sm text-muted">
+        <p v-if="connected" class="text-xs text-muted">
           {{ t('diagnostics.serial', { serial: lamp.connection.serial ?? '?' }) }}
           <template v-if="lamp.info">
             ·
@@ -89,6 +92,7 @@ function restart(): Promise<void> {
       variant="subtle"
       icon="i-lucide-triangle-alert"
       :description="t('diagnostics.crashed', { fault: crash })"
+      :ui="alert"
     />
     <UAlert
       v-if="errors.last"
@@ -96,7 +100,7 @@ function restart(): Promise<void> {
       variant="subtle"
       icon="i-lucide-circle-x"
       :description="errorText(errors.last)"
-      :ui="{ description: 'break-words' }"
+      :ui="alert"
     />
 
     <UModal

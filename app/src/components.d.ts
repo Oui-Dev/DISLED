@@ -12,8 +12,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     DiagnosticsChart: typeof import('./components/diagnostics/DiagnosticsChart.vue')['default']
-    DiagnosticsCounters: typeof import('./components/diagnostics/DiagnosticsCounters.vue')['default']
+    DiagnosticsFigures: typeof import('./components/diagnostics/DiagnosticsFigures.vue')['default']
     DiagnosticsHeader: typeof import('./components/diagnostics/DiagnosticsHeader.vue')['default']
+    DiagnosticsHealth: typeof import('./components/diagnostics/DiagnosticsHealth.vue')['default']
     DiagnosticsLamp: typeof import('./components/diagnostics/DiagnosticsLamp.vue')['default']
     DiagnosticsSelfTest: typeof import('./components/diagnostics/DiagnosticsSelfTest.vue')['default']
     DiagnosticsTelemetry: typeof import('./components/diagnostics/DiagnosticsTelemetry.vue')['default']
@@ -25,8 +26,8 @@ declare module 'vue' {
     UApp: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
     UBadge: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UCard: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
     UChart: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Chart.vue')['default']
+    UEmpty: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Empty.vue')['default']
     UIcon: typeof import('./../node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UModal: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     UpdateStepDetail: typeof import('./components/update/UpdateStepDetail.vue')['default']
@@ -35,6 +36,7 @@ declare module 'vue' {
     USelect: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USlider: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Slider.vue')['default']
     USwitch: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
+    UTabs: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Tabs.vue')['default']
     UTimeline: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Timeline.vue')['default']
   }
 }

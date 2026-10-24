@@ -3,7 +3,8 @@
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
   Live telemetry for the tuning campaigns (touch, light sensor, thermal):
-  the stream period, the last figures, three charts, and CSV recordings.
+  its controls in one row, the last figures, three charts, and CSV
+  recordings. The stream starts with the window.
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -27,32 +28,27 @@ const periods = computed(() =>
   })),
 );
 
+/** What stands in for the figures and the charts before the first sample. */
+const placeholder = computed(() => {
+  if (!lamp.connection.connected) {
+    return { icon: 'i-lucide-unplug', description: t('diagnostics.noLamp') };
+  }
+  if (lamp.info && !lamp.info.telemetry) {
+    return { icon: 'i-lucide-activity', description: t('telemetry.unsupported') };
+  }
+  if (telemetry.periodMs === 0) {
+    return {
+      icon: 'i-lucide-circle-pause',
+      title: t('telemetry.stopped'),
+      description: t('telemetry.stoppedHint'),
+    };
+  }
+  return { loading: true, description: t('telemetry.waiting') };
+});
+
 const permille = (value: number) => t('telemetry.permille', { value: n(Math.round(value)) });
 const lux = (value: number) => t('telemetry.lux', { value: n(value, 'decimal') });
 const count = (value: number) => n(Math.round(value));
-
-const figures = computed(() => {
-  const s = telemetry.latest;
-  if (!s) {
-    return [];
-  }
-  return [
-    {
-      label: t('telemetry.touch'),
-      value: `${t(`enums.touchState.${s.touch_state}`)} · ${permille(s.touch_delta_permille)}`,
-    },
-    { label: t('telemetry.light'), value: lux(s.lux_centi / 100) },
-    {
-      label: t('telemetry.ledCurrent'),
-      value: t('telemetry.current', {
-        current: n(s.led_current_ma_x10 / 10, 'decimal'),
-        cap: n(s.cap_ma),
-      }),
-    },
-    { label: t('telemetry.level'), value: n(s.level_permille / 1000, 'percent') },
-    { label: t('telemetry.duty'), value: s.duty.join(' / ') },
-  ];
-});
 
 const charts = computed<
   {
@@ -115,29 +111,58 @@ const charts = computed<
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center justify-between gap-3">
-        <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
+  <section class="@container flex flex-col gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
+      <div class="flex flex-wrap items-center gap-2">
         <USelect
           :model-value="telemetry.periodMs"
           :items="periods"
-          :disabled="!lamp.connection.connected"
+          :disabled="!telemetry.supported"
           :aria-label="t('telemetry.period')"
+          icon="i-lucide-timer"
+          size="sm"
           class="w-32"
           @update:model-value="telemetry.setPeriod($event as number)"
         />
+        <UButton
+          v-if="!telemetry.recording"
+          color="neutral"
+          variant="outline"
+          size="sm"
+          icon="i-lucide-circle-dot"
+          :disabled="!telemetry.latest"
+          @click="telemetry.startRecording"
+        >
+          {{ t('telemetry.record') }}
+        </UButton>
+        <UButton
+          v-else
+          color="error"
+          size="sm"
+          icon="i-lucide-square"
+          @click="telemetry.stopRecording"
+        >
+          {{ t('telemetry.stop') }}
+        </UButton>
+        <span class="text-xs text-muted tabular-nums">
+          {{ t('telemetry.rows', telemetry.recordedRows) }}
+        </span>
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="sm"
+          icon="i-lucide-file-down"
+          :disabled="telemetry.recording || telemetry.recordedRows === 0"
+          @click="telemetry.exportRecording(t('telemetry.saveTitle'))"
+        >
+          {{ t('telemetry.export') }}
+        </UButton>
       </div>
-    </template>
+    </div>
 
-    <p v-if="!telemetry.latest" class="text-sm text-muted">{{ t('telemetry.empty') }}</p>
-    <div v-else class="flex flex-col gap-5">
-      <dl class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-2">
-        <div v-for="figure in figures" :key="figure.label">
-          <dt class="text-xs text-muted">{{ figure.label }}</dt>
-          <dd class="text-sm tabular-nums">{{ figure.value }}</dd>
-        </div>
-      </dl>
+    <template v-if="telemetry.latest">
+      <DiagnosticsFigures :sample="telemetry.latest" />
       <DiagnosticsChart
         v-for="chart in charts"
         :key="chart.title"
@@ -147,37 +172,7 @@ const charts = computed<
         :series="chart.series"
         :format="chart.format"
       />
-    </div>
-
-    <template #footer>
-      <div class="flex flex-wrap items-center gap-3">
-        <UButton
-          v-if="!telemetry.recording"
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-circle-dot"
-          :disabled="!telemetry.latest"
-          @click="telemetry.startRecording"
-        >
-          {{ t('telemetry.record') }}
-        </UButton>
-        <UButton v-else color="error" icon="i-lucide-square" @click="telemetry.stopRecording">
-          {{ t('telemetry.stop') }}
-        </UButton>
-        <span class="text-sm text-muted tabular-nums">
-          {{ t('telemetry.rows', telemetry.recordedRows) }}
-        </span>
-        <UButton
-          class="ms-auto"
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-file-down"
-          :disabled="telemetry.recording || telemetry.recordedRows === 0"
-          @click="telemetry.exportRecording(t('telemetry.saveTitle'))"
-        >
-          {{ t('telemetry.export') }}
-        </UButton>
-      </div>
     </template>
-  </UCard>
+    <UEmpty v-else v-bind="placeholder" variant="naked" class="flex-1" />
+  </section>
 </template>

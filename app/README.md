@@ -95,11 +95,13 @@ variable.
   update key), flashes it with [wchisp](https://github.com/ch32-rs/wchisp)
   and checks the version the lamp reports. wchisp is a separate GPL-2.0
   program that the installers put next to the app.
-- **Diagnostics window**: connection, firmware, serial number, last fault;
-  lamp controls; diagnostics counters (resets, faults, stack margin,
-  errors); the production self-test; telemetry at 50 ms to 1 s with live
-  charts, and CSV recordings for the tuning campaigns of
-  [`docs/bringup.md`](../docs/bringup.md).
+- **Diagnostics window**: connection, firmware, serial number, last crash
+  and restart on top; on the left, tabs for the lamp controls, its health
+  (the diagnostics counters by theme, with a warning on what needs a look)
+  and the production self-test; on the right, always in view, telemetry at
+  50 ms to 1 s with live charts, and CSV recordings for the tuning campaigns
+  of [`docs/bringup.md`](../docs/bringup.md). The stream starts with the
+  window, at 100 ms, and the backend stops it when the window closes.
 
 ## Front end
 

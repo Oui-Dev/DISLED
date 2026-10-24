@@ -6,7 +6,7 @@
 
 import { save } from '@tauri-apps/plugin-dialog';
 import { defineStore } from 'pinia';
-import { ref, shallowRef } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import type { Telemetry } from '@/bindings/Telemetry';
 import { saveCsv } from '@/ipc/commands';
 import { on } from '@/ipc/events';
@@ -16,13 +16,15 @@ import { useLampStore } from './lamp';
 
 /** Samples kept for the charts: 30 s at 50 ms, 10 min at 1 s. */
 const HISTORY_LENGTH = 600;
+/** The stream period when the window opens, ms: the charts hold the last minute. */
+const DEFAULT_PERIOD_MS = 100;
 
 export const useTelemetryStore = defineStore('telemetry', () => {
   const errors = useErrorStore();
   const lamp = useLampStore();
 
   /** 0: no stream. */
-  const periodMs = ref(0);
+  const periodMs = ref(DEFAULT_PERIOD_MS);
   const latest = ref<Telemetry | null>(null);
   /**
    * The last samples, oldest first. A new array at each sample, outside
@@ -32,6 +34,11 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   const recording = ref(false);
   const recordedRows = ref(0);
   let rows: string[] = [];
+
+  /** The connected lamp streams telemetry. */
+  const supported = computed(() => lamp.connection.connected && (lamp.info?.telemetry ?? false));
+  /** Set by start(): only the Diagnostics window streams. */
+  const following = ref(false);
 
   async function setPeriod(ms: number): Promise<void> {
     periodMs.value = ms;
@@ -46,6 +53,22 @@ export const useTelemetryStore = defineStore('telemetry', () => {
       recordedRows.value = rows.length;
     }
   }
+
+  // The stream starts with the window, and again for a lamp that comes
+  // back: a lamp streams nothing until asked. The backend stops it when the
+  // window closes. A lamp that leaves takes its charts along: the next one
+  // counts its uptime from zero.
+  watch(
+    () => following.value && supported.value,
+    (streaming) => {
+      if (!streaming) {
+        latest.value = null;
+        history.value = [];
+      } else if (periodMs.value > 0) {
+        void setPeriod(periodMs.value);
+      }
+    },
+  );
 
   function startRecording(): void {
     rows = [];
@@ -75,22 +98,16 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     }
   }
 
-  /** Follows the backend events. Call once, in the Diagnostics window. */
+  /** Follows the backend events and the lamp. Call once, in the Diagnostics window. */
   async function start(): Promise<void> {
-    await on('device-connection', ({ connected }) => {
-      if (!connected) {
-        latest.value = null;
-      } else if (periodMs.value > 0) {
-        // A lamp that comes back streams nothing until asked again.
-        void setPeriod(periodMs.value);
-      }
-    });
     await on('device-message', ({ message }) => {
       if (message.kind === 'telemetry') {
         const { kind: _kind, ...sample } = message;
         receive(sample);
       }
     });
+    // Once the samples have a listener.
+    following.value = true;
   }
 
   return {
@@ -99,6 +116,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     history,
     recording,
     recordedRows,
+    supported,
     setPeriod,
     startRecording,
     stopRecording,
