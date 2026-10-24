@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "typecheck": "vue-tsc --noEmit",
     "check": "biome check .",
-    "fix": "biome check --write ."
+    "fix": "biome check --write .",
+    "bindings": "cargo test --workspace export_bindings"
   },
   "dependencies": {
     "@fontsource-variable/montserrat": "^5.3.0",

@@ -37,3 +37,10 @@ disled-flash = { path = "../../crates/disled-flash" }
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 semver = "1"
+
+# The tests write the TypeScript types of the front end (ts-rs, see
+# .cargo/config.toml); release builds never compile ts-rs.
+[dev-dependencies]
+disled-flash = { path = "../../crates/disled-flash", features = ["ts"] }
+disled-protocol = { path = "../../crates/disled-protocol", features = ["ts"] }
+ts-rs = "12"

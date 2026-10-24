@@ -7,8 +7,9 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { LampColor } from '@/bindings/LampColor';
+import { LAMP_COLORS } from '@/utils/lamp';
 import { device, setLamp } from '../lib/device';
-import { LAMP_COLORS, type LampColor } from '../lib/protocol';
 
 defineProps<{ labels?: boolean }>();
 

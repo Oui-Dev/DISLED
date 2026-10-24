@@ -8,7 +8,8 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { device, type SettingsPatch, updateSettings } from '../lib/device';
+import type { SettingsPatch } from '@/bindings/SettingsPatch';
+import { device, updateSettings } from '../lib/device';
 
 const settings = computed(() => device.settings);
 const auto = computed(() => settings.value?.brightness_mode !== 'manual');

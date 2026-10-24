@@ -152,6 +152,7 @@ async fn open_lamp_update(app: AppHandle) {
 
 /// Pages the windows may open in the browser.
 #[derive(Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(rename_all = "snake_case")]
 enum Link {
     /// The tool that installs the WinUSB driver of the lamp's bootloader.

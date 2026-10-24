@@ -69,3 +69,8 @@ jobs:
           cargo fmt --all --check
           cargo clippy --workspace --all-targets -- -D warnings
           cargo test --workspace
+
+      # The tests rewrite the TypeScript types of the front end (ts-rs).
+      - name: TypeScript types up to date with the Rust types
+        working-directory: .
+        run: git diff --exit-code -- app/src/bindings

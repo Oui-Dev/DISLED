@@ -7,19 +7,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { reactive } from 'vue';
-
-export interface UpdateStatus {
-  /** A check is running. */
-  checking: boolean;
-  /** Version found by the last check, newer than this app. */
-  available: string | null;
-  /** Download progress of the update being installed, percent. */
-  progress: number | null;
-  /** Why the last check or install failed. */
-  error: string | null;
-  /** Last successful check, seconds since 1970-01-01 UTC. */
-  checked_at: number | null;
-}
+import type { UpdateStatus } from '@/bindings/UpdateStatus';
 
 export const updates = reactive<UpdateStatus>({
   checking: false,

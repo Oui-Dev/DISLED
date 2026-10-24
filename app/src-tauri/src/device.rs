@@ -28,6 +28,7 @@ pub const EVENT_MESSAGE: &str = "device-message";
 pub const EVENT_PROTOCOL_ERROR: &str = "device-protocol-error";
 
 #[derive(Debug, Clone, Default, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 pub struct Connection {
     pub connected: bool,
     pub debug_build: bool,

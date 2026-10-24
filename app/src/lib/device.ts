@@ -9,34 +9,17 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { save } from '@tauri-apps/plugin-dialog';
 import { reactive, shallowRef, triggerRef } from 'vue';
-import type {
-  BrightnessMode,
-  Command,
-  Connection,
-  Diagnostics,
-  Frame,
-  Info,
-  LampState,
-  SelfTestResult,
-  SetState,
-  Telemetry,
-} from './protocol';
-
-/** Settings kept on this computer and applied at every connection. */
-export interface Settings {
-  brightness_mode: BrightnessMode;
-  /** Percent, 1 to 100. */
-  manual_level: number;
-  /** Automatic brightness bias, percent (-50 to +50). */
-  auto_bias: number;
-  autostart_initialized: boolean;
-  /** Look for a new version of the app and of the lamp firmware at start-up and once a day. */
-  check_updates: boolean;
-}
-
-export type SettingsPatch = Partial<
-  Pick<Settings, 'brightness_mode' | 'manual_level' | 'auto_bias' | 'check_updates'>
->;
+import type { Command } from '@/bindings/Command';
+import type { Connection } from '@/bindings/Connection';
+import type { Diagnostics } from '@/bindings/Diagnostics';
+import type { Frame } from '@/bindings/Frame';
+import type { Info } from '@/bindings/Info';
+import type { LampState } from '@/bindings/LampState';
+import type { SelfTestResult } from '@/bindings/SelfTestResult';
+import type { SetState } from '@/bindings/SetState';
+import type { Settings } from '@/bindings/Settings';
+import type { SettingsPatch } from '@/bindings/SettingsPatch';
+import type { Telemetry } from '@/bindings/Telemetry';
 
 /** Telemetry samples kept for the charts. */
 const HISTORY_LENGTH = 600;

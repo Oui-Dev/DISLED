@@ -8,38 +8,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { reactive } from 'vue';
-import type { Info } from './protocol';
-
-export type FlashStage = 'erasing' | 'writing' | 'verifying' | 'restarting';
-
-/** Where a lamp update stands. */
-export type Flash =
-  | { step: 'idle' }
-  | { step: 'downloading' }
-  /** The user holds BOOT and presses RESET, or the lamp restarts in its bootloader by itself. */
-  | { step: 'waiting_for_bootloader'; by_command: boolean }
-  /** Windows: the bootloader needs the WinUSB driver (Zadig), once. */
-  | { step: 'driver_missing' }
-  /** Linux: no access to the bootloader (udev rule). */
-  | { step: 'no_permission' }
-  | { step: 'several_bootloaders' }
-  | { step: 'other_chip'; chip: string }
-  | { step: 'flashing'; stage: FlashStage }
-  | { step: 'waiting_for_lamp' }
-  | { step: 'done'; version: string }
-  | { step: 'failed'; error: string };
-
-export interface FirmwareStatus {
-  /** A check is running. */
-  checking: boolean;
-  /** Newest firmware the app can install. */
-  latest: string | null;
-  /** Why the last check failed. */
-  error: string | null;
-  /** Last successful check, seconds since 1970-01-01 UTC. */
-  checked_at: number | null;
-  flash: Flash;
-}
+import type { FirmwareStatus } from '@/bindings/FirmwareStatus';
+import type { Info } from '@/bindings/Info';
+import type { Link } from '@/bindings/Link';
 
 export const firmware = reactive<FirmwareStatus>({
   checking: false,
@@ -84,7 +55,7 @@ export function openLampUpdate(): Promise<void> {
   return invoke('open_lamp_update');
 }
 
-export function openLink(link: 'zadig' | 'flashing_guide'): Promise<void> {
+export function openLink(link: Link): Promise<void> {
   return invoke('open_link', { link });
 }
 

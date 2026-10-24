@@ -17,6 +17,7 @@ const STORE_FILE: &str = "settings.json";
 const KEY: &str = "settings";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(default)]
 pub struct Settings {
     pub brightness_mode: BrightnessMode,
@@ -45,6 +46,7 @@ impl Default for Settings {
 
 /// Fields the front end may change; `None` keeps the current value.
 #[derive(Debug, Clone, Default, Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export, optional_fields))]
 pub struct SettingsPatch {
     pub brightness_mode: Option<BrightnessMode>,
     pub manual_level: Option<u8>,

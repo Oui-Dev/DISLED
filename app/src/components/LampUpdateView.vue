@@ -9,11 +9,11 @@
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { computed, ref, watch } from 'vue';
+import type { Flash } from '@/bindings/Flash';
 import { device } from '../lib/device';
 import {
   cancelFirmware,
   checkFirmware,
-  type Flash,
   firmware,
   firmwareUpdateFor,
   installFirmware,
