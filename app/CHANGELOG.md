@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/Oui-Dev/DISLED/compare/app-v0.5.1...app-v0.5.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **hid:** Limit device scan to lamp vendor to prevent stalls ([4531fa4](https://github.com/Oui-Dev/DISLED/commit/4531fa43ef9c899a956127841a64f527e22510d1))
+
 ## [0.5.1](https://github.com/Oui-Dev/DISLED/compare/app-v0.5.0...app-v0.5.1) (2026-10-24)
 
 
