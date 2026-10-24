@@ -100,7 +100,9 @@ function restart(): Promise<void> {
       variant="subtle"
       icon="i-lucide-circle-x"
       :description="errorText(errors.last)"
+      :close="{ size: 'sm' }"
       :ui="alert"
+      @update:open="errors.clear()"
     />
 
     <UModal

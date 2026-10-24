@@ -40,6 +40,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   /** Set by start(): only the Diagnostics window streams. */
   const following = ref(false);
 
+  /** The period the user picked. */
   async function setPeriod(ms: number): Promise<void> {
     periodMs.value = ms;
     await lamp.send({ kind: 'set_telemetry', period_ms: ms });
@@ -65,7 +66,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
         latest.value = null;
         history.value = [];
       } else if (periodMs.value > 0) {
-        void setPeriod(periodMs.value);
+        void lamp.send({ kind: 'set_telemetry', period_ms: periodMs.value }, { automatic: true });
       }
     },
   );

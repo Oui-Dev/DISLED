@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// The last thing that failed, shown until a command succeeds. The window
-// words the cause; the backend's own message stays as it came.
+// The last thing that failed, shown until something the user asked for
+// succeeds, the lamp comes back, or the user closes it. The window words
+// the cause; the backend's own message stays as it came.
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';

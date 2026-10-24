@@ -23,10 +23,17 @@ export const useLampStore = defineStore('lamp', () => {
   const info = ref<Info | null>(null);
   const state = ref<LampState | null>(null);
 
-  async function send(command: Command): Promise<void> {
+  /**
+   * Sends a command; a failure becomes the last error. A command the user
+   * asked for clears it once sent. One the app sends on its own (polling,
+   * a stream started again) leaves it on show: it says nothing of it.
+   */
+  async function send(command: Command, { automatic = false } = {}): Promise<void> {
     try {
       await deviceSend(command);
-      errors.clear();
+      if (!automatic) {
+        errors.clear();
+      }
     } catch (error) {
       errors.reportFailure(error);
     }
@@ -51,7 +58,7 @@ export const useLampStore = defineStore('lamp', () => {
       && next.state_seq !== previous.state_seq
       && next.state_seq !== ((previous.state_seq + 1) & 0xffff)
     ) {
-      void send({ kind: 'get_state' });
+      void send({ kind: 'get_state' }, { automatic: true });
     }
   }
 
@@ -89,8 +96,8 @@ export const useLampStore = defineStore('lamp', () => {
     });
     connection.value = await deviceConnection();
     if (connection.value.connected) {
-      await send({ kind: 'get_info' });
-      await send({ kind: 'get_state' });
+      await send({ kind: 'get_info' }, { automatic: true });
+      await send({ kind: 'get_state' }, { automatic: true });
     }
   }
 

@@ -96,7 +96,9 @@ const footerUpdate = computed(() => {
         variant="subtle"
         icon="i-lucide-triangle-alert"
         :description="errorText(errors.last)"
+        :close="{ size: 'sm' }"
         :ui="{ root: 'gap-2 p-3', icon: 'size-4', description: 'text-xs break-words' }"
+        @update:open="errors.clear()"
       />
     </div>
 

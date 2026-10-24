@@ -30,7 +30,7 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
   const following = ref(false);
 
   function request(): Promise<void> {
-    return lamp.send({ kind: 'get_diagnostics' });
+    return lamp.send({ kind: 'get_diagnostics' }, { automatic: true });
   }
 
   function startSelfTest(): Promise<void> {
