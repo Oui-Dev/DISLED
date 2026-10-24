@@ -60,6 +60,7 @@ jobs:
           npm ci
           npm run typecheck
           npx biome ci .
+          node branding/palette.mjs --check
           npm run build
 
       - name: Rust workspace (app, shared crates, tools)

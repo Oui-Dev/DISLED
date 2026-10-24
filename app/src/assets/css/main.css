@@ -1,0 +1,53 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * SPDX-FileCopyrightText: 2026 The DISLED contributors
+ *
+ * Design system of every window: Tailwind, Nuxt UI, the Montserrat font and
+ * the DISLED palettes (branding/palette.mjs).
+ */
+@import 'tailwindcss';
+@import '@nuxt/ui';
+@import '@fontsource-variable/montserrat/wght.css';
+@import './palettes.css';
+
+@theme static {
+  --font-sans: 'Montserrat Variable', sans-serif;
+}
+
+/*
+ * Nuxt UI tokens. The brand white replaces pure white: the light background,
+ * the text on solid colors, the strongest text of dark mode. The light
+ * surfaces move one shade down since the background takes ink-50. Dark mode
+ * restates the values the light block would otherwise override.
+ */
+@layer theme {
+  :root,
+  .light {
+    --ui-bg: var(--ui-color-neutral-50);
+    --ui-bg-muted: var(--ui-color-neutral-100);
+    --ui-text-inverted: var(--ui-color-neutral-50);
+  }
+
+  .dark {
+    --ui-bg: var(--ui-color-neutral-900);
+    --ui-bg-muted: var(--ui-color-neutral-800);
+    --ui-text-inverted: var(--ui-color-neutral-900);
+    --ui-text-highlighted: var(--ui-color-neutral-50);
+    --ui-bg-inverted: var(--ui-color-neutral-50);
+    --ui-border-inverted: var(--ui-color-neutral-50);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-default text-default antialiased;
+  }
+}
