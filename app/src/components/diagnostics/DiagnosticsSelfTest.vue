@@ -82,6 +82,7 @@ const checks = computed(() => {
     <UButton
       color="neutral"
       variant="outline"
+      size="sm"
       icon="i-lucide-play"
       class="self-start"
       :disabled="!lamp.info"

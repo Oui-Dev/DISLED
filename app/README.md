@@ -101,7 +101,7 @@ variable.
   and the production self-test; on the right, always in view, telemetry at
   50 ms to 1 s with live charts, and CSV recordings for the tuning campaigns
   of [`docs/bringup.md`](../docs/bringup.md). The stream starts with the
-  window, at 100 ms, and the backend stops it when the window closes.
+  window, at 250 ms, and the backend stops it when the window closes.
 
 ## Front end
 

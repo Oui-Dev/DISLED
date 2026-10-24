@@ -59,7 +59,7 @@ const tabs = computed<TabsItem[]>(() => [
         <template #self-test><DiagnosticsSelfTest /></template>
       </UTabs>
 
-      <DiagnosticsTelemetry class="min-w-0 flex-1 overflow-y-auto p-5" />
+      <DiagnosticsTelemetry class="min-w-0 flex-1" />
     </div>
   </main>
 </template>

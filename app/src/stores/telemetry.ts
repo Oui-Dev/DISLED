@@ -16,8 +16,8 @@ import { useLampStore } from './lamp';
 
 /** Samples kept for the charts: 30 s at 50 ms, 10 min at 1 s. */
 const HISTORY_LENGTH = 600;
-/** The stream period when the window opens, ms: the charts hold the last minute. */
-const DEFAULT_PERIOD_MS = 100;
+/** The stream period when the window opens, ms: the charts hold the last 2.5 min. */
+const DEFAULT_PERIOD_MS = 250;
 
 export const useTelemetryStore = defineStore('telemetry', () => {
   const errors = useErrorStore();

@@ -3,8 +3,8 @@
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
   Live telemetry for the tuning campaigns (touch, light sensor, thermal):
-  its controls in one row, the last figures, three charts, and CSV
-  recordings. The stream starts with the window.
+  the stream period, the last figures, three charts, and CSV recordings at
+  the bottom. The stream starts with the window.
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -54,7 +54,9 @@ const charts = computed<
   {
     title: string;
     description: string;
-    height: number;
+    /** Its share of the height left for the charts, and its smallest plot, px. */
+    grow: number;
+    minHeight: number;
     series: ChartSeries[];
     format: (value: number) => string;
   }[]
@@ -62,7 +64,8 @@ const charts = computed<
   {
     title: t('telemetry.touchChart'),
     description: t('telemetry.touchDescription'),
-    height: 150,
+    grow: 1.4,
+    minHeight: 100,
     format: count,
     series: [
       {
@@ -82,7 +85,8 @@ const charts = computed<
   {
     title: t('telemetry.deltaChart'),
     description: t('telemetry.deltaDescription'),
-    height: 110,
+    grow: 1,
+    minHeight: 70,
     format: permille,
     series: [
       {
@@ -96,7 +100,8 @@ const charts = computed<
   {
     title: t('telemetry.lightChart'),
     description: t('telemetry.lightDescription'),
-    height: 110,
+    grow: 1,
+    minHeight: 70,
     format: lux,
     series: [
       {
@@ -111,10 +116,10 @@ const charts = computed<
 </script>
 
 <template>
-  <section class="@container flex flex-col gap-4">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
-      <div class="flex flex-wrap items-center gap-2">
+  <section class="flex flex-col">
+    <div class="@container flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
         <USelect
           :model-value="telemetry.periodMs"
           :items="periods"
@@ -125,54 +130,64 @@ const charts = computed<
           class="w-32"
           @update:model-value="telemetry.setPeriod($event as number)"
         />
-        <UButton
-          v-if="!telemetry.recording"
-          color="neutral"
-          variant="outline"
-          size="sm"
-          icon="i-lucide-circle-dot"
-          :disabled="!telemetry.latest"
-          @click="telemetry.startRecording"
-        >
-          {{ t('telemetry.record') }}
-        </UButton>
-        <UButton
-          v-else
-          color="error"
-          size="sm"
-          icon="i-lucide-square"
-          @click="telemetry.stopRecording"
-        >
-          {{ t('telemetry.stop') }}
-        </UButton>
-        <span class="text-xs text-muted tabular-nums">
-          {{ t('telemetry.rows', telemetry.recordedRows) }}
-        </span>
-        <UButton
-          color="neutral"
-          variant="outline"
-          size="sm"
-          icon="i-lucide-file-down"
-          :disabled="telemetry.recording || telemetry.recordedRows === 0"
-          @click="telemetry.exportRecording(t('telemetry.saveTitle'))"
-        >
-          {{ t('telemetry.export') }}
-        </UButton>
       </div>
+
+      <template v-if="telemetry.latest">
+        <DiagnosticsFigures :sample="telemetry.latest" />
+        <!-- The charts share the height left; below their minimum, the panel scrolls. -->
+        <div class="flex flex-1 flex-col gap-4">
+          <DiagnosticsChart
+            v-for="chart in charts"
+            :key="chart.title"
+            :title="chart.title"
+            :description="chart.description"
+            :min-height="chart.minHeight"
+            :series="chart.series"
+            :format="chart.format"
+            class="basis-0"
+            :style="{ flexGrow: chart.grow }"
+          />
+        </div>
+      </template>
+      <UEmpty v-else v-bind="placeholder" variant="naked" class="flex-1" />
     </div>
 
-    <template v-if="telemetry.latest">
-      <DiagnosticsFigures :sample="telemetry.latest" />
-      <DiagnosticsChart
-        v-for="chart in charts"
-        :key="chart.title"
-        :title="chart.title"
-        :description="chart.description"
-        :height="chart.height"
-        :series="chart.series"
-        :format="chart.format"
-      />
-    </template>
-    <UEmpty v-else v-bind="placeholder" variant="naked" class="flex-1" />
+    <!-- The recording, at hand whatever the scroll. -->
+    <footer class="flex flex-wrap items-center gap-3 border-t border-default px-5 py-3">
+      <UButton
+        v-if="!telemetry.recording"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        icon="i-lucide-circle-dot"
+        :disabled="!telemetry.latest"
+        @click="telemetry.startRecording"
+      >
+        {{ t('telemetry.record') }}
+      </UButton>
+      <UButton
+        v-else
+        color="error"
+        size="sm"
+        icon="i-lucide-square"
+        @click="telemetry.stopRecording"
+      >
+        {{ t('telemetry.stop') }}
+      </UButton>
+      <span class="text-xs text-muted tabular-nums">
+        {{ t('telemetry.rows', telemetry.recordedRows) }}
+      </span>
+      <UButton
+        color="neutral"
+        variant="outline"
+        size="sm"
+        icon="i-lucide-file-down"
+        class="ms-auto"
+        :disabled="telemetry.recording || telemetry.recordedRows === 0"
+        @click="telemetry.exportRecording(t('telemetry.saveTitle'))"
+      >
+        {{ t('telemetry.export') }}
+      </UButton>
+    </footer>
   </section>
 </template>
