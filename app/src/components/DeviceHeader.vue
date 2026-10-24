@@ -6,19 +6,31 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
-import { device, send } from '../lib/device';
+import { useErrorText } from '@/composables/useErrorText';
+import { useErrorStore } from '@/stores/errors';
+import { useLampStore } from '@/stores/lamp';
+import { describeFault } from '@/utils/fault';
+
+const device = useLampStore();
+const errors = useErrorStore();
+const errorText = useErrorText();
 
 const firmware = computed(() => device.info?.firmware_version || '…');
 const fault = computed(() => {
   const f = device.info?.fault;
-  return f
-    ? `mcause 0x${f.mcause.toString(16)}, mepc 0x${f.mepc.toString(16).padStart(8, '0')}`
-    : null;
+  if (!f) {
+    return null;
+  }
+  const summary = describeFault(f);
+  return summary.kind === 'assertion'
+    ? `assertion failed at line ${summary.line}, called from ${summary.caller}`
+    : `mcause ${summary.mcause}, mepc ${summary.mepc}`;
 });
+const errorLine = computed(() => (errors.last ? errorText(errors.last) : null));
 
 function reset(): void {
   if (window.confirm('Restart the lamp firmware?')) {
-    void send({ kind: 'reset' });
+    void device.restart();
   }
 }
 </script>
@@ -40,7 +52,7 @@ function reset(): void {
       <button type="button" @click="reset">Restart</button>
     </div>
     <p v-if="fault" class="warning">The firmware crashed before its last restart ({{ fault }}).</p>
-    <p v-if="device.lastError" class="warning">{{ device.lastError }}</p>
+    <p v-if="errorLine" class="warning">{{ errorLine }}</p>
   </header>
 </template>
 

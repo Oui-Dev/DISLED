@@ -7,53 +7,60 @@
 -->
 <script setup lang="ts">
 import { getVersion } from '@tauri-apps/api/app';
+import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref } from 'vue';
-import {
-  device,
-  getAutostart,
-  openDiagnostics,
-  quitApp,
-  setAutostart,
-  updateSettings,
-} from '../lib/device';
-import { checkFirmware, firmware, firmwareUpdateFor, openLampUpdate } from '../lib/firmware';
-import { checkForUpdates, installUpdate, updates } from '../lib/updates';
+import { useErrorText } from '@/composables/useErrorText';
+import { openDiagnostics, openLampUpdate, quit } from '@/ipc/commands';
+import { useErrorStore } from '@/stores/errors';
+import { useFirmwareStore } from '@/stores/firmware';
+import { useLampStore } from '@/stores/lamp';
+import { useSettingsStore } from '@/stores/settings';
+import { useUpdatesStore } from '@/stores/updates';
 import BrightnessControl from './BrightnessControl.vue';
 import ColorSwatches from './ColorSwatches.vue';
 
+const lamp = useLampStore();
+const settingsStore = useSettingsStore();
+const updatesStore = useUpdatesStore();
+const firmwareStore = useFirmwareStore();
+const errors = useErrorStore();
+const errorText = useErrorText();
+const { settings, autostart } = storeToRefs(settingsStore);
+const updates = computed(() => updatesStore.status);
+const firmware = computed(() => firmwareStore.status);
+
 const page = ref<'lamp' | 'settings'>('lamp');
-const autostart = ref(false);
 const appVersion = ref('');
 
-const connected = computed(() => device.connection.connected);
-const state = computed(() => device.state);
+const connected = computed(() => lamp.connection.connected);
 const status = computed(() => {
   if (!connected.value) {
     return 'No lamp connected';
   }
-  return state.value ? 'Lamp connected' : 'Connecting…';
+  return lamp.state ? 'Lamp connected' : 'Connecting…';
 });
-const firmwareVersion = computed(() => device.info?.firmware_version ?? '–');
+const firmwareVersion = computed(() => lamp.info?.firmware_version ?? '–');
 /** A newer firmware for the connected lamp. */
-const lampUpdate = computed(() => firmwareUpdateFor(device.info));
+const lampUpdate = computed(() => firmwareStore.updateForLamp);
 
-const installing = computed(() => updates.progress !== null);
-const checking = computed(() => updates.checking || firmware.checking);
+const installing = computed(() => updates.value.progress !== null);
+const checking = computed(() => updates.value.checking || firmware.value.checking);
 const updateLine = computed(() => {
+  const u = updates.value;
   if (installing.value) {
-    return `Downloading ${updates.available}… ${updates.progress} %`;
+    return `Downloading ${u.available}… ${u.progress} %`;
   }
   if (checking.value) {
     return 'Checking for updates…';
   }
-  if (updates.error) {
-    return `Update error: ${updates.error}`;
+  if (u.error) {
+    return `Update error: ${u.error}`;
   }
-  if (updates.available) {
-    return `DISLED ${updates.available} is available.`;
+  if (u.available) {
+    return `DISLED ${u.available} is available.`;
   }
-  if (updates.checked_at) {
-    const at = new Date(updates.checked_at * 1000).toLocaleString([], {
+  if (u.checked_at) {
+    const at = new Date(u.checked_at * 1000).toLocaleString([], {
       dateStyle: 'short',
       timeStyle: 'short',
     });
@@ -62,11 +69,11 @@ const updateLine = computed(() => {
   return '';
 });
 const lampLine = computed(() => {
-  if (firmware.checking) {
+  if (firmware.value.checking) {
     return '';
   }
-  if (firmware.error) {
-    return `Lamp firmware check error: ${firmware.error}`;
+  if (firmware.value.error) {
+    return `Lamp firmware check error: ${firmware.value.error}`;
   }
   if (lampUpdate.value) {
     return `Lamp firmware ${lampUpdate.value} is available.`;
@@ -75,27 +82,27 @@ const lampLine = computed(() => {
 });
 /** The app first: a new firmware may need a new app. */
 const footerUpdate = computed(() => {
-  if (updates.available) {
-    return `Update to ${updates.available}`;
+  if (updates.value.available) {
+    return `Update to ${updates.value.available}`;
   }
   return lampUpdate.value ? 'Update the lamp' : null;
 });
+const errorLine = computed(() => (errors.last ? errorText(errors.last) : null));
 
 function checkAll(): Promise<unknown> {
-  return Promise.all([checkForUpdates(), checkFirmware()]);
+  return Promise.all([updatesStore.check(), firmwareStore.check()]);
 }
 
 onMounted(async () => {
   appVersion.value = await getVersion();
-  autostart.value = await getAutostart();
 });
 
-async function toggleAutostart(event: Event): Promise<void> {
-  autostart.value = await setAutostart((event.target as HTMLInputElement).checked);
+function toggleAutostart(event: Event): Promise<void> {
+  return settingsStore.setAutostart((event.target as HTMLInputElement).checked);
 }
 
 function toggleUpdateChecks(event: Event): Promise<void> {
-  return updateSettings({ check_updates: (event.target as HTMLInputElement).checked });
+  return settingsStore.update({ check_updates: (event.target as HTMLInputElement).checked });
 }
 </script>
 
@@ -124,8 +131,8 @@ function toggleUpdateChecks(event: Event): Promise<void> {
       <label class="option">
         <input
           type="checkbox"
-          :checked="device.settings?.check_updates ?? true"
-          :disabled="!device.settings"
+          :checked="settings?.check_updates ?? true"
+          :disabled="!settings"
           @change="toggleUpdateChecks"
         />
         Check for updates every day
@@ -136,7 +143,7 @@ function toggleUpdateChecks(event: Event): Promise<void> {
           type="button"
           class="install"
           :disabled="installing"
-          @click="installUpdate"
+          @click="updatesStore.install"
         >
           Install {{ updates.available }} and restart
         </button>
@@ -161,7 +168,7 @@ function toggleUpdateChecks(event: Event): Promise<void> {
       <p class="muted small">App {{ appVersion }} · lamp firmware {{ firmwareVersion }}</p>
     </section>
 
-    <p v-if="device.lastError" class="warning">{{ device.lastError }}</p>
+    <p v-if="errorLine" class="warning">{{ errorLine }}</p>
 
     <footer class="foot">
       <button type="button" class="link" @click="page = page === 'lamp' ? 'settings' : 'lamp'">
@@ -175,7 +182,7 @@ function toggleUpdateChecks(event: Event): Promise<void> {
       >
         {{ footerUpdate }}
       </button>
-      <button type="button" class="link" @click="quitApp">Quit</button>
+      <button type="button" class="link" @click="quit">Quit</button>
     </footer>
   </main>
 </template>

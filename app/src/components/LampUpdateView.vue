@@ -9,16 +9,17 @@
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { computed, ref, watch } from 'vue';
-import type { Flash } from '@/bindings/Flash';
-import { device } from '../lib/device';
-import {
-  cancelFirmware,
-  checkFirmware,
-  firmware,
-  firmwareUpdateFor,
-  installFirmware,
-  openLink,
-} from '../lib/firmware';
+import { openLink } from '@/ipc/commands';
+import { useFirmwareStore } from '@/stores/firmware';
+import { useLampStore } from '@/stores/lamp';
+import { stepOf } from '@/utils/flash';
+
+const device = useLampStore();
+const firmwareStore = useFirmwareStore();
+const firmware = computed(() => firmwareStore.status);
+const cancelFirmware = firmwareStore.cancel;
+const checkFirmware = firmwareStore.check;
+const installFirmware = firmwareStore.install;
 
 const STEPS = [
   'Download the firmware',
@@ -34,29 +35,7 @@ const STAGES = {
   restarting: 'Restarting the lamp…',
 } as const;
 
-/** Index in STEPS of the step an update is at; STEPS.length once done. */
-function stepOf(flash: Flash): number | null {
-  switch (flash.step) {
-    case 'downloading':
-      return 0;
-    case 'waiting_for_bootloader':
-    case 'driver_missing':
-    case 'no_permission':
-    case 'several_bootloaders':
-    case 'other_chip':
-      return 1;
-    case 'flashing':
-      return 2;
-    case 'waiting_for_lamp':
-      return 3;
-    case 'done':
-      return STEPS.length;
-    default:
-      return null;
-  }
-}
-
-const flash = computed(() => firmware.flash);
+const flash = computed(() => firmware.value.flash);
 const step = computed(() => stepOf(flash.value));
 const failed = computed(() => flash.value.step === 'failed');
 const idle = computed(() => flash.value.step === 'idle');
@@ -64,9 +43,9 @@ const idle = computed(() => flash.value.step === 'idle');
 /** The step a failed update stopped at. */
 const reached = ref(-1);
 watch(
-  () => firmware.flash.step,
+  () => flash.value.step,
   () => {
-    const current = stepOf(firmware.flash);
+    const current = stepOf(flash.value);
     if (current !== null) {
       reached.value = current;
     } else if (idle.value) {
@@ -78,13 +57,14 @@ watch(
 const shown = computed(() => step.value ?? reached.value);
 
 const lampVersion = computed(() => device.info?.firmware_version ?? null);
-const newer = computed(() => firmwareUpdateFor(device.info));
+const newer = computed(() => firmwareStore.updateForLamp);
 const summary = computed(() => {
-  if (!firmware.latest) {
-    return firmware.error ? `No firmware found: ${firmware.error}` : 'No firmware to install.';
+  const { latest, error } = firmware.value;
+  if (!latest) {
+    return error ? `No firmware found: ${error}` : 'No firmware to install.';
   }
   if (!device.connection.connected) {
-    return `No lamp connected. A lamp that does not start can still get firmware ${firmware.latest} through its update mode.`;
+    return `No lamp connected. A lamp that does not start can still get firmware ${latest} through its update mode.`;
   }
   if (!lampVersion.value) {
     return 'Connecting to the lamp…';

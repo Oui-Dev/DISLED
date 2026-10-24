@@ -6,16 +6,26 @@
   thermal V2) and CSV recordings of it.
 -->
 <script setup lang="ts">
+import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
-import {
-  device,
-  exportRecording,
-  history,
-  setTelemetry,
-  startRecording,
-  stopRecording,
-} from '../lib/device';
+import { useLampStore } from '@/stores/lamp';
+import { useTelemetryStore } from '@/stores/telemetry';
 import LineChart from './LineChart.vue';
+
+const lamp = useLampStore();
+const telemetry = useTelemetryStore();
+const { history } = storeToRefs(telemetry);
+const device = computed(() => ({
+  connection: lamp.connection,
+  telemetry: telemetry.latest,
+  telemetryPeriodMs: telemetry.periodMs,
+  recording: telemetry.recording,
+  recordedRows: telemetry.recordedRows,
+}));
+const setTelemetry = telemetry.setPeriod;
+const startRecording = telemetry.startRecording;
+const stopRecording = telemetry.stopRecording;
+const exportRecording = () => telemetry.exportRecording('Save the recording');
 
 const PERIODS = [
   { label: 'Off', ms: 0 },
@@ -25,7 +35,7 @@ const PERIODS = [
   { label: '1 s', ms: 1000 },
 ];
 
-const t = computed(() => device.telemetry);
+const t = computed(() => device.value.telemetry);
 
 const touchSeries = computed(() => [
   { label: 'touch average', color: '#3498db', values: history.value.map((s) => s.touch_value) },

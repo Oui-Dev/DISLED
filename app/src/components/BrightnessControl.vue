@@ -9,12 +9,18 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { SettingsPatch } from '@/bindings/SettingsPatch';
-import { device, updateSettings } from '../lib/device';
+import { useLampStore } from '@/stores/lamp';
+import { useSettingsStore } from '@/stores/settings';
 
-const settings = computed(() => device.settings);
+const lamp = useLampStore();
+const settingsStore = useSettingsStore();
+const updateSettings = settingsStore.update;
+const device = lamp;
+
+const settings = computed(() => settingsStore.settings);
 const auto = computed(() => settings.value?.brightness_mode !== 'manual');
 /* Unknown until INFO arrives: assume support rather than flash a warning. */
-const biasSupported = computed(() => device.info?.auto_bias ?? true);
+const biasSupported = computed(() => lamp.info?.auto_bias ?? true);
 
 /* Slider values, kept locally while dragging so the thumb does not jump. */
 const level = ref(50);

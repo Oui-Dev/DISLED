@@ -8,8 +8,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { LampColor } from '@/bindings/LampColor';
+import { useLampStore } from '@/stores/lamp';
 import { LAMP_COLORS } from '@/utils/lamp';
-import { device, setLamp } from '../lib/device';
+
+const lamp = useLampStore();
+const setLamp = lamp.setLamp;
 
 defineProps<{ labels?: boolean }>();
 
@@ -20,7 +23,7 @@ const SWATCHES: Record<LampColor, { label: string; css: string }> = {
   warm_white: { label: 'Warm white', css: '#ffe2b8' },
 };
 
-const state = computed(() => device.state);
+const state = computed(() => lamp.state);
 </script>
 
 <template>

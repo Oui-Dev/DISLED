@@ -6,34 +6,34 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue';
-import { device, requestDiagnostics } from '../lib/device';
+import { useDiagnosticsStore } from '@/stores/diagnostics';
+import { useLampStore } from '@/stores/lamp';
+import { describeFault } from '@/utils/fault';
 
 const REFRESH_MS = 2000;
 
+const device = useLampStore();
+const diagnosticsStore = useDiagnosticsStore();
+
 const supported = computed(() => device.info?.diagnostics ?? false);
-const d = computed(() => device.diagnostics);
+const d = computed(() => diagnosticsStore.diagnostics);
 
-function hex(value: number): string {
-  return `0x${value.toString(16).padStart(8, '0')}`;
-}
-
-/** mcause 0x0A55nnnn: a failed assertion at source line nnnn. */
 const lastFault = computed(() => {
   const fault = d.value?.last_fault;
   if (!fault) {
     return null;
   }
-  if (fault.mcause >>> 16 === 0x0a55) {
-    return `assertion failed at line ${fault.mcause & 0xffff} (called from ${hex(fault.mepc)})`;
-  }
-  return `mcause ${hex(fault.mcause)}, mepc ${hex(fault.mepc)}, mtval ${hex(fault.mtval)}`;
+  const summary = describeFault(fault);
+  return summary.kind === 'assertion'
+    ? `assertion failed at line ${summary.line} (called from ${summary.caller})`
+    : `mcause ${summary.mcause}, mepc ${summary.mepc}, mtval ${summary.mtval}`;
 });
 
 let timer: number | undefined;
 onMounted(() => {
   timer = window.setInterval(() => {
     if (device.connection.connected && supported.value) {
-      void requestDiagnostics();
+      void diagnosticsStore.request();
     }
   }, REFRESH_MS);
 });

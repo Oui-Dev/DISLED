@@ -7,10 +7,18 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
-import { device, startSelfTest } from '../lib/device';
+import { useDiagnosticsStore } from '@/stores/diagnostics';
+import { useLampStore } from '@/stores/lamp';
+
+const device = useLampStore();
+const diagnostics = useDiagnosticsStore();
+const startSelfTest = diagnostics.startSelfTest;
 
 const supported = computed(() => device.info?.self_test ?? false);
-const test = computed(() => device.selfTest);
+const test = computed(() => ({
+  running: diagnostics.selfTestRunning,
+  result: diagnostics.selfTestResult,
+}));
 
 const checks = computed(() => {
   const r = test.value.result;

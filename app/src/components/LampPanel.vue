@@ -7,11 +7,12 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
-import { device } from '../lib/device';
+import { useLampStore } from '@/stores/lamp';
 import BrightnessControl from './BrightnessControl.vue';
 import ColorSwatches from './ColorSwatches.vue';
 
-const state = computed(() => device.state);
+const lamp = useLampStore();
+const state = computed(() => lamp.state);
 </script>
 
 <template>

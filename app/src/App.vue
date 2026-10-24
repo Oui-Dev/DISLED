@@ -2,27 +2,36 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  One page for every window: the window label picks the view.
+  One page for every window: the window label picks the view and the
+  stores it follows.
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { onMounted } from 'vue';
+import { useDiagnosticsStore } from '@/stores/diagnostics';
+import { useFirmwareStore } from '@/stores/firmware';
+import { useLampStore } from '@/stores/lamp';
+import { useSettingsStore } from '@/stores/settings';
+import { useTelemetryStore } from '@/stores/telemetry';
+import { useUpdatesStore } from '@/stores/updates';
 import DiagnosticsView from './components/DiagnosticsView.vue';
 import LampUpdateView from './components/LampUpdateView.vue';
 import PopupView from './components/PopupView.vue';
-import { startDevice } from './lib/device';
-import { startFirmware } from './lib/firmware';
-import { startUpdates } from './lib/updates';
 
 const label = getCurrentWebviewWindow().label;
 
 onMounted(() => {
-  void startDevice();
+  void useSettingsStore().start();
+  void useLampStore().start();
   if (label === 'popup' || label === 'lamp-update') {
-    void startFirmware();
+    void useFirmwareStore().start();
   }
   if (label === 'popup') {
-    void startUpdates();
+    void useUpdatesStore().start();
+  }
+  if (label === 'diagnostics') {
+    void useTelemetryStore().start();
+    void useDiagnosticsStore().start();
   }
 });
 </script>
