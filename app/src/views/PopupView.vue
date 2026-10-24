@@ -42,6 +42,11 @@ async function show(next: Page): Promise<void> {
 }
 
 onKeyStroke('Escape', () => {
+  // An open menu closes first (it is still there while this runs); the
+  // popup stays.
+  if (document.querySelector('[role="menu"]')) {
+    return;
+  }
   void popupHide();
 });
 
@@ -80,13 +85,17 @@ const footerUpdate = computed(() => {
       </section>
 
       <section v-else class="flex flex-col gap-3">
-        <h2
-          ref="pageHeading"
-          tabindex="-1"
-          class="text-sm font-semibold text-highlighted focus:outline-none"
-        >
-          {{ t('common.settings') }}
-        </h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2
+            ref="pageHeading"
+            tabindex="-1"
+            class="text-sm font-semibold text-highlighted focus:outline-none"
+          >
+            {{ t('common.settings') }}
+          </h2>
+          <PopupMenu />
+        </div>
+        <PopupUpdates />
         <PopupSettings />
       </section>
 
@@ -97,7 +106,7 @@ const footerUpdate = computed(() => {
         icon="i-lucide-triangle-alert"
         :description="errorText(errors.last)"
         :close="{ size: 'sm' }"
-        :ui="{ root: 'gap-2 p-3', icon: 'size-4', description: 'text-xs break-words' }"
+        :ui="{ root: 'gap-2 p-3', icon: 'size-4', description: 'text-xs wrap-break-word' }"
         @update:open="errors.clear()"
       />
     </div>

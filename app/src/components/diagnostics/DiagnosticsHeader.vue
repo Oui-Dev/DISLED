@@ -23,7 +23,7 @@ const connected = computed(() => lamp.connection.connected);
 const crash = computed(() => (lamp.info?.fault ? faultText(lamp.info.fault) : null));
 
 /** Compact alerts, as in the popup: the header stays a bar. */
-const alert = { root: 'gap-2 p-3', icon: 'size-4', description: 'text-sm break-words' };
+const alert = { root: 'gap-2 p-3', icon: 'size-4', description: 'text-sm wrap-break-word' };
 
 const confirmingRestart = ref(false);
 

@@ -47,11 +47,12 @@
     "language": "Langue",
     "systemLanguage": "Système",
     "diagnostics": "Ouvrir les diagnostics…",
-    "versions": "App {app} · firmware de la lampe {firmware}"
+    "versions": "App {app} · firmware de la lampe {firmware}",
+    "more": "Plus d’actions"
   },
   "updates": {
-    "install": "Installer {version} et redémarrer",
-    "updateLamp": "Mettre à jour la lampe en {version}…",
+    "install": "Installer et redémarrer",
+    "updateLamp": "Mettre à jour la lampe…",
     "check": "Rechercher les mises à jour",
     "downloading": "Téléchargement de {version}… {progress}",
     "checking": "Recherche des mises à jour…",
@@ -60,7 +61,7 @@
     "upToDate": "À jour (vérifié le {date}).",
     "lampError": "Erreur de recherche du firmware de la lampe : {detail}",
     "lampAvailable": "Le firmware {version} de la lampe est disponible.",
-    "reinstall": "Lampe non détectée ? Réinstaller son firmware…",
+    "reinstall": "Réinstaller le firmware de la lampe…",
     "toApp": "Mettre à jour en {version}",
     "toLamp": "Mettre à jour la lampe"
   },

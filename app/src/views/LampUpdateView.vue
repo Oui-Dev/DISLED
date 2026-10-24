@@ -126,7 +126,7 @@ function close(): Promise<void> {
       variant="subtle"
       icon="i-lucide-circle-x"
       :title="t('lampUpdate.failed', { detail: flash.error })"
-      :ui="{ title: 'break-words' }"
+      :ui="{ title: 'wrap-break-word' }"
     >
       <template #description>
         <i18n-t keypath="lampUpdate.notDamaged" tag="span" scope="global">

@@ -70,9 +70,11 @@ variable.
   squares; the brightness as on a phone, one slider that shows the level of
   the lamp and an Auto switch: in automatic mode the level follows the room
   light and moving the slider corrects the curve, otherwise it sets a fixed
-  level; a settings page (start at login, color mode, language, app and
-  lamp updates, diagnostics, versions). It takes the height of its
-  content, and hides when it loses the focus or on Escape.
+  level; a settings page (start at login, daily update checks, color mode,
+  language, versions), with the update on offer on top and a "⋯" menu for
+  the rare actions (check for updates, Diagnostics, reinstall the lamp
+  firmware). It takes the height of its content, and hides when it loses
+  the focus or on Escape.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are
@@ -146,7 +148,7 @@ same keys. Errors from the backend's libraries stay in English, inside a
 translated sentence.
 
 To add a language: a JSON file, a variant of the `Language` and `Locale`
-enums in Rust, and an entry in the language select of the popup.
+enums in Rust, and an entry in the language choices of the popup.
 
 ## Layout
 

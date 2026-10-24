@@ -2,8 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  The settings page of the popup: start at login, update checks, color
-  mode, language, updates, diagnostics, versions.
+  The settings of the popup: start at login, daily update checks, color
+  mode, language, and the versions under them. The rare actions are in the
+  menu next to the title (PopupMenu).
 -->
 <script setup lang="ts">
 import { getVersion } from '@tauri-apps/api/app';
@@ -11,7 +12,6 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { ColorMode } from '@/bindings/ColorMode';
 import type { Language } from '@/bindings/Language';
-import { openDiagnostics } from '@/ipc/commands';
 import { useLampStore } from '@/stores/lamp';
 import { useSettingsStore } from '@/stores/settings';
 
@@ -24,6 +24,9 @@ const appVersion = ref('');
 onMounted(async () => {
   appVersion.value = await getVersion();
 });
+const versions = computed(() =>
+  t('settings.versions', { app: appVersion.value, firmware: lamp.info?.firmware_version ?? '–' }),
+);
 
 const colorModes = computed(() => [
   { value: 'system', label: t('settings.colorModes.system'), icon: 'i-lucide-monitor' },
@@ -84,26 +87,7 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
       @update:model-value="settingsStore.update({ language: $event as Language })"
     />
 
-    <PopupUpdates />
-
-    <div class="flex flex-col items-start gap-1.5">
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="sm"
-        icon="i-lucide-activity"
-        @click="openDiagnostics"
-      >
-        {{ t('settings.diagnostics') }}
-      </UButton>
-      <p class="text-xs text-muted">
-        {{
-          t('settings.versions', {
-            app: appVersion,
-            firmware: lamp.info?.firmware_version ?? '–',
-          })
-        }}
-      </p>
-    </div>
+    <!-- A development firmware has a long version: one line, whole on hover. -->
+    <p class="truncate text-xs text-muted" :title="versions">{{ versions }}</p>
   </div>
 </template>

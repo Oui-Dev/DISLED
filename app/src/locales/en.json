@@ -47,11 +47,12 @@
     "language": "Language",
     "systemLanguage": "System",
     "diagnostics": "Open diagnostics…",
-    "versions": "App {app} · lamp firmware {firmware}"
+    "versions": "App {app} · lamp firmware {firmware}",
+    "more": "More actions"
   },
   "updates": {
-    "install": "Install {version} and restart",
-    "updateLamp": "Update the lamp to {version}…",
+    "install": "Install and restart",
+    "updateLamp": "Update the lamp…",
     "check": "Check for updates",
     "downloading": "Downloading {version}… {progress}",
     "checking": "Checking for updates…",
@@ -60,7 +61,7 @@
     "upToDate": "Up to date (checked {date}).",
     "lampError": "Lamp firmware check error: {detail}",
     "lampAvailable": "Lamp firmware {version} is available.",
-    "reinstall": "Lamp not detected? Reinstall its firmware…",
+    "reinstall": "Reinstall the lamp firmware…",
     "toApp": "Update to {version}",
     "toLamp": "Update the lamp"
   },
