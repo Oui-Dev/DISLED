@@ -124,10 +124,15 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 
 ## Notes
 
-- The installers are not code-signed (the update signatures above only
-  serve the updater): Windows SmartScreen and macOS Gatekeeper warn on
-  first launch (right-click, then Open, on macOS). Code signing is a later
-  choice ([ADR 0006](decisions/0006-desktop-app.md)).
+- The installers carry no publisher certificate (the update signatures
+  above only serve the updater): Windows SmartScreen and macOS Gatekeeper
+  warn on first launch ([app/README.md](../app/README.md#install)). Code
+  signing is a later choice ([ADR 0006](decisions/0006-desktop-app.md)).
+- The macOS app is still signed ad hoc (`signingIdentity` `-` in
+  `tauri.conf.json`): Apple Silicon calls a downloaded app without any
+  signature "damaged" and offers only to bin it
+  ([issue #19](https://github.com/Oui-Dev/DISLED/issues/19)). The release
+  workflow checks that signature.
 - On a private repository the macOS and Windows runners consume the free
   Actions minutes 10 and 2 times faster; an app release costs about 150 to
   200 minutes. Public repositories have no such limit.

@@ -10,9 +10,22 @@ live telemetry, CSV recordings, lamp diagnostics and the self-test.
 Installers are attached to each `app-vX.Y.Z` release on the
 [releases page](https://github.com/Oui-Dev/DISLED/releases): Windows
 (`.exe`), macOS on Apple Silicon (`.dmg`) and Debian or Ubuntu (`.deb`).
-They are not signed, so Windows and macOS warn on first launch. Once
-installed, the app updates itself (0.1.0 has no updater: install a newer
-version by hand once).
+Once installed, the app updates itself (0.1.0 has no updater: install a
+newer version by hand once).
+
+They carry no publisher certificate, so Windows and macOS warn on first
+launch:
+
+- **Windows**: SmartScreen shows "Windows protected your PC": **More
+  info**, then **Run anyway**.
+- **macOS**: drag DISLED into Applications and open it: macOS refuses
+  once. Then open System Settings, Privacy & Security, and click **Open
+  Anyway** next to the message about DISLED; confirm with your password.
+  The app is signed ad hoc only, which Apple Silicon requires.
+- **macOS, app 0.4.0 and older**: macOS says the app "is damaged and can't
+  be opened", because those builds had no signature at all. Move the app to
+  Applications, then run once in Terminal
+  `xattr -cr /Applications/DISLED.app` and open it.
 
 On Linux, only root may open a USB HID device by default. The `.deb`
 installs a udev rule, `/usr/lib/udev/rules.d/70-disled.rules`
