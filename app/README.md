@@ -68,12 +68,17 @@ variable.
   menu is the only way in: tray click events do not exist there.
 - **Popup**: off (black, struck through) and the four colors, as rounded
   squares; automatic brightness with a "darker / brighter" correction, or a
-  fixed level; a settings page (start at login, app and lamp updates,
-  diagnostics, versions). It hides when it loses the focus.
+  fixed level; a settings page (start at login, color mode, language, app
+  and lamp updates, diagnostics, versions). It takes the height of its
+  content, and hides when it loses the focus or on Escape.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are
   not saved: the lamp always starts green, "available".
+- **Color mode and language** ([ADR
+  0018](../docs/decisions/0018-nuxt-ui-themes-languages.md)): System, Light
+  or Dark; System, English or French. They apply to every window, the
+  window frames, the tray menu and its tooltip.
 - **Start at login**, turned on at the first launch (installed app only);
   one running instance (a second launch shows the popup).
 - **Updates** ([ADR 0014](../docs/decisions/0014-app-updates.md)): the
@@ -94,6 +99,51 @@ variable.
   charts, and CSV recordings for the tuning campaigns of
   [`docs/bringup.md`](../docs/bringup.md).
 
+## Front end
+
+Vue 3 with [Nuxt UI](https://ui.nuxt.com) 4 through its Vite plugin (no
+Nuxt): its components wherever one fits, charts included. Components are
+auto-imported (`src/components.d.ts`, written by the plugin; a file starts
+with its folder: `lamp/LampColorPicker.vue` is `<LampColorPicker>`);
+functions are imported explicitly, through the `@/` alias of `src/`.
+
+- **State**: one Pinia store per domain in `src/stores`, started by each
+  window for what it shows (`src/App.vue`). They talk to the backend
+  through `src/ipc`: typed wrappers of the Tauri commands and a typed map
+  of the events.
+- **Types from Rust**: ts-rs writes the types exchanged with the backend
+  to `src/bindings` when the Rust tests run. After a change to one of
+  those Rust types, run `npm run bindings`; CI fails when the committed
+  files are out of date.
+
+### Design system
+
+`src/assets/css/main.css` brings Tailwind, Nuxt UI, the Montserrat font
+(self-hosted) and the token overrides. The two palettes, `ink` (neutral:
+from the brand white `#fefcf7`, the light background, to the brand black
+`#020f05`, the dark one) and `brand` (primary, on the logo green
+`#2ecc71`), come from a script that also checks their contrast. Edit the
+script, never `palettes.css`:
+
+```sh
+node branding/palette.mjs           # writes src/assets/css/palettes.css
+node branding/palette.mjs --check   # what CI runs
+```
+
+### Translations
+
+The messages live in `src/locales/en.json` and `src/locales/fr.json`. The
+windows read them with [vue-i18n](https://vue-i18n.intlify.dev) (compiled
+at build time); the backend reads the `tray` and `window` sections for the
+tray menu and the window titles (`src-tauri/src/i18n.rs`), which must stay
+plain text. English is the reference: TypeScript rejects a French file
+that lacks a message, and `cargo test` checks that both files have the
+same keys. Errors from the backend's libraries stay in English, inside a
+translated sentence.
+
+To add a language: a JSON file, a variant of the `Language` and `Locale`
+enums in Rust, and an entry in the language select of the popup.
+
 ## Layout
 
 | Path                                | Content                                                                             |
@@ -102,21 +152,25 @@ variable.
 | `../crates/disled-flash`            | Signed firmware files and wchisp, run as a separate program (shared with the tools) |
 | `src-tauri/src/device.rs`           | USB worker thread: discovery, reconnection, settings applied on INFO, tray updates  |
 | `src-tauri/src/settings.rs`         | Settings saved on the computer (store plugin) and the commands that apply them      |
+| `src-tauri/src/i18n.rs`             | Languages: "System" resolved, the messages of the tray and of the window titles     |
 | `src-tauri/src/tray.rs`             | Tray icon (drawn at run time), menu and clicks                                      |
-| `src-tauri/src/windows.rs`          | Popup placement and hiding, Diagnostics and lamp update windows                     |
+| `src-tauri/src/windows.rs`          | Popup placement, height and hiding, Diagnostics and lamp update windows             |
 | `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                    |
 | `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, download, update steps                |
 | `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                   |
-| `src/lib/protocol.ts`               | TypeScript mirror of the Rust message types                                         |
-| `src/lib/device.ts`                 | Store of one window (each window has its own), settings, CSV recorder               |
-| `src/lib/updates.ts`                | Update status shown in the popup                                                    |
-| `src/lib/firmware.ts`               | Lamp update status, shown by the popup and the lamp update window                   |
-| `src/components/`                   | Popup, Diagnostics and lamp update views, and their panels                          |
+| `src/views/`                        | One view per window: popup, Diagnostics, lamp update                                |
+| `src/components/`                   | Their parts, by domain: `lamp/`, `popup/`, `diagnostics/`, `update/`                |
+| `src/stores/`                       | Pinia stores: lamp, settings, telemetry, diagnostics, updates, firmware, errors     |
+| `src/ipc/`                          | Typed Tauri commands and events                                                     |
+| `src/bindings/`                     | Types generated from the Rust ones (ts-rs, `npm run bindings`)                      |
+| `src/locales/`, `src/i18n.ts`       | Messages in English and French (shared with the backend), vue-i18n setup            |
+| `src/composables/`, `src/utils/`    | Appearance, popup height, error wording; versions, update steps, CSV, faults        |
+| `src/assets/css/`                   | Tailwind, Nuxt UI, the font and the palettes (`palettes.css` is generated)          |
 | `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                 |
 | `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)     |
 | `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                            |
-| `branding/`                         | The logo and the script that draws it with the installer images                     |
-| `src-tauri/installer/`              | Windows installer bitmaps and macOS disk image background, made by that script      |
+| `branding/`                         | The logo and its installer images (`render.py`), the palettes (`palette.mjs`)       |
+| `src-tauri/installer/`              | Windows installer bitmaps and macOS disk image background, made by `render.py`      |
 
 The Rust code is one Cargo workspace at the repository root: this app
 (`src-tauri`) and the shared crates (`../crates`). Its build output goes to
@@ -144,10 +198,12 @@ time in the color of the lamp.
 ## Checks
 
 ```sh
-npm run typecheck      # vue-tsc
+npm run typecheck      # vue-tsc, including the French messages against the English ones
 npm run check          # Biome: lint, format, import order (npm run fix applies the fixes)
+node branding/palette.mjs --check
 cd ..                  # the Rust workspace root
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace # protocol codec against the shared vectors
+cargo test --workspace # protocol codec, message keys of both languages, TypeScript types
+git diff --exit-code -- app/src/bindings
 ```
