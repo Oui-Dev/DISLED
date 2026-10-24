@@ -4,11 +4,13 @@
 
   The popup under the tray icon: everyday control of the lamp, and a
   settings page. The window takes the height of its content; Escape hides
-  it.
+  it, and it opens again on the lamp page.
 -->
 <script setup lang="ts">
+import type { UnlistenFn } from '@tauri-apps/api/event';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { onKeyStroke } from '@vueuse/core';
-import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useErrorText } from '@/composables/useErrorText';
 import { usePopupAutoSize } from '@/composables/usePopupAutoSize';
@@ -29,7 +31,10 @@ const errorText = useErrorText();
 
 // The page, then the footer: the window fits both, and the footer stays at
 // the bottom of a window taller than the content.
-usePopupAutoSize(useTemplateRef<HTMLElement>('body'), useTemplateRef<HTMLElement>('footer'));
+const { fit } = usePopupAutoSize(
+  useTemplateRef<HTMLElement>('body'),
+  useTemplateRef<HTMLElement>('footer'),
+);
 
 const page = ref<Page>('lamp');
 const pageHeading = useTemplateRef<HTMLElement>('pageHeading');
@@ -41,14 +46,36 @@ async function show(next: Page): Promise<void> {
   pageHeading.value?.focus();
 }
 
-onKeyStroke('Escape', () => {
+/** Back to the lamp page once hidden, sized for it before the popup shows again. */
+async function reset(): Promise<void> {
+  if (page.value === 'lamp') {
+    return;
+  }
+  page.value = 'lamp';
+  await nextTick();
+  await fit();
+}
+
+onKeyStroke('Escape', async () => {
   // An open menu closes first (it is still there while this runs); the
   // popup stays.
   if (document.querySelector('[role="menu"]')) {
     return;
   }
-  void popupHide();
+  await popupHide();
+  await reset();
 });
+
+// The backend hides the popup when it loses the focus.
+let stopFollowingFocus: UnlistenFn | undefined;
+onMounted(async () => {
+  stopFollowingFocus = await getCurrentWebviewWindow().onFocusChanged(({ payload: focused }) => {
+    if (!focused) {
+      void reset();
+    }
+  });
+});
+onBeforeUnmount(() => stopFollowingFocus?.());
 
 const status = computed(() => {
   if (!lamp.connection.connected) {
