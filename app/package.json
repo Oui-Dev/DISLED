@@ -11,9 +11,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "typecheck": "vue-tsc --noEmit",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "check": "biome check .",
+    "fix": "biome check --write ."
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -21,16 +20,10 @@
     "vue": "^3.5.44"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@biomejs/biome": "2.6.2",
     "@tauri-apps/cli": "^2",
     "@vitejs/plugin-vue": "^6.0.7",
-    "eslint": "^10.13.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vue": "^10.11.1",
-    "globals": "^17.13.0",
-    "prettier": "^3.9.10",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.71.2",
     "vite": "^8.0.16",
     "vue-tsc": "^3.3.5"
   }

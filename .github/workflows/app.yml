@@ -59,8 +59,7 @@ jobs:
         run: |
           npm ci
           npm run typecheck
-          npm run lint
-          npm run format:check
+          npx biome ci .
           npm run build
 
       - name: Rust workspace (app, shared crates, tools)
