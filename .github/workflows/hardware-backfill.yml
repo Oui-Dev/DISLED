@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 The DISLED contributors
+#
+# One-off (ADR 0019): releases the hardware designs made before the
+# hardware releases, oldest first, each from the commit that brought it.
+# Run it once by hand on main, then delete this file.
+name: hardware backfill
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  pcb-0-1-0:
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: pcb
+      version: 0.1.0
+      prerelease: true
+      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92 # the boards v1 to v4
+      files: hardware/easyeda/v1_ProPrj_connected_status_light_2026-10-03.epro2
+
+  pcb-0-2-0:
+    needs: pcb-0-1-0
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: pcb
+      version: 0.2.0
+      prerelease: true
+      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92
+      files: hardware/easyeda/v2_ProPrj_connected_status_light_2026-10-06.epro2
+
+  pcb-0-3-0:
+    needs: pcb-0-2-0
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: pcb
+      version: 0.3.0
+      prerelease: true
+      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92
+      files: hardware/easyeda/v3_ProPrj_connected_status_light_2026-10-07.epro2
+
+  # v4 and its STEP model, from main.
+  pcb-1-0-0:
+    needs: pcb-0-3-0
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: pcb
+      version: 1.0.0
+
+  enclosure-0-1-0:
+    needs: pcb-1-0-0
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: enclosure
+      version: 0.1.0
+      ref: d8a4430ed4d745d353e4ccfdfd7b93301772193a # the first exports
+      # Published under the names of 1.0.0.
+      files: >-
+        hardware/housing/top_housing.3mf=top.3mf
+        hardware/housing/bottom_housing.3mf=bottom.3mf
+        hardware/housing/als_light_cover.3mf
+        hardware/housing/anti_slip_foot.3mf
+        hardware/housing/copper_disk_cutter.3mf=copper_ring_cutter.3mf
+        hardware/housing/copper_disk_cutter_blade_holder.3mf=copper_ring_cutter_blade_holder.3mf
+
+  enclosure-1-0-0:
+    needs: enclosure-0-1-0
+    uses: ./.github/workflows/hardware-release.yml
+    with:
+      design: enclosure
+      version: 1.0.0
