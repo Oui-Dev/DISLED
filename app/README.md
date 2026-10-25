@@ -7,9 +7,10 @@ live telemetry, CSV recordings, lamp diagnostics and the self-test.
 
 ## Install
 
-Installers are attached to each `app-vX.Y.Z` release on the
-[releases page](https://github.com/Oui-Dev/DISLED/releases): Windows
-(`.exe`), macOS on Apple Silicon (`.dmg`) and Debian or Ubuntu (`.deb`).
+Installers are attached to each `app-vX.Y.Z` release, and the
+[latest release](https://github.com/Oui-Dev/DISLED/releases/latest) is
+always the newest one: Windows (`.exe`), macOS on Apple Silicon (`.dmg`)
+and Debian or Ubuntu (`.deb`).
 Once installed, the app updates itself (0.1.0 has no updater: install a
 newer version by hand once).
 

@@ -1,9 +1,9 @@
 # Releasing
 
-Releases are automated with
-[release-please](https://github.com/googleapis/release-please). The
-firmware and the desktop app are released separately, each with its own
-version, tag and changelog:
+The firmware and the desktop app are released with
+[release-please](https://github.com/googleapis/release-please),
+separately, each with its own version, tag and changelog. The hardware is
+released by hand ([Hardware releases](#hardware-releases)).
 
 | Component | Path | Tag | Changelog | Version source |
 |---|---|---|---|---|
@@ -70,12 +70,40 @@ The release stays a draft, with its tag: nothing is published.
   without it the next changelog would take the whole history. The name of
   a deleted published release cannot be used again either.
 
+## Hardware releases
+
+The PCB and the enclosure have their own versions, tags and changelogs,
+written by hand: a hardware version is a decision (a board order, a
+print), not a sum of commits
+([ADR 0019](decisions/0019-hardware-releases.md)).
+
+| Design | Path | Tag | Changelog |
+|---|---|---|---|
+| PCB | `hardware/pcb/` | `pcb-vX.Y.Z` | [hardware/pcb/CHANGELOG.md](../hardware/pcb/CHANGELOG.md) |
+| Enclosure | `hardware/enclosure/` | `enclosure-vX.Y.Z` | [hardware/enclosure/CHANGELOG.md](../hardware/enclosure/CHANGELOG.md) |
+
+1. Merge the new files into `main`, over the old ones, with a section for
+   the version at the top of the changelog: `## X.Y.Z (YYYY-MM-DD)`, the
+   date of the design, then the changes. Links in a section must be
+   absolute: the section becomes the notes of the release. A new board
+   revision carries its version on the silkscreen.
+2. Run the **hardware release** workflow on `main` (Actions, hardware
+   release, Run workflow) with the design and the version. Tick
+   pre-release for a design that will not be manufactured.
+3. The workflow tags the commit, attaches the files of the folder (its
+   changelog aside) as `disled-<design>-X.Y.Z.<ext>`, or
+   `disled-<design>-X.Y.Z-<name>.<ext>` when the folder has several of
+   that type, and publishes the release, never as the "Latest" one.
+
+A failed run may leave a draft: delete it, then run the workflow again.
+
 ## The "Latest" release
 
 GitHub marks one release per repository as "Latest", whatever the
 component. It is always the newest app release: the installed apps read
-`releases/latest/download/latest.json`. Firmware releases are published
-without the flag; the app finds the newest firmware by its `fw-v*` tag.
+`releases/latest/download/latest.json`. Firmware and hardware releases
+are published without the flag; the app finds the newest firmware by its
+`fw-v*` tag.
 
 ## App updates
 
@@ -168,7 +196,8 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
   component: a change there is released with the component that the same
   commit touches (a protocol change touches the firmware, the app or both).
   Neither does `tools/`: the production tool is not released, it runs from
-  the repository ([docs/production.md](production.md)).
+  the repository ([docs/production.md](production.md)). Nor does
+  `hardware/`, released by hand (above).
 - One release pull request for both components: with one per component,
   both edited `.release-please-manifest.json`, so merging one left the
   other in conflict, and release-please does not rebuild a pull request

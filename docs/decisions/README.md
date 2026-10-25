@@ -24,3 +24,4 @@ one.
 | [0016](0016-lamp-updates.md) | Lamp updates: firmware signed with the update key, wchisp built and bundled by the release workflow | Accepted |
 | [0017](0017-automatic-brightness.md) | Automatic brightness: light sensor ranging, logarithmic filter, curve in the lux the sensor reads | Accepted |
 | [0018](0018-nuxt-ui-themes-languages.md) | Nuxt UI front end: DISLED palettes, color modes, English and French | Accepted |
+| [0019](0019-hardware-releases.md) | PCB and enclosure released by hand from a workflow, never as the latest release | Accepted |
