@@ -10,9 +10,11 @@ desktop.ini
 *~
 __pycache__/
 
-# Hardware: large generated 3D exports (regenerate them from EasyEDA)
+# Hardware: large generated 3D exports (regenerate them from EasyEDA),
+# except the model of the board, a file of its releases (ADR 0019)
 *.step
 *.stp
+!/hardware/pcb/*.step
 
 # Firmware (PlatformIO, tools installed by uv)
 firmware/.pio/
