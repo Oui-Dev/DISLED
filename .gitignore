@@ -27,9 +27,9 @@ firmware/tools/*/touch_replay.exe
 # Desktop app
 app/node_modules/
 app/dist/
-# Rust workspace build output (and the old per-crate location)
+# Rust build output: the workspace target, and the capability schemas
+# that tauri-build writes
 /target/
-app/src-tauri/target/
 app/src-tauri/gen/schemas/
 # The wchisp sidecar, which the release workflow builds, or a hand-built one
 app/src-tauri/binaries/
