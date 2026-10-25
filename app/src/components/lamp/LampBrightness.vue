@@ -137,38 +137,40 @@ const hint = computed(() => {
       </div>
     </div>
 
-    <div v-if="auto" class="flex items-center gap-2.5">
-      <span class="text-xs text-muted">{{ t('lamp.brightness.darker') }}</span>
-      <USlider
-        :model-value="value"
-        :min="AUTO_BIAS_MIN"
-        :max="AUTO_BIAS_MAX"
-        :step="BIAS_STEP"
-        :disabled="!settings || !biasSupported"
-        :tooltip="{ text: biasText }"
-        :aria-label="t('lamp.brightness.correctionLabel')"
-        :aria-valuetext="biasText"
-        class="flex-1"
-        @update:model-value="move"
-        @change="release"
-      />
-      <span class="text-xs text-muted">{{ t('lamp.brightness.brighter') }}</span>
-    </div>
-
-    <div v-else class="flex items-center gap-2.5">
-      <UIcon name="i-lucide-sun-dim" class="size-4 shrink-0 text-muted" />
-      <USlider
-        :model-value="value"
-        :min="1"
-        :max="100"
-        :disabled="!settings"
-        :aria-label="t('lamp.brightness.title')"
-        :aria-valuetext="levelText"
-        class="flex-1"
-        @update:model-value="move"
-        @change="release"
-      />
-      <UIcon name="i-lucide-sun" class="size-5 shrink-0 text-muted" />
+    <!-- One row for both modes, as tall as the larger sun: the slider and the hint stay put when the mode changes. -->
+    <div class="flex h-5 items-center gap-2.5">
+      <template v-if="auto">
+        <span class="shrink-0 text-xs text-muted">{{ t('lamp.brightness.darker') }}</span>
+        <USlider
+          :model-value="value"
+          :min="AUTO_BIAS_MIN"
+          :max="AUTO_BIAS_MAX"
+          :step="BIAS_STEP"
+          :disabled="!settings || !biasSupported"
+          :tooltip="{ text: biasText }"
+          :aria-label="t('lamp.brightness.correctionLabel')"
+          :aria-valuetext="biasText"
+          class="flex-1"
+          @update:model-value="move"
+          @change="release"
+        />
+        <span class="shrink-0 text-xs text-muted">{{ t('lamp.brightness.brighter') }}</span>
+      </template>
+      <template v-else>
+        <UIcon name="i-lucide-sun-dim" class="size-4 shrink-0 text-muted" />
+        <USlider
+          :model-value="value"
+          :min="1"
+          :max="100"
+          :disabled="!settings"
+          :aria-label="t('lamp.brightness.title')"
+          :aria-valuetext="levelText"
+          class="flex-1"
+          @update:model-value="move"
+          @change="release"
+        />
+        <UIcon name="i-lucide-sun" class="size-5 shrink-0 text-muted" />
+      </template>
     </div>
 
     <p class="text-xs text-muted">{{ hint }}</p>
