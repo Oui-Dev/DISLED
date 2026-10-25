@@ -1,6 +1,6 @@
 version: 2
-# Commit messages follow Conventional Commits, read by release-please
-# (docs/releasing.md): fix(deps) releases the component it touches;
+# Commit messages follow Conventional Commits, which release-please reads
+# (docs/releasing.md). fix(deps) releases the component it touches;
 # chore(deps-dev), build(deps) and ci(deps) release nothing.
 updates:
   # APP dependencies: front end and Tauri CLI
@@ -38,9 +38,9 @@ updates:
           - 'minor'
           - 'patch'
 
-  # APP back end and shared crates: Rust workspace at the root. Updates of
-  # Cargo.lock alone belong to no component: they go out with the next
-  # app release.
+  # APP back end and shared crates, the Rust workspace at the root. An
+  # update of Cargo.lock alone belongs to no component and goes out with the
+  # next app release.
   - package-ecosystem: 'cargo'
     directory: '/'
     schedule:
@@ -65,9 +65,9 @@ updates:
           - 'minor'
           - 'patch'
 
-  # FIRMWARE build and check tools (PlatformIO, clang-format), with uv:
-  # pyproject.toml and uv.lock. The PlatformIO platform and SDK are pinned
-  # by commit in platformio.ini, and TinyUSB follows its releases by hand:
+  # FIRMWARE build and check tools, PlatformIO and clang-format, through uv
+  # in pyproject.toml and uv.lock. platformio.ini pins the PlatformIO
+  # platform and the SDK by commit, and TinyUSB follows its releases by hand;
   # Dependabot reads neither.
   - package-ecosystem: 'uv'
     directory: '/firmware/'

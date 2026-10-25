@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Hardware releases (docs/releasing.md), run by hand on main: the PCB or
-# the enclosure, which release-please leaves alone. The release tags the
-# commit that runs, gets the files of hardware/<design>/ but its changelog
-# and, as notes, the section of that changelog for the version. Like the
-# other releases it is drafted, then published complete, and never as the
-# "latest" one: that one is the app's, where the updater looks.
+# Hardware releases of the PCB or the enclosure, which release-please leaves
+# alone (docs/releasing.md). The workflow runs by hand on main and tags the
+# commit it runs on. The release gets the files of hardware/<design>/ except
+# its changelog, and as notes the section of that changelog for the version.
+# Like the other releases it is drafted, then published complete, and never
+# as the latest one, which is the app's release, where the updater looks.
 name: hardware release
 
 on:
@@ -52,7 +52,7 @@ jobs:
             echo "::error::$VERSION is not X.Y.Z."
             exit 1
           fi
-          # gh finds the drafts too: delete one left by a failed run.
+          # gh finds the drafts too, so delete a draft left by a failed run.
           if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null || gh release view "$TAG" > /dev/null 2>&1; then
             echo "::error::$TAG exists."
             exit 1
@@ -94,5 +94,5 @@ jobs:
             --title "$DESIGN: v$VERSION" --notes-file notes.md "${prerelease[@]}"
 
       - name: Publish the release
-        # Never as the "latest" release: that one is the app's.
+        # Never as the latest release, which is the app's.
         run: gh release edit "$TAG" --draft=false --latest=false

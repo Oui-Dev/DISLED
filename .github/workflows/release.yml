@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Releases (docs/releasing.md). On every push to main,
-# release-please keeps the release pull request up to date. Merging it
-# tags fw-vX.Y.Z and/or app-vX.Y.Z and creates draft releases, visible to
-# the maintainers only. The jobs below build those tags, attach the
-# binaries, and publish each release only once it is complete: published
-# releases are immutable (repository setting). The app release is
-# published as the "latest" one and a firmware release never is: the app
-# updater reads releases/latest/download/latest.json.
+# Releases (docs/releasing.md). On every push to main, release-please keeps
+# the release pull request up to date. Merging it tags fw-vX.Y.Z, app-vX.Y.Z
+# or both, and creates draft releases that only the maintainers see. The
+# jobs below build those tags, attach the binaries, and publish each release
+# only once it is complete, because the repository makes published releases
+# immutable. The app release is published as the latest one and a firmware
+# release never is, since the app updater reads
+# releases/latest/download/latest.json.
 name: release
 
 on:
@@ -24,10 +24,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # The flasher shipped with the app for the lamp updates. The
-  # app reads its messages (crates/disled-flash/src/wchisp.rs), and its
-  # notice names the version (app/src-tauri/third-party/wchisp): check
-  # both before changing it.
+  # The flasher shipped with the app for the lamp updates. The app reads its
+  # messages in crates/disled-flash/src/wchisp.rs, and its notice in
+  # app/src-tauri/third-party/wchisp names the version, so check both before
+  # changing it.
   WCHISP_VERSION: 0.3.0
 
 jobs:
@@ -77,7 +77,7 @@ jobs:
           uv run pio test -e native
           uv run pio run -e debug -e release
 
-      # For the signature below: the Tauri CLI of the app.
+      # The Tauri CLI of the app, for the signature below.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -104,7 +104,7 @@ jobs:
           gh release upload "$TAG" dist/* --clobber
 
       - name: Publish the release
-        # Never as the "latest" release: that one is the app's.
+        # Never as the latest release, which is the app's.
         run: gh release edit "$TAG" --draft=false --latest=false
 
   app:
@@ -117,8 +117,8 @@ jobs:
           - os: windows-2022
             bundles: nsis
           - os: macos-14 # Apple Silicon
-            bundles: app,dmg # the updater archive is made from the app bundle
-          - os: ubuntu-22.04 # oldest supported glibc: the .deb installs on older systems too
+            bundles: app,dmg # Tauri makes the updater archive from the app bundle
+          - os: ubuntu-22.04 # an old glibc, so that the .deb installs on older systems too
             bundles: deb
     runs-on: ${{ matrix.os }}
     env:
@@ -157,7 +157,7 @@ jobs:
       # to the app, never linked. Tauri wants it named after the target.
       - name: wchisp
         env:
-          # Like the app: no dependency on the Visual C++ runtime DLLs.
+          # Like the app, with no dependency on the Visual C++ runtime DLLs.
           RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
         run: |
           cargo install "wchisp@$WCHISP_VERSION" --locked --root "$RUNNER_TEMP/wchisp"
@@ -178,8 +178,8 @@ jobs:
             --config src-tauri/tauri.wchisp.conf.json
 
       # Apple Silicon calls an app downloaded without any signature
-      # "damaged" and offers only the bin (issue #19): the bundle, wchisp
-      # included, must carry the ad-hoc signature of tauri.conf.json.
+      # "damaged" and offers only the bin, as issue #19 showed, so the bundle,
+      # wchisp included, must carry the ad-hoc signature of tauri.conf.json.
       - name: Check the macOS signature
         if: runner.os == 'macOS'
         working-directory: target/release/bundle/macos
@@ -200,8 +200,9 @@ jobs:
             -print0 | xargs -0 gh release upload "$TAG" --clobber
 
   app-publish:
-    # Only once every installer is attached: a published release can no
-    # longer change. If one platform failed, re-run it: this job follows.
+    # Only once every installer is attached, since a published release can
+    # no longer change. If one platform failed, re-run it, and this job
+    # follows.
     needs: [release-please, app]
     if: needs.release-please.outputs.app-released == 'true'
     runs-on: ubuntu-24.04
@@ -218,9 +219,9 @@ jobs:
           node-version: 24
 
       - name: Attach the wchisp source and notice
-        # GPL-2.0: the source of the wchisp in the installers goes with
-        # them. The crates.io package that `cargo install` built, checked
-        # against the checksum of the crates.io index.
+        # wchisp is GPL-2.0, so its source goes with the installers. It is the
+        # crates.io package that `cargo install` built, checked against the
+        # checksum of the crates.io index.
         run: |
           crate="wchisp-$WCHISP_VERSION.crate"
           curl -fsSL -o "$crate" "https://static.crates.io/crates/wchisp/$crate"

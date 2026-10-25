@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 name: app
 
-# Checks of the pull requests into main that are ready for review (not
-# drafts). The installers are built by the release workflow.
+# Checks of the pull requests into main that are ready for review, drafts
+# aside. The release workflow builds the installers.
 on:
   pull_request:
     branches: [main]
@@ -63,9 +63,9 @@ jobs:
           npx biome ci .
           npm run build
 
-      # The tests write the TypeScript types of the front end again (ts-rs),
-      # into an emptied folder: a type renamed or removed in Rust leaves no
-      # file behind.
+      # The tests write the TypeScript types of the front end again with
+      # ts-rs, into an emptied folder, so that a type renamed or removed in
+      # Rust leaves no file behind.
       - name: Rust workspace (app, shared crates, tools)
         working-directory: .
         run: |

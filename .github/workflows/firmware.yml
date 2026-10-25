@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 name: firmware
 
-# Checks of the pull requests into main that are ready for review (not
-# drafts). Release builds come from the release workflow.
+# Checks of the pull requests into main that are ready for review, drafts
+# aside. The release workflow makes the release builds.
 on:
   pull_request:
     branches: [main]
@@ -24,7 +24,7 @@ concurrency:
 jobs:
   firmware:
     if: ${{ !github.event.pull_request.draft }}
-    # Linux runners only: their minutes are the cheapest on a private repo.
+    # The runner of the release build, so the same compiler.
     runs-on: ubuntu-24.04
     defaults:
       run:

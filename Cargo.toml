@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Rust workspace: the desktop app, the production tool, and the crates they
-# share (protocol codec, flashing).
+# Rust workspace of the desktop app, the production tool and the two crates
+# they share, the protocol codec and the flashing code.
 [workspace]
 resolver = "3"
 members = [
