@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! DISLED USB HID protocol v1.1 (see `protocol/README.md`): command encoder
-//! and message decoder. Pure functions, no I/O. Shared by the desktop app
-//! and the production tool.
+//! Command encoder and message decoder of the DISLED USB HID protocol v1.1,
+//! which `protocol/README.md` specifies. The functions do no I/O; the desktop
+//! app and the production tool share them.
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-/// USB IDs of the lamp (pid.codes test PIDs during phase 1).
+/// USB IDs of the lamp, the pid.codes test PIDs that LICENSING.md describes.
 pub const USB_VENDOR_ID: u16 = 0x1209;
 pub const USB_PRODUCT_ID_RELEASE: u16 = 0x0001;
 pub const USB_PRODUCT_ID_DEBUG: u16 = 0x0002;
-/// Usage page of the HID interface (vendor defined).
+/// Vendor-defined usage page of the HID interface.
 pub const HID_USAGE_PAGE: u16 = 0xFF00;
 
-/// The HID interface of a lamp, from what hidapi lists. hidapi reports a
-/// usage page of 0 where the platform does not give it.
+/// Tells whether a device that hidapi lists is the HID interface of a lamp.
+/// hidapi reports a usage page of 0 where the platform does not give it, so 0
+/// matches too.
 pub fn is_lamp_interface(vendor_id: u16, product_id: u16, usage_page: u16) -> bool {
     vendor_id == USB_VENDOR_ID
         && (product_id == USB_PRODUCT_ID_RELEASE || product_id == USB_PRODUCT_ID_DEBUG)
@@ -58,7 +59,7 @@ const FIELD_COLOR: u8 = 0x02;
 const FIELD_BRIGHTNESS_MODE: u8 = 0x04;
 const FIELD_MANUAL_LEVEL: u8 = 0x08;
 
-/// Wire enums: the discriminant is the byte on the wire.
+/// An enum whose discriminant is its byte on the wire.
 macro_rules! wire_enum {
     ($(#[$meta:meta])* $name:ident { $($variant:ident = $value:expr),+ $(,)? }) => {
         $(#[$meta])*
@@ -121,7 +122,8 @@ pub enum Command {
         period_ms: u16,
     },
     Reset,
-    /// Percent, `AUTO_BIAS_MIN` to `AUTO_BIAS_MAX` (version 1.1).
+    /// Percent, `AUTO_BIAS_MIN` to `AUTO_BIAS_MAX`, for a lamp that announces
+    /// `auto_bias`.
     SetAutoBias {
         bias: i8,
     },
@@ -131,7 +133,7 @@ pub enum Command {
 }
 
 impl Command {
-    /// Encodes the command payload (without the report ID).
+    /// Encodes the command payload, which follows the report ID.
     pub fn encode(&self, seq: u8) -> [u8; PAYLOAD_SIZE] {
         let (kind, body): (u8, Vec<u8>) = match self {
             Command::GetInfo => (CMD_GET_INFO, vec![]),
@@ -197,7 +199,7 @@ pub struct Info {
     pub uid: String,
     pub telemetry: bool,
     pub debug_console: bool,
-    /// Optional commands of version 1.1.
+    // Optional commands, each announced by its capability bit.
     pub auto_bias: bool,
     pub diagnostics: bool,
     pub self_test: bool,
@@ -243,7 +245,7 @@ pub struct Telemetry {
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Diagnostics {
     pub uptime_ms: u32,
-    /// Since power-up (kept across resets).
+    // Since power-up, kept across resets.
     pub boots: u16,
     pub watchdog_resets: u16,
     pub faults: u16,
@@ -251,7 +253,7 @@ pub struct Diagnostics {
     pub last_fault: Option<FaultDetail>,
     /// Smallest stack margin seen since boot, bytes.
     pub stack_free_min: u16,
-    /// Since boot.
+    // Since boot.
     pub i2c_errors: u16,
     pub light_sensor_probes: u16,
     pub touch_samples_lost: u16,
@@ -303,7 +305,7 @@ pub enum Message {
     Error { command: u8, error: ProtocolError },
 }
 
-/// A decoded message and the sequence number it answers (0: unsolicited).
+/// A decoded message and the sequence number it answers, 0 when unsolicited.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Frame {
@@ -317,8 +319,9 @@ pub enum DecodeError {
     TooShort(usize),
     #[error("body length {0} does not fit the report")]
     BadLength(usize),
-    /// Hosts ignore unsolicited messages of an unknown type (compatibility
-    /// rules of the specification): callers usually skip this error.
+    /// The compatibility rules of the specification make hosts ignore an
+    /// unsolicited message of an unknown type, so callers usually skip this
+    /// error.
     #[error("unknown message type 0x{0:02x}")]
     UnknownType(u8),
     #[error("message 0x{0:02x}: body of {1} bytes, expected at least {2}")]
@@ -363,8 +366,8 @@ impl Reader<'_> {
     }
 }
 
-/// Bodies may be longer than this version knows (a newer lamp added fields
-/// at the end): only a shorter body is an error.
+/// A newer lamp may add fields at the end of a body, so only a body shorter
+/// than this version expects is an error.
 fn expect_size(kind: u8, body: &[u8], expected: usize) -> Result<(), DecodeError> {
     if body.len() >= expected {
         Ok(())
@@ -373,7 +376,7 @@ fn expect_size(kind: u8, body: &[u8], expected: usize) -> Result<(), DecodeError
     }
 }
 
-/// Decodes a message payload (the bytes after the report ID).
+/// Decodes a message payload, the bytes after the report ID.
 pub fn decode_message(payload: &[u8]) -> Result<Frame, DecodeError> {
     if payload.len() < HEADER_SIZE {
         return Err(DecodeError::TooShort(payload.len()));
@@ -467,7 +470,7 @@ pub fn decode_message(payload: &[u8]) -> Result<Frame, DecodeError> {
                 boots,
                 watchdog_resets,
                 faults,
-                // mcause 0 is a real exception (misaligned fetch): the
+                // mcause 0 is a real exception, a misaligned fetch, so the
                 // counter tells whether a fault happened.
                 last_fault: (faults != 0).then_some(FaultDetail {
                     mcause,

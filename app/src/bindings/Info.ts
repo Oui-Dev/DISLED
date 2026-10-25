@@ -6,8 +6,4 @@ export type Info = { protocol: [number, number], firmware: [number, number, numb
 /**
  * Chip unique ID in hexadecimal, as in the USB serial number.
  */
-uid: string, telemetry: boolean, debug_console: boolean, 
-/**
- * Optional commands of version 1.1.
- */
-auto_bias: boolean, diagnostics: boolean, self_test: boolean, enter_bootloader: boolean, reset_cause: ResetCause, debug_build: boolean, fault: Fault | null, };
+uid: string, telemetry: boolean, debug_console: boolean, auto_bias: boolean, diagnostics: boolean, self_test: boolean, enter_bootloader: boolean, reset_cause: ResetCause, debug_build: boolean, fault: Fault | null, };

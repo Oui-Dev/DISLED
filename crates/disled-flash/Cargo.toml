@@ -8,7 +8,8 @@ repository.workspace = true
 publish.workspace = true
 
 [features]
-# TypeScript types of the serialized types (ts-rs), for the desktop app.
+# TypeScript types of the serialized types, written by ts-rs for the desktop
+# app.
 ts = ["dep:ts-rs"]
 
 [dependencies]

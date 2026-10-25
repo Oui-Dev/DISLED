@@ -3,9 +3,9 @@
 
 //! The firmware files of the releases. Each firmware release carries its
 //! release build, `disled-fw-X.Y.Z.hex`, signed with the update key of the
-//! app, because the computer trusts the lamp as a USB device: a replaced
-//! firmware could present it as a keyboard. The release workflow puts the
-//! file name and the version in the signed comment.
+//! app, because a replaced firmware could present the lamp to the computer
+//! as a keyboard. The release workflow puts the file name and the version
+//! in the signed comment.
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -29,7 +29,7 @@ pub fn version_of(file_name: &str) -> Option<Version> {
 }
 
 /// Checks that `data` is the release build of `version`, signed with the
-/// update key: an older signed file cannot pass for a newer one.
+/// update key, so that an older signed file cannot pass for a newer one.
 /// `signature` is the content of the `.sig` file.
 pub fn verify(data: &[u8], signature: &str, version: &Version) -> Result<(), String> {
     verify_with(UPDATE_KEY, data, signature, version)
