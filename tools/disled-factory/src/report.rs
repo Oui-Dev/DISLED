@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The production log: one CSV row per board, appended as soon as the board
+//! The production log, one CSV row per board, appended as soon as the board
 //! is done.
 
 use std::fs::OpenOptions;
@@ -54,7 +54,8 @@ pub struct Row {
     pub touch_baseline: Option<u16>,
     pub touch: Check,
     pub touch_peak_permille: Option<i16>,
-    /// Why the board failed outside the checks above (flash, version…).
+    /// Why the board failed outside the checks above, at the flash or the
+    /// version check for instance.
     pub error: Option<String>,
     /// Facts that do not fail the board.
     pub remarks: Vec<String>,

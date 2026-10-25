@@ -22,7 +22,7 @@ use crate::report::{Check, Report, Row};
 const POLL: Duration = Duration::from_secs(1);
 /// wchisp failures in a row before the board fails.
 const PROBE_FAILURES: u32 = 5;
-/// After the flash the lamp restarts: 2 s on the first board.
+/// After the flash the lamp restarts in about 2 s.
 const LAMP_TIMEOUT: Duration = Duration::from_secs(30);
 const REPLY_TIMEOUT: Duration = Duration::from_secs(2);
 
@@ -38,7 +38,7 @@ const DRIVER_HELP: &str = "Windows needs the WinUSB driver for the bootloader, o
 
 pub struct Station {
     pub api: HidApi,
-    /// None: the lamps already run their firmware (`--no-flash`).
+    /// None when the lamps already run their firmware, with `--no-flash`.
     pub flasher: Option<Wchisp>,
     pub firmware: Firmware,
     pub report: Report,
@@ -132,8 +132,8 @@ fn show_stage(stage: Stage) {
 }
 
 /// Waits for the bootloader of a DISLED board, telling the operator what
-/// holds it up. A bootloader that just appeared may not open at once: a
-/// problem shows when two probes in a row see it.
+/// holds it up. A bootloader that just appeared may not open at once, so a
+/// problem shows only when two probes in a row see it.
 fn wait_for_bootloader(api: &mut HidApi, flasher: &Wchisp) -> Result<(), String> {
     let mut previous = None;
     let mut shown: Option<String> = None;
@@ -342,7 +342,7 @@ fn yes_no(answer: &str) -> Option<bool> {
     }
 }
 
-/// Letters (`r b`, `rb`) or words (`red, warm white`).
+/// Reads letters such as `r b` or `rb`, or words such as `red, warm white`.
 fn wrong_colors(answer: &str) -> Vec<&'static str> {
     let mut letters = Vec::new();
     for word in answer

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! A lamp on USB, through its HID interface: blocking requests and replies.
+//! A lamp on USB, reached through its HID interface with blocking requests
+//! and replies.
 
 use std::time::{Duration, Instant};
 
@@ -18,14 +19,14 @@ pub struct Lamp {
     seq: u8,
 }
 
-/// Lists the HID devices of the lamp's vendor only: hidapi skips the other
-/// devices before reading their strings, so a slow one (a sleeping wireless
-/// receiver took 15 s per request) cannot stall the scan.
+/// Lists the HID devices of the lamp's vendor only. hidapi then skips the
+/// other devices before reading their strings, so a slow one cannot stall the
+/// scan.
 fn scan(api: &mut HidApi) -> bool {
     api.reset_devices().is_ok() && api.add_devices(USB_VENDOR_ID, 0).is_ok()
 }
 
-/// A lamp is connected.
+/// Tells whether a lamp is connected.
 pub fn present(api: &mut HidApi) -> bool {
     scan(api)
         && api
@@ -34,7 +35,7 @@ pub fn present(api: &mut HidApi) -> bool {
 }
 
 impl Lamp {
-    /// The connected lamp, if there is one.
+    /// Opens the connected lamp, if there is one.
     pub fn open(api: &mut HidApi) -> Option<Self> {
         if !scan(api) {
             return None;
@@ -48,7 +49,7 @@ impl Lamp {
 
     /// Sends a command; returns the sequence number its replies carry.
     pub fn send(&mut self, command: &Command) -> Result<u8, String> {
-        // 0 marks unsolicited messages: never use it for a request.
+        // 0 marks unsolicited messages, so a request never uses it.
         self.seq = if self.seq == u8::MAX { 1 } else { self.seq + 1 };
         let mut report = [0u8; PAYLOAD_SIZE + 1];
         report[0] = REPORT_ID_COMMAND;
@@ -59,8 +60,8 @@ impl Lamp {
         Ok(self.seq)
     }
 
-    /// The next message that answers `seq`, skipping the others. `tick`
-    /// runs between reads, with the time spent waiting.
+    /// Waits for the next message that answers `seq`, skipping the others.
+    /// `tick` runs between reads, with the time spent waiting.
     pub fn reply(
         &mut self,
         seq: u8,
