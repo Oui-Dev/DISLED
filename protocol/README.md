@@ -7,7 +7,7 @@ state: the host reads it, changes it and follows its notifications.
 
 > Status: version 1.1, **frozen** on 2026-10-21 ([ADR 0012](../docs/decisions/0012-protocol-v1-frozen.md)).
 > Only the compatible changes listed in [Compatibility](#compatibility)
-> remain allowed; anything else needs version 2. The v4 board announces
+> remain allowed; anything else needs version 2. The board (PCB 1.0.0) announces
 > every capability of 1.1 except `ENTER_BOOTLOADER`, which the CH32V203
 > cannot implement ([ADR 0010](../docs/decisions/0010-firmware-updates-from-the-app.md)).
 

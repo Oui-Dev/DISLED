@@ -5,9 +5,10 @@ green, orange or red to tell colleagues whether you are available. A touch
 on the lid cycles the colors, the brightness follows the room light, and a
 desktop app gives full control.
 
-> **Status:** phase 1 (bring-up and MVP) complete on the first v4 board;
-> the Mac, current and thermal tests wait for the enclosure V2. Binaries
-> are on the [releases page](https://github.com/Oui-Dev/DISLED/releases).
+> **Status:** phase 1 (bring-up and MVP) complete on the first board
+> (PCB 1.0.0); the Mac, current and thermal tests wait for the enclosure
+> 1.0.0. Binaries and hardware files are on the
+> [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout
 
@@ -18,7 +19,7 @@ desktop app gives full control.
 | [`tools/`](tools/) | Production tool, `disled-factory` (Rust) |
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
-| [`hardware/`](hardware/) | PCB design files, renders and design review |
+| [`hardware/`](hardware/) | PCB (EasyEDA Pro, STEP) and enclosure (3MF) design files |
 | [`docs/`](docs/) | Architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
 
 ## Hardware at a glance
