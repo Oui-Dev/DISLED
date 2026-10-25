@@ -15,14 +15,20 @@ version, tag and changelog:
 1. Work on a branch and merge it into `main` with a pull request. Commit
    messages follow [Conventional Commits](https://www.conventionalcommits.org/):
    `feat` adds a feature, `fix` fixes a bug, `feat!` or a
-   `BREAKING CHANGE:` footer breaks compatibility. `docs`, `chore`, `ci`,
-   `test` and `refactor` do not trigger a release.
+   `BREAKING CHANGE:` footer breaks compatibility. `feat`, `fix`, `perf`,
+   `refactor` and `revert` trigger a release and are listed in the
+   changelog; `docs`, `style`, `build`, `chore`, `test` and `ci` are not
+   (`changelog-sections` in `release-please-config.json`).
 2. On each push to `main`, the `release` workflow opens or updates a
    single release pull request. It bumps only the components that have
    releasable commits, with their next version (computed from the
    commits) and their changelog entries. Commits are assigned to a
    component by the files they change.
-3. Merge the release pull request when you want to release.
+3. Optionally, write a few lines on what the release brings at the top of
+   a component's section in the body of the release pull request, just
+   before merging it: release-please writes the body again on each push to
+   `main`, and the release notes are taken from it.
+4. Merge the release pull request when you want to release.
    release-please then tags the merge commit for each bumped component and
    creates one **draft** release per component with its changelog: drafts
    are visible to the maintainers only. The workflow builds each tag,
@@ -42,8 +48,14 @@ version, tag and changelog:
    General, Releases): their files and tag can no longer change, only their
    title and notes ([ADR 0015](decisions/0015-releases-published-complete.md)).
 
-While the versions are below 1.0.0, `feat` raises the minor version and a
-breaking change does too; `fix` raises the patch version.
+From 1.0.0 (the app), a breaking change raises the major version, `feat`
+the minor version and the other releasing types the patch version. Below
+1.0.0 (the firmware), a breaking change raises the minor version, as
+`feat` does.
+
+The notes of a published release can still change (above), but the
+installed apps have already read those of the app in `latest.json`:
+anything to add goes in the release pull request (step 3).
 
 ## When a release build fails
 
@@ -141,8 +153,11 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
   and approve pull requests**. The default token permissions can stay
   read-only: the release workflow asks for write access itself, and the
   other workflows only need to read.
-- To force a version, add `Release-As: X.Y.Z` to the body of a commit that
-  touches the component.
+- To force a version, add `"release-as": "X.Y.Z"` to the component in
+  `release-please-config.json`, and remove it once that version is
+  released: as long as it stays, release-please proposes that version
+  again. A `Release-As: X.Y.Z` footer in the body of a commit that touches
+  the component does the same for one release.
 - Dependabot opens weekly update pull requests (`.github/dependabot.yml`)
   with Conventional Commit messages: `fix(deps)` for what the app ships
   (npm production dependencies, Rust crates), which releases the app;
