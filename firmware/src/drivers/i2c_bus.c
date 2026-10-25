@@ -58,8 +58,8 @@ static void release_bus(void)
         bsp_time_delay_us(5);
     }
     /* STOP: SDA rises while SCL is high. SDA must go low while SCL is low;
-     * pulling it low with SCL high is a START, which left the sensor out of
-     * step and made the next transfer lose arbitration (seen at bring-up). */
+     * pulling it low with SCL high is a START, which leaves the sensor out of
+     * step and makes the next transfer lose arbitration. */
     GPIO_ResetBits(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN);
     bsp_time_delay_us(5);
     GPIO_ResetBits(BOARD_I2C_PORT, BOARD_I2C_SDA_PIN);
@@ -72,8 +72,8 @@ static void release_bus(void)
 
 /* Full reset of the peripheral, then hands it the pins. Resetting before
  * the pins switch to the alternate function avoids the spurious BUSY state
- * these controllers are known for (seen at bring-up: the first transfer
- * after power-up left the bus busy for good). */
+ * these controllers are known for, which keeps the bus busy for good after
+ * the first transfer. */
 static void configure_peripheral(void)
 {
     I2C_DeInit(BOARD_I2C);
@@ -107,7 +107,7 @@ void i2c_bus_init(uint32_t speed_hz)
     configure_peripheral();
 }
 
-/* Waits for an event (all flags of `event` set) or a single flag. */
+/* Waits for an event: all the flags of `event` set. */
 static i2c_bus_status_t wait_event(uint32_t event)
 {
     const uint32_t start = bsp_time_ms();
@@ -219,8 +219,8 @@ i2c_bus_status_t i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
 
     /* Byte-by-byte reception, as in the WCH I2C examples: the first byte is
      * acknowledged; once it is read, ACK goes off and STOP is queued so the
-     * second byte gets the NACK that ends the transfer. (The STM32 two-byte
-     * method with POS and BTF never completed on the CH32V203.) */
+     * second byte gets the NACK that ends the transfer. The STM32 two-byte
+     * method, with POS and BTF, never completes on the CH32V203. */
     I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
     s_step = 6;
     I2C_Send7bitAddress(BOARD_I2C, (uint8_t)(address << 1), I2C_Direction_Receiver);

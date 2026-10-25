@@ -50,7 +50,7 @@ typedef struct {
     uint16_t duty[LED_CHANNEL_COUNT];
     usb_link_t link;
     app_als_t als;
-    uint16_t cap_override_ma; /* debug: thermal test (V2), 0 = off */
+    uint16_t cap_override_ma; /* debug: lifts the cap for the heat test, 0 = off */
     reset_cause_t reset_cause;
     fault_record_t fault;
     bool crystal_ok;

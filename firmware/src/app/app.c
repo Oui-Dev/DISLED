@@ -3,13 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Application wiring: drivers -> core logic -> outputs, run by the
- * cooperative scheduler.
- *
- *   TouchKey samples -> touch_detector -> lamp_fsm
- *   VEML7700 counts  -> als_range (lux, next range) -> brightness
- *   lamp + level     -> led_output (fade, power cap) -> LED PWM
- *   USB link + HID   -> app_host (commands, notifications, telemetry)
+ * Application wiring: the drivers feed the core logic, which drives the
+ * outputs, all run by the cooperative scheduler (data flow in
+ * docs/architecture.md).
  */
 #include "app.h"
 
@@ -418,7 +414,6 @@ void app_init(const fault_record_t *fault)
     self_test_init(&app.self_test, &app_self_test_config);
 
     i2c_bus_init(APP_I2C_SPEED_HZ);
-    /* The sensor may still be powering up: retry soon if it is silent. */
     als_probe(&app.als, bsp_time_ms(), APP_ALS_FIRST_RETRY_MS);
 
     touch_detector_init(&app.touch, &app_touch_config);

@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * RGB LED PWM on TIM3 (channels 1..3, active high, edge aligned).
+ * RGB LED PWM on TIM3 (channels 1 to 3, active high, edge aligned).
  *
  * Duties are given in sub-ticks (1/16 of a tick, see pwm_dither.h): the
  * update interrupt of every period dithers them into whole ticks. The
@@ -12,7 +12,8 @@
  * The driver also offers a "sample point": TIM3 channel 4 compare, used as
  * an internal event only (its output, which would land on the touch pin
  * PB1, is never enabled). The touch driver arms it to measure at a fixed
- * phase of the PWM period, away from the LED switching edges (review N1).
+ * phase of the PWM period, away from the LED switching edges (constraint N1
+ * in hardware/README.md).
  */
 #ifndef DISLED_LED_PWM_H
 #define DISLED_LED_PWM_H

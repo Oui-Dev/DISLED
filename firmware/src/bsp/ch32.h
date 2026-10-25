@@ -6,6 +6,10 @@
  * Single entry point to the WCH SDK device header. The vendor headers do
  * not build cleanly with our strict warnings, so they are silenced here and
  * nowhere else.
+ *
+ * The SDK startup sets mstatus to 0x88 before its mret, which leaves main()
+ * in user mode. Code that needs machine mode, such as a write to mtvec or
+ * mstatus or a jump into the ROM bootloader, has to run in a trap handler.
  */
 #ifndef DISLED_BSP_CH32_H
 #define DISLED_BSP_CH32_H

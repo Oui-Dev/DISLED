@@ -25,10 +25,10 @@
 #define USB_MANUFACTURER_STRING "DISLED"
 #define USB_PRODUCT_STRING      "DISLED"
 
-/* Declared current draw: LED budget plus MCU, with margin (review N2). */
+/* Declared current draw: LED budget plus MCU, with margin (constraint N2
+ * in hardware/README.md). */
 #define USB_MAX_POWER_MA 300u
 
-/* HID input polling interval. */
 #define USB_HID_POLL_INTERVAL_MS 4u
 
 enum {

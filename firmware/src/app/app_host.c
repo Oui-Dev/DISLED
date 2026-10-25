@@ -64,7 +64,8 @@ static bool same_content(const state_content_t *a, const state_content_t *b)
            a->link == b->link;
 }
 
-/* Records the cause of the latest change. */
+/* Records the cause of the latest change, and stops the telemetry when the
+ * host leaves. */
 static void observe_changes(void)
 {
     const state_content_t now = observe();

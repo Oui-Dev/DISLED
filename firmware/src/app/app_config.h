@@ -3,9 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Every tunable of the firmware, in one place. Values marked "tune" are
- * first guesses, to be adjusted from the measurements on real boards
- * (docs/bringup.md: V1 light sensor, V2 thermal, V4 touch).
+ * Every tunable of the firmware, in one place, with the reason for its
+ * value. docs/bringup.md checks them on a new board.
  */
 #ifndef DISLED_APP_CONFIG_H
 #define DISLED_APP_CONFIG_H
