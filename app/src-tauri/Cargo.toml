@@ -3,7 +3,7 @@ name = "disled-app"
 # No version here. The app version lives in package.json, where
 # release-please bumps it, and tauri.conf.json reads it from there.
 description = "Desktop app for the DISLED USB status light"
-authors = ["The DISLED contributors"]
+authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -13,30 +13,30 @@ publish.workspace = true
 tauri-build = "2"
 
 [dependencies]
-disled-protocol = { path = "../../crates/disled-protocol" }
+disled-protocol.workspace = true
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-positioner = { version = "2", features = ["tray-icon"] }
 tauri-plugin-store = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-hidapi = "2"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+hidapi.workspace = true
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-opener = "2"
 # Lamp firmware updates: the signed firmware files and wchisp, shared with
 # the production tool, then the HTTP client and the TLS stack of the updater.
-disled-flash = { path = "../../crates/disled-flash" }
+disled-flash.workspace = true
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
-semver = "1"
+semver.workspace = true
 # The languages of the system, for the "System" language setting.
 sys-locale = "0.3"
 
 # The tests write the TypeScript types of the front end with ts-rs, set up
 # in .cargo/config.toml. Release builds never compile ts-rs.
 [dev-dependencies]
-disled-flash = { path = "../../crates/disled-flash", features = ["ts"] }
-disled-protocol = { path = "../../crates/disled-protocol", features = ["ts"] }
-ts-rs = "12"
+disled-flash = { workspace = true, features = ["ts"] }
+disled-protocol = { workspace = true, features = ["ts"] }
+ts-rs.workspace = true

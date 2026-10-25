@@ -13,10 +13,20 @@ members = [
 ]
 
 [workspace.package]
+authors = ["The DISLED contributors"]
 edition = "2024"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/Oui-Dev/DISLED"
 publish = false
+
+[workspace.dependencies]
+disled-flash = { path = "crates/disled-flash" }
+disled-protocol = { path = "crates/disled-protocol" }
+hidapi = "2"
+semver = "1"
+serde = "1"
+serde_json = "1"
+ts-rs = "12"
 
 [profile.release]
 codegen-units = 1
