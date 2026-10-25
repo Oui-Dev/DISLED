@@ -1,7 +1,9 @@
 # Board bring-up
 
 Run these steps in order on each new board, since each one relies on the
-ones before.
+ones before. The settings they check live in
+`firmware/src/app/app_config.c`. After changing one, flash the debug
+firmware again.
 
 Equipment:
 
@@ -44,13 +46,12 @@ Equipment:
 
 - [ ] `set color 0` to `3` show green, orange, red and warm white, without
       flicker and with smooth 300 ms fades. Judge the colors through the
-      closed enclosure, because the PLA shifts them. `palette <i> <r> <g>
-      <b>` tunes a color live, in RAM only: copy the result into
-      `app_config.c`.
+      closed enclosure, because the PLA shifts them. The palette is
+      `app_color_config`.
 - [ ] Warm white keeps the same hue at 3, 10, 30 and 100 % (`set level`).
       If the low levels drift, yellow when blue is missing or pink when
-      green is, tune the pulse loss live with `pulse <r> <g> <b>`, in
-      sixteenths of a tick, at 3 % first.
+      green is, raise the pulse loss of the missing channel,
+      `app_led_pulse_loss_ns`, starting at 3 %.
 - [ ] `set level 1` is still visible in a dark room, and `set level 100` is
       bright.
 - [ ] `state` shows sensible duties and the estimated current.
@@ -78,10 +79,9 @@ Equipment:
 | Office lighting | | | | |
 | Daylight near a window | | | | |
 
-Tune the brightness curve until the automatic level looks right in each
-situation. The console command `curve` changes it live, in RAM only, then
-copy the points into `firmware/src/app/app_config.c`. Note the lux the lamp
-reads behind its window, not those of the phone.
+Tune the brightness curve, `app_brightness_curve`, until the automatic
+level looks right in each situation. Its points use the lux the lamp reads
+behind its window, not those of the phone.
 
 ## 6. Touch
 
@@ -110,11 +110,6 @@ Matrix, for each setup with the LED at 0, 50 and 100 % (`set level`):
 | Windows PC, monitor hub (earthed) | 0 / 50 / 100 % | | | |
 | MacBook, monitor hub (earthed) | 0 / 50 / 100 % | | | |
 | MacBook on battery, charger unplugged, direct (no earth) | 0 / 50 / 100 % | | | |
-
-To look for coupling from the LED PWM into the touch, at 100 % LED,
-`touch phase <ticks>` samples at another point of the 3600-tick period and
-`touch dither` at a random phase, as unsynchronized sampling would. Keep
-the phase with the lowest noise.
 
 Then check the thresholds in `app_config.c` against the matrix. The press
 threshold sits about halfway between the hand 1 cm above and the weakest

@@ -24,6 +24,4 @@ void bsp_power_slow_clock(void);
 bool bsp_power_full_clock(void);
 bool bsp_power_full_clock_from_isr(void);
 
-bool bsp_power_clock_is_slow(void);
-
 #endif /* DISLED_BSP_POWER_H */

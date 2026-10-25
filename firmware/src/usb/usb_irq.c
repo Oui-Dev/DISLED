@@ -20,10 +20,8 @@
 void usb_irq_handler(void) BSP_ISR;
 void usb_irq_handler(void)
 {
-    if (bsp_power_clock_is_slow()) {
-        (void)bsp_power_full_clock_from_isr();
-    }
-    EXTI->INTFR = EXTI_Line18; /* USB wake-up line, if it fired */
+    (void)bsp_power_full_clock_from_isr(); /* returns at once when fast */
+    EXTI->INTFR = EXTI_Line18;             /* USB wake-up line, if it fired */
     tud_int_handler(0);
 }
 

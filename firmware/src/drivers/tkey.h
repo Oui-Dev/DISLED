@@ -39,13 +39,4 @@ uint32_t tkey_overruns(void);
 /* Measurements that never completed (hardware fault). */
 uint32_t tkey_timeouts(void);
 
-/* Debug: new sample phase (PWM ticks), or random phase per sample to mimic
- * unsynchronized sampling during the touch noise tests (V4). */
-void tkey_set_phase(uint16_t phase_ticks);
-void tkey_set_dither(bool enabled);
-
-/* Debug: measurement timing, tuned live at bring-up. `adc_sample_time` is
- * an ADC_SampleTime_* value of the SDK. */
-void tkey_set_timing(uint8_t charge_time, uint8_t discharge_time, uint8_t adc_sample_time);
-
 #endif /* DISLED_TKEY_H */

@@ -12,7 +12,6 @@
 /* Backup registers (16 bits each, cleared by a power cycle):
  *   DATAR1     FAULT_MAGIC while a fault is waiting to be reported
  *   DATAR2..7  last fault: mcause, mepc, mtval (kept after the report)
- *   DATAR8     task marker of the DISLED_BOOT_DIAG build
  *   DATAR9     boots since power-up
  *   DATAR10    watchdog resets (high byte), faults (low byte) */
 #define FAULT_MAGIC 0xFA17u

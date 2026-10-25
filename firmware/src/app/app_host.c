@@ -6,7 +6,6 @@
 #include "app_host.h"
 
 #include <stdbool.h>
-#include <string.h>
 
 #include "app_config.h"
 #include "app_context.h"
@@ -167,6 +166,9 @@ _Static_assert(SELF_TEST_LIGHT_OK == PROTO_SELF_TEST_LIGHT_OK &&
                    SELF_TEST_TOUCH_PRESSED == PROTO_SELF_TEST_TOUCH_PRESSED &&
                    SELF_TEST_COMPLETED == PROTO_SELF_TEST_COMPLETED,
                "self-test result bits are part of the protocol");
+_Static_assert(BRIGHTNESS_BIAS_MIN == PROTO_AUTO_BIAS_MIN &&
+                   BRIGHTNESS_BIAS_MAX == PROTO_AUTO_BIAS_MAX,
+               "the bias limits are part of the protocol");
 
 static void send_self_test_result(void)
 {

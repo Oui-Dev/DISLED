@@ -5,8 +5,6 @@
  */
 #include "i2c_bus.h"
 
-#include <stdbool.h>
-
 #include "bsp/board.h"
 #include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
@@ -17,24 +15,14 @@
 
 static uint32_t s_speed_hz;
 
-/* Diagnostics of the last failure: step of the transaction and status
- * registers at that moment (see i2c_bus_last_failure). */
-static uint8_t s_step;
-static i2c_bus_failure_t s_failure;
-
 static uint16_t s_error_count;
 
-static i2c_bus_status_t fail(i2c_bus_status_t status)
+static bool fail(void)
 {
     if (s_error_count < UINT16_MAX) {
         s_error_count++;
     }
-    s_failure.step = s_step;
-    s_failure.status = status;
-    s_failure.star1 = BOARD_I2C->STAR1;
-    s_failure.star2 = BOARD_I2C->STAR2;
-    s_failure.ctlr1 = BOARD_I2C->CTLR1;
-    return status;
+    return false;
 }
 
 /* Clocks SCL by hand: up to nine clocks let a slave finish the byte it is
@@ -107,114 +95,100 @@ void i2c_bus_init(uint32_t speed_hz)
     configure_peripheral();
 }
 
-/* Waits for an event: all the flags of `event` set. */
-static i2c_bus_status_t wait_event(uint32_t event)
+/* Waits until all the flags of `event` are set. A NACK, a lost arbitration
+ * or a bus error ends the wait, as the timeout does. */
+static bool wait_event(uint32_t event)
 {
     const uint32_t start = bsp_time_ms();
     while (I2C_CheckEvent(BOARD_I2C, event) != READY) {
-        if (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_AF) != RESET) {
-            return fail(I2C_BUS_NACK);
-        }
-        if (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_ARLO) != RESET ||
-            I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_BERR) != RESET) {
-            return fail(I2C_BUS_ERROR);
-        }
-        if (time_elapsed_ms(bsp_time_ms(), start) > WAIT_TIMEOUT_MS) {
-            return fail(I2C_BUS_TIMEOUT);
+        if (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_AF) != RESET ||
+            I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_ARLO) != RESET ||
+            I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_BERR) != RESET ||
+            time_elapsed_ms(bsp_time_ms(), start) > WAIT_TIMEOUT_MS) {
+            return fail();
         }
     }
-    return I2C_BUS_OK;
+    return true;
 }
 
-static i2c_bus_status_t wait_flag(uint32_t flag)
+static bool wait_flag(uint32_t flag)
 {
     const uint32_t start = bsp_time_ms();
     while (I2C_GetFlagStatus(BOARD_I2C, flag) == RESET) {
-        if (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_AF) != RESET) {
-            return fail(I2C_BUS_NACK);
-        }
-        if (time_elapsed_ms(bsp_time_ms(), start) > WAIT_TIMEOUT_MS) {
-            return fail(I2C_BUS_TIMEOUT);
+        if (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_AF) != RESET ||
+            time_elapsed_ms(bsp_time_ms(), start) > WAIT_TIMEOUT_MS) {
+            return fail();
         }
     }
-    return I2C_BUS_OK;
+    return true;
 }
 
-static i2c_bus_status_t wait_bus_free(void)
+static bool wait_bus_free(void)
 {
     const uint32_t start = bsp_time_ms();
     while (I2C_GetFlagStatus(BOARD_I2C, I2C_FLAG_BUSY) != RESET) {
         if (time_elapsed_ms(bsp_time_ms(), start) > WAIT_TIMEOUT_MS) {
-            return fail(I2C_BUS_TIMEOUT);
+            return fail();
         }
     }
-    return I2C_BUS_OK;
+    return true;
 }
 
 /* Ends a failed transaction and leaves the peripheral ready: if the bus
  * stays busy after the STOP, it is released and the peripheral reset. */
-static i2c_bus_status_t abort_transfer(i2c_bus_status_t status)
+static void abort_transfer(void)
 {
     I2C_GenerateSTOP(BOARD_I2C, ENABLE);
     I2C_ClearFlag(BOARD_I2C, I2C_FLAG_AF | I2C_FLAG_ARLO | I2C_FLAG_BERR);
     I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
     I2C_NACKPositionConfig(BOARD_I2C, I2C_NACKPosition_Current);
-    const i2c_bus_failure_t original = s_failure; /* keep the first cause */
-    if (wait_bus_free() != I2C_BUS_OK) {
+    if (!wait_bus_free()) {
         i2c_bus_recover();
     }
-    s_failure = original;
-    return status;
 }
 
-static i2c_bus_status_t start_write(uint8_t address)
+static bool start_write(uint8_t address)
 {
-    s_step = 1;
-    i2c_bus_status_t status = wait_bus_free();
-    if (status != I2C_BUS_OK) {
-        return status;
+    if (!wait_bus_free()) {
+        return false;
     }
-    s_step = 2;
     I2C_GenerateSTART(BOARD_I2C, ENABLE);
-    status = wait_event(I2C_EVENT_MASTER_MODE_SELECT);
-    if (status != I2C_BUS_OK) {
-        return status;
+    if (!wait_event(I2C_EVENT_MASTER_MODE_SELECT)) {
+        return false;
     }
-    s_step = 3;
     I2C_Send7bitAddress(BOARD_I2C, (uint8_t)(address << 1), I2C_Direction_Transmitter);
     return wait_event(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED);
 }
 
-i2c_bus_status_t i2c_bus_write(uint8_t address, const uint8_t *data, size_t length)
+bool i2c_bus_write(uint8_t address, const uint8_t *data, size_t length)
 {
-    i2c_bus_status_t status = start_write(address);
-    for (size_t i = 0; status == I2C_BUS_OK && i < length; i++) {
-        s_step = 4;
+    bool ok = start_write(address);
+    for (size_t i = 0; ok && i < length; i++) {
         I2C_SendData(BOARD_I2C, data[i]);
-        status = wait_event(I2C_EVENT_MASTER_BYTE_TRANSMITTED);
+        ok = wait_event(I2C_EVENT_MASTER_BYTE_TRANSMITTED);
     }
-    if (status != I2C_BUS_OK) {
-        return abort_transfer(status);
+    if (ok) {
+        I2C_GenerateSTOP(BOARD_I2C, ENABLE);
+    } else {
+        abort_transfer();
     }
-    I2C_GenerateSTOP(BOARD_I2C, ENABLE);
-    return I2C_BUS_OK;
+    return ok;
 }
 
-i2c_bus_status_t i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
+bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
 {
-    i2c_bus_status_t status = start_write(address);
-    if (status == I2C_BUS_OK) {
-        s_step = 4;
+    bool ok = start_write(address);
+    if (ok) {
         I2C_SendData(BOARD_I2C, reg);
-        status = wait_event(I2C_EVENT_MASTER_BYTE_TRANSMITTED);
+        ok = wait_event(I2C_EVENT_MASTER_BYTE_TRANSMITTED);
     }
-    if (status == I2C_BUS_OK) {
-        s_step = 5;
+    if (ok) {
         I2C_GenerateSTART(BOARD_I2C, ENABLE); /* repeated start */
-        status = wait_event(I2C_EVENT_MASTER_MODE_SELECT);
+        ok = wait_event(I2C_EVENT_MASTER_MODE_SELECT);
     }
-    if (status != I2C_BUS_OK) {
-        return abort_transfer(status);
+    if (!ok) {
+        abort_transfer();
+        return false;
     }
 
     /* Byte-by-byte reception, as in the WCH I2C examples: the first byte is
@@ -222,25 +196,23 @@ i2c_bus_status_t i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
      * second byte gets the NACK that ends the transfer. The STM32 two-byte
      * method, with POS and BTF, never completes on the CH32V203. */
     I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
-    s_step = 6;
     I2C_Send7bitAddress(BOARD_I2C, (uint8_t)(address << 1), I2C_Direction_Receiver);
-    status = wait_event(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED);
-    for (size_t i = 0; status == I2C_BUS_OK && i < 2u; i++) {
+    ok = wait_event(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED);
+    for (size_t i = 0; ok && i < 2u; i++) {
         if (i == 1u) {
             I2C_AcknowledgeConfig(BOARD_I2C, DISABLE);
             I2C_GenerateSTOP(BOARD_I2C, ENABLE);
         }
-        s_step = (uint8_t)(7u + i);
-        status = wait_flag(I2C_FLAG_RXNE);
-        if (status == I2C_BUS_OK) {
+        ok = wait_flag(I2C_FLAG_RXNE);
+        if (ok) {
             out[i] = I2C_ReceiveData(BOARD_I2C);
         }
     }
     I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
-    if (status != I2C_BUS_OK) {
-        return abort_transfer(status);
+    if (!ok) {
+        abort_transfer();
     }
-    return I2C_BUS_OK;
+    return ok;
 }
 
 void i2c_bus_recover(void)
@@ -248,11 +220,6 @@ void i2c_bus_recover(void)
     I2C_Cmd(BOARD_I2C, DISABLE);
     release_bus();
     configure_peripheral();
-}
-
-i2c_bus_failure_t i2c_bus_last_failure(void)
-{
-    return s_failure;
 }
 
 uint16_t i2c_bus_error_count(void)

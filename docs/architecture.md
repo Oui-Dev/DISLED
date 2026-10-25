@@ -116,11 +116,8 @@ on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 30.3 KB | 5.1 KB |
-| release (HID) | 20.8 KB | 4.3 KB |
-
-The debug build is above the 90 % warning, so a new debug-only feature has
-to make room first.
+| debug (HID + CDC console) | 27.4 KB | 4.9 KB |
+| release (HID) | 20.2 KB | 4.1 KB |
 
 ### Configuration
 

@@ -63,13 +63,13 @@ static uint16_t configuration(uint8_t gain_eighths, uint16_t integration_ms)
 static bool write_register(uint8_t reg, uint16_t value)
 {
     const uint8_t frame[3] = { reg, (uint8_t)(value & 0xFFu), (uint8_t)(value >> 8) };
-    return i2c_bus_write(BOARD_VEML7700_ADDR, frame, sizeof frame) == I2C_BUS_OK;
+    return i2c_bus_write(BOARD_VEML7700_ADDR, frame, sizeof frame);
 }
 
 static bool read_register(uint8_t reg, uint16_t *value)
 {
     uint8_t bytes[2];
-    if (i2c_bus_read_word(BOARD_VEML7700_ADDR, reg, bytes) != I2C_BUS_OK) {
+    if (!i2c_bus_read_word(BOARD_VEML7700_ADDR, reg, bytes)) {
         return false;
     }
     *value = (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));

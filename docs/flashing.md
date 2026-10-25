@@ -86,8 +86,8 @@ Type `help` for the list of commands:
 | `watch <ms>\|off` | stream touch, light (lux, sensor range, count, level) and current (`watch 20`: every touch window) |
 | `diag`, `tasks` | diagnostics counters; longest run of each task |
 | `selftest` | production self-test (colors, light sensor, touch) |
-| `touch`, `palette`, `pulse`, `curve`, `cap`, `i2c` | tuning and bring-up tools |
-| `log <0-3>`, `reset` | log level; restart |
+| `cap <mA>\|off` | override the LED current cap, for the heat test of [bringup.md](bringup.md#8-heat) only |
+| `log <0-2>`, `reset` | log level; restart |
 
 ## Without PlatformIO
 

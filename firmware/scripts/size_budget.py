@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 # Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
-"""Check flash and RAM usage of the firmware against a budget.
+"""Check flash and RAM usage of the firmware against the memory sizes of
+the PlatformIO board.
 
-Runs after linking. It prints a one-line summary, warns above
-``custom_budget_warn_percent`` and fails the build above 100 %.
-RAM usage includes the reserved stack, as placed by the linker script.
+Runs after linking. It prints a one-line summary, warns from 90 % and fails
+the build above 100 %. RAM usage includes the reserved stack, as placed by
+the linker script.
 """
 
 import subprocess
@@ -17,6 +18,7 @@ FLASH_SECTIONS = (".init", ".vector", ".text", ".fini", ".preinit_array",
                   ".init_array", ".fini_array", ".ctors", ".dtors", ".data",
                   ".highcode_init", ".highcode")
 RAM_SECTIONS = (".data", ".bss", ".stack", ".highcode_init", ".highcode")
+WARN_PERCENT = 90
 
 
 def section_sizes(size_tool, elf_path):
@@ -35,10 +37,9 @@ def check_budget(target, source, env):  # SCons passes keyword arguments
     sizes = section_sizes(env.subst("$SIZETOOL"), elf_path)
     flash_used = sum(sizes.get(name, 0) for name in FLASH_SECTIONS)
     ram_used = sum(sizes.get(name, 0) for name in RAM_SECTIONS)
-
-    flash_budget = int(env.GetProjectOption("custom_flash_budget", "32768"))
-    ram_budget = int(env.GetProjectOption("custom_ram_budget", "10240"))
-    warn_percent = int(env.GetProjectOption("custom_budget_warn_percent", "90"))
+    board = env.BoardConfig()
+    flash_budget = int(board.get("upload.maximum_size"))
+    ram_budget = int(board.get("upload.maximum_ram_size"))
 
     failed = False
     for label, used, budget in (("Flash", flash_used, flash_budget),
@@ -48,7 +49,7 @@ def check_budget(target, source, env):  # SCons passes keyword arguments
         if percent > 100.0:
             status = "OVER BUDGET"
             failed = True
-        elif percent >= warn_percent:
+        elif percent >= WARN_PERCENT:
             status = "warning"
         print("Budget %-5s %6d / %6d bytes (%5.1f %%) %s" % (label, used, budget, percent, status))
 

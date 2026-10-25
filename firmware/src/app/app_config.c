@@ -45,7 +45,7 @@ const touch_config_t app_touch_config = {
  * the room: a dim room reads under 0.01 lx there. The floor of 1.5 % is the
  * level chosen for the night. */
 /* clang-format off */
-const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS] = {
+static const brightness_point_t app_brightness_curve[] = {
     { MLUX(100),   15 },
     { MLUX(500),   95 },
     {    LUX(2),  285 },
@@ -59,7 +59,7 @@ const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS] = {
  * confirm the change, then a time constant of 0.25 s. */
 const brightness_config_t app_brightness_config = {
     .curve = app_brightness_curve,
-    .curve_points = APP_BRIGHTNESS_CURVE_POINTS,
+    .curve_points = sizeof app_brightness_curve / sizeof app_brightness_curve[0],
     .tick_ms = 100,    /* the shortest integration of the sensor */
     .slow_divisor = 8, /* small changes: time constant about 0.75 s */
     .fast_divisor = 3, /* large ones: about 0.25 s */
@@ -84,10 +84,10 @@ const color_config_t app_color_config = {
 };
 /* clang-format on */
 
-/* Light lost per pulse by the driver edges, tuned by eye on warm white, in
- * ticks of 14 ns at 72 MHz. Without it, the 1-tick blue of warm white at
- * 10 % gives no light and the color turns yellow. With the dithering, a blue
- * of 4 3/16 ticks suits both 3 and 10 %. */
+/* Light lost per pulse by the driver edges, in ns, tuned by eye on warm
+ * white. A tick lasts 14 ns at 72 MHz. Without it, the 1-tick blue of warm
+ * white at 10 % gives no light and the color turns yellow. With the
+ * dithering, a blue of 4 3/16 ticks suits both 3 and 10 %. */
 const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT] = { 28, 42, 58 };
 
 /* Worst-case LED currents at 100 % duty, at 5.25 V and the lowest forward

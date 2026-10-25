@@ -37,12 +37,10 @@ uint16_t led_pwm_period(void);
  * period. */
 void led_pwm_set(const uint16_t duty[LED_CHANNEL_COUNT]);
 
-/* Sample point: `callback` runs in interrupt context once per arming, when
- * the counter reaches `phase_ticks` (0 .. period - 1). */
+/* Sample point: `callback` runs in interrupt context once per arming, in
+ * the middle of the PWM period. */
 typedef void (*led_pwm_sample_callback_t)(void);
 void led_pwm_set_sample_callback(led_pwm_sample_callback_t callback);
-void led_pwm_set_sample_phase(uint16_t phase_ticks);
-uint16_t led_pwm_sample_phase(void);
 void led_pwm_arm_sample(void);
 
 #endif /* DISLED_LED_PWM_H */
