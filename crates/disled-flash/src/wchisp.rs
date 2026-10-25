@@ -24,7 +24,7 @@ pub const PROGRAM: &str = if cfg!(windows) {
 };
 
 /// What `wchisp probe` found on USB.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Probe {
     /// No WCH bootloader.
     Nothing,
@@ -51,7 +51,7 @@ pub enum Stage {
 }
 
 /// A wchisp program.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Wchisp {
     program: PathBuf,
 }
