@@ -58,7 +58,8 @@ jobs:
       - name: Build debug and release
         run: uv run pio run -e debug -e release
 
-      # The platform picks the compiler per OS; it cannot be pinned (ADR 0008).
+      # The platform picks the compiler per OS and platformio.ini cannot pin
+      # it, so the log shows which one built.
       - name: Toolchain version
         run: ~/.platformio/packages/toolchain-riscv/bin/riscv-wch-elf-gcc --version | head -n 1
 

@@ -1,7 +1,7 @@
 # Contributing to DISLED
 
 DISLED is a firmware, a desktop app, a few shared Rust crates and the
-hardware design files, in one repository ([ADR 0001](docs/decisions/0001-monorepo.md)).
+hardware design files, in one repository.
 This page explains how to propose a change and what the checks expect.
 For a bug or an idea, open an [issue](https://github.com/Oui-Dev/DISLED/issues)
 first, unless the fix is small; the [user guide](docs/user-guide.md#get-help)
@@ -27,8 +27,7 @@ part you work on:
 
 The design is described in [docs/architecture.md](docs/architecture.md),
 the lamp behavior in [docs/behavior.md](docs/behavior.md) (the reference
-specification), the USB protocol in [protocol/README.md](protocol/README.md),
-and the decisions behind them in the [decision records](docs/decisions/).
+specification) and the USB protocol in [protocol/README.md](protocol/README.md).
 
 ## Branches and pull requests
 
@@ -62,7 +61,7 @@ on Apple Silicon`. The body says why, wrapped at 72 characters.
   tool), `hardware`, `deps`.
 - `feat!` or a `BREAKING CHANGE:` footer marks a breaking change. The USB
   protocol has its own rules: version 1 is frozen at 1.1 and only grows
-  in compatible ways ([ADR 0012](docs/decisions/0012-protocol-v1-frozen.md)).
+  in compatible ways ([protocol/README.md](protocol/README.md#compatibility)).
 
 ## Checks
 
@@ -97,10 +96,7 @@ them).
 
 Some changes can only be checked on a board: the lamp behavior
 ([test scenarios](docs/behavior.md#test-scenarios)), the touch, the light
-sensor, USB sleep. [docs/bringup.md](docs/bringup.md) lists the checks;
-the results go in [docs/measurements/](docs/measurements/), one file per
-board, and every tuned value of `firmware/src/app/app_config.c` cites the
-measurement it comes from.
+sensor, USB sleep. [docs/bringup.md](docs/bringup.md) lists the checks.
 
 ## Code and files
 
@@ -120,14 +116,6 @@ measurement it comes from.
   (`protocol/vectors`) and both codecs, the firmware's and
   `crates/disled-protocol`, in the same pull request.
 
-## Decisions
-
-A decision that shapes the design (a dependency, a protocol rule, a
-release process) gets a record in [docs/decisions/](docs/decisions/): the
-next number, its context, the options considered, the decision and its
-consequences, and a line in the index. Records are not rewritten: a new
-record supersedes or amends an older one.
-
 ## Dependencies
 
 Dependabot opens update pull requests every week
@@ -140,8 +128,10 @@ pinned on purpose:
   Close Dependabot's pull requests for 2.12 and later until that issue is
   fixed.
 - wchisp, the flasher bundled with the app, is built by the release
-  workflow at the version of `WCHISP_VERSION`
-  ([ADR 0016](docs/decisions/0016-lamp-updates.md)).
+  workflow at the version of `WCHISP_VERSION`. wchisp has no machine
+  interface: the app and the production tool read its log lines
+  (`crates/disled-flash/src/wchisp.rs`), so check them against a new
+  version before changing it.
 
 ## Releases
 

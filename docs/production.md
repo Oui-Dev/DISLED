@@ -20,8 +20,7 @@ A board takes about 30 seconds.
   the [releases page](https://github.com/Oui-Dev/DISLED/releases)),
   download the release build `disled-fw-X.Y.Z.hex` and its signature
   `disled-fw-X.Y.Z.hex.sig` into the same folder. The tool flashes only a
-  release build signed with the update key
-  ([ADR 0016](decisions/0016-lamp-updates.md)): the first signed release
+  release build signed with the update key: the first signed release
   is the one after 0.2.1.
 - **USB IDs**: lamps that leave your hands must use the pid.codes PIDs of
   DISLED, not the test PIDs of phase 1

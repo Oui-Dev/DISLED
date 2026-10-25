@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Lamp firmware updates (ADR 0016): the backend looks for a new firmware
+// Lamp firmware updates: the backend looks for a new firmware
 // with the app updates and runs the update; the popup offers it, the lamp
 // update window guides it.
 

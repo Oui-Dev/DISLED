@@ -5,8 +5,8 @@
  *
  * Power saving for USB suspend: a slow clock (internal 8 MHz oscillator
  * divided by 8, crystal and PLL off). The core never sleeps (WFI): in the
- * main loop it never woke up again on this board (ADR 0011). The loop keeps
- * running, slowly, and keeps feeding the watchdog.
+ * main loop it never wakes up from it. The loop keeps running, slowly, and
+ * keeps feeding the watchdog.
  */
 #ifndef DISLED_BSP_POWER_H
 #define DISLED_BSP_POWER_H

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Releases (docs/releasing.md, ADR 0015). On every push to main,
+# Releases (docs/releasing.md). On every push to main,
 # release-please keeps the release pull request up to date. Merging it
 # tags fw-vX.Y.Z and/or app-vX.Y.Z and creates draft releases, visible to
 # the maintainers only. The jobs below build those tags, attach the
@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # The flasher shipped with the app for the lamp updates (ADR 0016). The
+  # The flasher shipped with the app for the lamp updates. The
   # app reads its messages (crates/disled-flash/src/wchisp.rs), and its
   # notice names the version (app/src-tauri/third-party/wchisp): check
   # both before changing it.
@@ -86,7 +86,7 @@ jobs:
         working-directory: firmware
         env:
           # The app installs only firmware signed with the update key, the
-          # version included (ADR 0016).
+          # version included.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
@@ -154,8 +154,7 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       # The lamp updates flash with wchisp, a GPL-2.0 program shipped next
-      # to the app, never linked (ADR 0016). Tauri wants it named after the
-      # target.
+      # to the app, never linked. Tauri wants it named after the target.
       - name: wchisp
         env:
           # Like the app: no dependency on the Visual C++ runtime DLLs.

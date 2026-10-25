@@ -22,7 +22,7 @@ desktop app gives full control ([user guide](docs/user-guide.md)).
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
 | [`hardware/`](hardware/) | PCB (EasyEDA Pro, STEP) and enclosure (3MF) design files |
-| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
+| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up, production and releases |
 
 ## Hardware at a glance
 
@@ -40,7 +40,7 @@ desktop app gives full control ([user guide](docs/user-guide.md)).
 | Contribute a change | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
 | Run the desktop app from source | [app/README.md](app/README.md) |
-| Understand the design | [docs/architecture.md](docs/architecture.md), [decision records](docs/decisions/) |
+| Understand the design | [docs/architecture.md](docs/architecture.md) |
 | Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
 | Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |
 | Bring up a new board | [docs/bringup.md](docs/bringup.md) |

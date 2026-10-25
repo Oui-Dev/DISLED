@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 // Writes the update manifest (latest.json) of an app release from the
-// signatures of its installers (docs/releasing.md, ADR 0014):
+// signatures of its installers (docs/releasing.md):
 //
 //   node scripts/updater-manifest.mjs <version> <download URL> <signature dir> [notes file]
 //

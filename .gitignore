@@ -11,7 +11,7 @@ desktop.ini
 __pycache__/
 
 # Hardware: large generated 3D exports (regenerate them from EasyEDA),
-# except the model of the board, a file of its releases (ADR 0019)
+# except the model of the board, a file of its releases
 *.step
 *.stp
 !/hardware/pcb/*.step

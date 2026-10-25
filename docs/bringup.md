@@ -1,15 +1,7 @@
 # Board bring-up and tuning campaigns
 
 Run these steps on each new board, in order: each one relies on the ones
-before. The first board's results and the lessons drawn from them are in
-[measurements](measurements/F1B9ABCD5A9BBD15E339E339.md) and
-[ADR 0009](decisions/0009-bring-up-corrections.md); those of the final
-board, which set the touch thresholds, in
-[measurements](measurements/F1B5ABCD5A97BD15E339E339.md). Write the
-results in `docs/measurements/` (one file per board, named after its
-serial number). The measurements of the tuning campaigns
-(V1, V2, V4, named after the design review) set the values marked "tune" in
-`firmware/src/app/app_config.c` for phase 2.
+before.
 
 Equipment: multimeter (current in series through a USB breakout or an
 opened cable, temperature probe if available), a Windows PC and a MacBook,
@@ -81,8 +73,7 @@ with a light-meter app, a flashlight.
 Tune the brightness curve until the automatic level looks right in each
 situation: the console command `curve` changes it live (RAM only), then
 copy the points into `firmware/src/app/app_config.c`. The lux to note are
-those of the lamp, as the sensor reads them behind its window
-([ADR 0017](decisions/0017-automatic-brightness.md)).
+those of the lamp, as the sensor reads them behind its window.
 
 ## 6. Touch (V4)
 
@@ -123,7 +114,7 @@ threshold about halfway between the hand 1 cm above and the weakest
 finger drop, the rise above the floor below the weakest tap on top of a
 resting hand, and the release threshold above the idle noise. Recorded
 taps can be replayed through `touch_detector` on the build machine before
-flashing (see the first board's measurements).
+flashing ([touch_replay](../firmware/tools/touch_replay/README.md)).
 
 ## 7. USB power states
 

@@ -13,21 +13,6 @@ and `enclosure-vX.Y.Z` ([docs/releasing.md](../docs/releasing.md#hardware-releas
 Each folder holds the current version only: a new version replaces the
 files under the same names. The older versions are in their releases.
 
-## Versions
-
-The decision records and the measurements use the names the designs had
-when they were made:
-
-| Design | Version | |
-|---|---|---|
-| PCB v1, v2, v3 | pcb 0.1.0, 0.2.0, 0.3.0 | Never manufactured: pre-releases |
-| PCB v4, silkscreen "DISLED – Rev 1.0" | pcb 1.0.0 | The board in production |
-| Enclosure V1 | enclosure 0.1.0 | The first prototype |
-| Enclosure V2 | enclosure 1.0.0 | |
-
-A new board revision carries its version on the silkscreen: "Rev 1.1" for
-pcb 1.1.0.
-
 ## PCB
 
 Board `connected_status_light`, pcb 1.0.0: 35 × 35 mm, 2 layers,

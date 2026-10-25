@@ -7,10 +7,7 @@ so that detector settings can be compared before they are flashed.
 
 On the debug console, `log 2` (to keep the touch events for comparison)
 then `watch 20`: one line per 20 ms window, as the detector sees it. Save
-the console output to a file. Recordings of the first board are in
-`docs/measurements/F1B9ABCD5A9BBD15E339E339/`, those of the final board,
-which set the current thresholds, in
-`docs/measurements/F1B5ABCD5A97BD15E339E339/`.
+the console output to a file.
 
 The replay feeds each window value to the detector 20 times, as 1 kHz
 samples. The console may skip a window now and then; the timing is close

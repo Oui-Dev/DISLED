@@ -128,7 +128,7 @@ static void send_info(uint8_t seq)
         .fw_patch = DISLED_FW_VERSION_PATCH,
         .board_revision = BOARD_REVISION,
         /* No ENTER_BOOTLOADER: the CH32V203 cannot start its ROM
-         * bootloader from software (ADR 0010). */
+         * bootloader from software. */
         .capabilities = PROTO_CAP_TELEMETRY | PROTO_CAP_AUTO_BIAS | PROTO_CAP_DIAGNOSTICS |
                         PROTO_CAP_SELF_TEST | (DISLED_DEBUG ? PROTO_CAP_DEBUG_CONSOLE : 0u),
         .reset_cause = app.reset_cause,

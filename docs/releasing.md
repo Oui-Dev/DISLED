@@ -46,7 +46,7 @@ released by hand ([Hardware releases](#hardware-releases)).
 
    Published releases are immutable (repository setting, Settings,
    General, Releases): their files and tag can no longer change, only their
-   title and notes ([ADR 0015](decisions/0015-releases-published-complete.md)).
+   title and notes.
 
 From 1.0.0 (the app), a breaking change raises the major version, `feat`
 the minor version and the other releasing types the patch version. Below
@@ -74,8 +74,7 @@ The release stays a draft, with its tag: nothing is published.
 
 The PCB and the enclosure have their own versions, tags and changelogs,
 written by hand: a hardware version is a decision (a board order, a
-print), not a sum of commits
-([ADR 0019](decisions/0019-hardware-releases.md)).
+print), not a sum of commits.
 
 | Design | Path | Tag | Changelog |
 |---|---|---|---|
@@ -86,7 +85,8 @@ print), not a sum of commits
    the version at the top of the changelog: `## X.Y.Z (YYYY-MM-DD)`, the
    date of the design, then the changes. Links in a section must be
    absolute: the section becomes the notes of the release. A new board
-   revision carries its version on the silkscreen.
+   revision carries its version on the silkscreen: "Rev 1.1" for
+   pcb 1.1.0.
 2. Run the **hardware release** workflow on `main` (Actions, hardware
    release, Run workflow) with the design and the version. Tick
    pre-release for a design that will not be manufactured.
@@ -114,14 +114,17 @@ are published without the flag; the app finds the newest firmware by its
 
 ## App updates
 
-The installed apps update themselves from the latest GitHub release
-([ADR 0014](decisions/0014-app-updates.md)):
+The installed apps update themselves from the latest GitHub release:
 
 - the `app` job signs the installers with the update key (the secrets
   below) and attaches a `.sig` next to each one;
 - once the three installers are attached, the `app-publish` job writes
   `latest.json` from these signatures (`app/scripts/updater-manifest.mjs`),
-  attaches it, and publishes the release as the latest.
+  attaches it, and publishes the release as the latest;
+- the app installs an update only if its signature names the version that
+  `latest.json` announces (`requireSignedVersion` in `tauri.conf.json`), so
+  a forged manifest cannot pair a newer version number with an older signed
+  installer.
 
 Local builds (`npm run tauri build`) need no key: only the release
 workflow adds `src-tauri/tauri.updater.conf.json`, which asks for the
@@ -152,7 +155,7 @@ update files.
 ## Lamp updates
 
 The app updates the lamp firmware from the newest published `fw-v*`
-release ([ADR 0016](decisions/0016-lamp-updates.md)):
+release:
 
 - the `firmware` job signs the release build with the same update key,
   the version included in the signature (`tauri signer sign
@@ -174,7 +177,7 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 - The installers carry no publisher certificate (the update signatures
   above only serve the updater): Windows SmartScreen and macOS Gatekeeper
   warn on first launch ([user guide](user-guide.md#install-the-app)). Code
-  signing is a later choice ([ADR 0006](decisions/0006-desktop-app.md)).
+  signing is a later choice.
 - The macOS app is still signed ad hoc (`signingIdentity` `-` in
   `tauri.conf.json`): Apple Silicon calls a downloaded app without any
   signature "damaged" and offers only to bin it

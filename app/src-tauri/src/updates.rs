@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! App updates (ADR 0014): each app release publishes a signed
+//! App updates: each app release publishes a signed
 //! `latest.json` on GitHub. The app checks it at start-up and then once a
 //! day, along with the lamp firmware; the popup offers the update,
 //! installed only when the user asks.

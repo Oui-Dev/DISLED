@@ -66,18 +66,15 @@ variable.
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are
   not saved: the lamp always starts green, "available".
-- **Color mode and language** ([ADR
-  0018](../docs/decisions/0018-nuxt-ui-themes-languages.md)): System, Light
-  or Dark; System, English or French. They apply to every window, the
+- **Color mode and language**: System, Light or Dark; System, English or
+  French. They apply to every window, the
   window frames, the tray menu and its tooltip.
 - **Start at login**, turned on at the first launch (installed app only);
   one running instance (a second launch shows the popup).
-- **Updates** ([ADR 0014](../docs/decisions/0014-app-updates.md)): the
-  installed app looks for a new version at start-up and once a day (a
+- **Updates**: the installed app looks for a new version at start-up and once a day (a
   setting turns it off); the popup offers it and installs it on request,
   then restarts. Updates are signed; `tauri dev` never checks by itself.
-- **Lamp updates** ([ADR 0016](../docs/decisions/0016-lamp-updates.md)):
-  with the app updates, the app looks for the newest firmware release and
+- **Lamp updates**: with the app updates, the app looks for the newest firmware release and
   the popup offers it when the lamp runs an older one. A window guides the
   update (BOOT and RESET on the board, the WinUSB driver once on Windows),
   while the backend downloads the firmware, checks its signature (the

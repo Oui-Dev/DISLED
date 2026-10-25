@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Lamp firmware updates (ADR 0010, 0016). With the app updates, the app
+//! Lamp firmware updates. With the app updates, the app
 //! looks for the newest firmware release on GitHub. On request it downloads
 //! the release build, checks the update key's signature, waits for the
 //! lamp's ROM bootloader (BOOT + RESET), flashes it with wchisp and checks
@@ -374,8 +374,8 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
     let file = tauri::async_runtime::block_on(download(app, release))?;
 
     // Into the ROM bootloader. A lamp that announces ENTER_BOOTLOADER
-    // restarts in it by itself; for the others (every board so far, ADR
-    // 0010) the user presses the buttons.
+    // restarts in it by itself; for the others the user presses the
+    // buttons (the CH32V203 cannot start it from software).
     let device = app.state::<DeviceHandle>();
     let by_command = device.info().is_some_and(|info| info.enter_bootloader)
         && device.send(Command::EnterBootloader).is_ok();

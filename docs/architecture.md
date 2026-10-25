@@ -11,8 +11,7 @@ DISLED has three parts that share one protocol:
                       protocol/README.md + protocol/vectors/v1.json
 ```
 
-The lamp owns its state ([ADR 0007](decisions/0007-device-behavior.md)):
-the touch changes it locally, the host reads and changes it, and every
+The lamp owns its state: the touch changes it locally, the host reads and changes it, and every
 change is notified. The behavior itself is specified in
 [behavior.md](behavior.md).
 
@@ -48,7 +47,7 @@ main loop ── touch task ─> touch_detector ─> short/long press ─> lamp_
           ── usb task ─> TinyUSB, link state (unconfigured/configured/suspended)
           ── host task ─> commands, STATE notifications, telemetry
           ── console task (debug) ─> text commands, watch
-          └─ watchdog feed, then the next round at once (no WFI, ADR 0011)
+          └─ watchdog feed, then the next round at once (no WFI: it hangs on this chip)
 
 TIM3 update interrupt (20 kHz, every PWM period) ─> dithers the duties
                                      into whole ticks for the next period
@@ -68,7 +67,7 @@ Bare metal, one cooperative loop driven by a table-based scheduler
 | HardFault, NMI | saves `mcause`, `mepc`, `mtval` in backup registers, resets |
 
 All interrupts share one priority, so the QingKe hardware stack never
-nests ([ADR 0008](decisions/0008-toolchain-baseline.md)).
+nests.
 
 ### Safety rules
 
@@ -97,8 +96,7 @@ nests ([ADR 0008](decisions/0008-toolchain-baseline.md)).
 
 ### Power
 
-The core never sleeps: WFI in the main loop hangs on this chip
-([ADR 0011](decisions/0011-low-power.md)). While the host sleeps (USB
+The core never sleeps: WFI in the main loop hangs on this chip. While the host sleeps (USB
 suspend), the firmware stops the LED timer, the touch and the light
 sensor, and runs the core at 1 MHz from the internal oscillator, crystal
 and PLL off. The USB wake-up interrupt restores the full clock before
@@ -122,7 +120,7 @@ should replace bring-up console commands rather than add to them.
 Every tunable lives in `src/app/app_config.c`, with the reason for its
 value. Values marked "tune" are first guesses that the bring-up campaigns
 replace ([bringup.md](bringup.md)); the others were measured or tuned on
-the first board ([ADR 0009](decisions/0009-bring-up-corrections.md)).
+the first board.
 
 ### LED output
 
@@ -166,7 +164,7 @@ object time), so it cannot drift under the hand and blunt the next touch.
   lives in its own crate, `crates/disled-protocol`, shared with the
   production tool and tested against the shared vectors. The Rust code is
   one Cargo workspace at the repository root.
-- **Tray and windows** ([ADR 0013](decisions/0013-tray-app.md)). The app
+- **Tray and windows**. The app
   lives in the menu bar or notification area; its icon is drawn at run
   time from the lamp state. Three windows share one page, chosen by the
   window label: the popup (daily use), the Diagnostics window (tuning)
@@ -176,13 +174,13 @@ object time), so it cannot drift under the hand and blunt the next touch.
   (mode, fixed level, correction) as soon as the lamp answers `INFO`, so
   they hold across lamp restarts. The backend applies the color mode to
   the window frames and the language to the tray and the window titles
-  (`i18n.rs`, [ADR 0018](decisions/0018-nuxt-ui-themes-languages.md)),
+  (`i18n.rs`),
   and tells the windows the language in force (`locale-changed`).
-- **Updates** ([ADR 0014](decisions/0014-app-updates.md)). A thread checks
+- **Updates**. A thread checks
   the `latest.json` of the latest GitHub release at start-up and once a
   day (`updates.rs`, updater plugin); the popup shows the result
   (`update-status`) and asks the backend to install it.
-- **Lamp updates** ([ADR 0016](decisions/0016-lamp-updates.md)). The same
+- **Lamp updates**. The same
   thread looks for the newest signed `fw-v*` release (`firmware.rs`). An
   update runs on its own thread: download, signature check against the
   update key, then `wchisp probe` every second until the ROM bootloader
@@ -190,8 +188,7 @@ object time), so it cannot drift under the hand and blunt the next touch.
   is a separate program next to the app, driven through its log lines
   (`crates/disled-flash`, shared with the production tool); the lamp
   update window follows `firmware-status`.
-- **Vue front end** (`app/src`, Nuxt UI, [ADR
-  0018](decisions/0018-nuxt-ui-themes-languages.md)). Each window runs its
+- **Vue front end** (`app/src`, Nuxt UI). Each window runs its
   own Pinia stores (lamp, settings, telemetry, diagnostics, updates,
   firmware, errors),
   fed by the backend events through a typed layer (`ipc/`); the

@@ -3,8 +3,9 @@
 
 //! The firmware files of the releases. Each firmware release carries its
 //! release build, `disled-fw-X.Y.Z.hex`, signed with the update key of the
-//! app (ADR 0016): the release workflow puts the file name and the version
-//! in the signed comment.
+//! app, because the computer trusts the lamp as a USB device: a replaced
+//! firmware could present it as a keyboard. The release workflow puts the
+//! file name and the version in the signed comment.
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;

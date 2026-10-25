@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# Hardware releases (docs/releasing.md, ADR 0019), run by hand on main: the
-# PCB or the enclosure, which release-please leaves alone. The release tags
-# the commit that runs, gets the files of hardware/<design>/ but its
-# changelog and, as notes, the section of that changelog for the version.
-# Like the other releases it is drafted, then published complete (ADR
-# 0015), and never as the "latest" one: that one is the app's, where the
-# updater looks.
+# Hardware releases (docs/releasing.md), run by hand on main: the PCB or
+# the enclosure, which release-please leaves alone. The release tags the
+# commit that runs, gets the files of hardware/<design>/ but its changelog
+# and, as notes, the section of that changelog for the version. Like the
+# other releases it is drafted, then published complete, and never as the
+# "latest" one: that one is the app's, where the updater looks.
 name: hardware release
 
 on:

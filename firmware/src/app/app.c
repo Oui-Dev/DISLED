@@ -453,7 +453,7 @@ void app_run(void)
         (void)scheduler_run_timed(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
-        /* No WFI: in this loop the core never woke up again (ADR 0011). */
+        /* No WFI: in this loop the core never wakes up from it. */
     }
 }
 
