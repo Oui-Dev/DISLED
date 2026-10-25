@@ -67,12 +67,12 @@ impl DeviceHandle {
         }
     }
 
-    /// What the connected lamp said about itself (INFO), once it answered.
+    /// The INFO message of the connected lamp, once it answered.
     pub fn info(&self) -> Option<Info> {
         self.info.lock().ok().and_then(|info| info.clone())
     }
 
-    /// The connected lamp understands SET_AUTO_BIAS (protocol 1.1).
+    /// Tells whether the connected lamp announces SET_AUTO_BIAS.
     pub fn auto_bias_supported(&self) -> bool {
         self.info().is_some_and(|info| info.auto_bias)
     }
@@ -142,9 +142,9 @@ impl Worker {
     }
 
     fn open(&mut self, api: &mut HidApi) -> Option<HidDevice> {
-        // Only the lamp's vendor: hidapi skips the other devices before
-        // reading their strings, so a slow one (a sleeping wireless receiver
-        // took 15 s per request) cannot keep the lamp out of sight.
+        // Only the lamp's vendor. hidapi then skips the other devices before
+        // reading their strings, so a slow one cannot keep the lamp out of
+        // sight.
         api.reset_devices().ok()?;
         api.add_devices(USB_VENDOR_ID, 0).ok()?;
         let info = api
@@ -173,7 +173,7 @@ impl Worker {
     }
 
     fn next_seq(&mut self) -> u8 {
-        // 0 marks unsolicited messages: never use it for a request.
+        // 0 marks unsolicited messages, so a request never uses it.
         self.seq = if self.seq == u8::MAX { 1 } else { self.seq + 1 };
         self.seq
     }
@@ -255,14 +255,14 @@ impl Worker {
                             let _ = self.app.emit(EVENT_MESSAGE, frame);
                         }
                         // A newer lamp may send message types this app does
-                        // not know: the protocol says to ignore them.
+                        // not know, which the protocol says to ignore.
                         Err(DecodeError::UnknownType(_)) => {}
                         Err(error) => {
                             let _ = self.app.emit(EVENT_PROTOCOL_ERROR, error.to_string());
                         }
                     }
                 }
-                Ok(_) => {} // another report ID: not ours
+                Ok(_) => {} // another report ID, not ours
                 Err(_) => return Exit::Disconnected,
             }
         }

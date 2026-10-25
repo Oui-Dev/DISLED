@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Settings kept on this computer. The brightness settings are applied to
-//! the lamp at every connection: the lamp starts in automatic brightness
-//! after each power-up and forgets its bias, so the app re-applies them.
-//! Power and color are not settings: the lamp always starts green
-//! (available). The color mode and the language are the app's own.
+//! Settings kept on this computer. The lamp starts in automatic brightness
+//! after each power-up and forgets its bias, so the app applies the
+//! brightness settings at every connection. Power and color are not
+//! settings, since the lamp always starts green. The color mode and the
+//! language are the app's own.
 
 use std::sync::Mutex;
 
@@ -117,8 +117,8 @@ impl Settings {
         }
     }
 
-    /// Commands that bring a lamp in line with these settings. The bias
-    /// needs protocol 1.1 (`auto_bias` capability).
+    /// Commands that bring a lamp in line with these settings. The bias goes
+    /// only to a lamp that announces the `auto_bias` capability.
     pub fn commands(&self, auto_bias_supported: bool) -> Vec<Command> {
         let mut commands = vec![Command::SetState(SetState {
             brightness_mode: Some(self.brightness_mode),
@@ -144,8 +144,8 @@ impl SettingsState {
     }
 }
 
-/// Reads the saved settings (defaults when there are none or they cannot
-/// be read).
+/// Reads the saved settings, or the defaults when there are none or they
+/// cannot be read.
 pub fn load<R: Runtime>(app: &AppHandle<R>) -> Settings {
     app.store(STORE_FILE)
         .ok()

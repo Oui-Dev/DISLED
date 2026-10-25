@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Lamp firmware updates. With the app updates, the app
-//! looks for the newest firmware release on GitHub. On request it downloads
-//! the release build, checks the update key's signature, waits for the
-//! lamp's ROM bootloader (BOOT + RESET), flashes it with wchisp and checks
+//! Lamp firmware updates. Along with the app updates, the app looks for the
+//! newest firmware release on GitHub. On request it downloads the release
+//! build, checks the update key's signature, waits for the lamp's ROM
+//! bootloader, which BOOT and RESET start, flashes it with wchisp and checks
 //! the version the lamp then reports. The update window follows each step.
 
 use std::path::PathBuf;
@@ -25,7 +25,8 @@ use crate::updates::now;
 
 const EVENT_STATUS: &str = "firmware-status";
 
-/// Published releases only: GitHub hides the drafts from anonymous callers.
+/// The published releases only, since GitHub hides the drafts from
+/// anonymous callers.
 const RELEASES_URL: &str = "https://api.github.com/repos/Oui-Dev/DISLED/releases?per_page=100";
 const TAG_PREFIX: &str = "fw-v";
 
@@ -36,8 +37,8 @@ const POLL: Duration = Duration::from_secs(1);
 const COMMAND_GRACE: Duration = Duration::from_secs(10);
 /// wchisp failures in a row before the update gives up.
 const PROBE_FAILURES: u32 = 5;
-/// After the flash the lamp restarts, through its bootloader first: it
-/// takes several seconds.
+/// After the flash the lamp restarts through its bootloader, which takes
+/// several seconds.
 const LAMP_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// A firmware the app can install.
@@ -51,7 +52,7 @@ struct Release {
 enum Source {
     /// The release build attached to a GitHub release, and its signature.
     GitHub { hex: String, signature: String },
-    /// Development builds only: a local file, unsigned.
+    /// An unsigned local file, in development builds only.
     Local(PathBuf),
 }
 
@@ -83,11 +84,13 @@ pub enum Flash {
     WaitingForBootloader {
         by_command: bool,
     },
-    /// Windows: the bootloader needs the WinUSB driver (Zadig), once.
+    /// On Windows, the bootloader needs the WinUSB driver, installed once
+    /// with Zadig.
     DriverMissing,
-    /// Linux: the user may not open the bootloader (udev rule).
+    /// On Linux, the user may not open the bootloader, for lack of the udev
+    /// rule.
     NoPermission,
-    /// Several WCH bootloaders: which one is the lamp is unknown.
+    /// Several WCH bootloaders, so which one is the lamp is unknown.
     SeveralBootloaders,
     /// A WCH bootloader that is not a DISLED lamp.
     OtherChip {
@@ -96,7 +99,7 @@ pub enum Flash {
     Flashing {
         stage: Stage,
     },
-    /// Flashed: the lamp restarts.
+    /// Flashed, the lamp restarts.
     WaitingForLamp,
     Done {
         version: String,
@@ -158,7 +161,6 @@ fn show<R: Runtime>(app: &AppHandle<R>, flash: Flash) {
 }
 
 /// The newest published firmware release whose release build is signed.
-/// The releases from before the signatures (up to 0.2.1) never qualify.
 fn newest(releases: &[GitHubRelease]) -> Option<Release> {
     releases
         .iter()
@@ -183,7 +185,7 @@ fn newest(releases: &[GitHubRelease]) -> Option<Release> {
         .max_by(|a, b| a.version.cmp(&b.version))
 }
 
-/// Development builds only: `DISLED_FIRMWARE_HEX=path/disled-fw-X.Y.Z.hex`
+/// In development builds, `DISLED_FIRMWARE_HEX=path/disled-fw-X.Y.Z.hex`
 /// stands for the newest release, unsigned, to try an update with a local
 /// build. Release builds ignore it.
 fn local_release() -> Option<Release> {
@@ -215,7 +217,8 @@ fn flasher() -> Result<Wchisp, String> {
 
 /// Downloads a file; GitHub wants a user agent.
 async fn get<R: Runtime>(app: &AppHandle<R>, url: &str) -> Result<Vec<u8>, String> {
-    // The same TLS stack as the updater: rustls with ring.
+    // reqwest is built without a TLS provider, `rustls-no-provider`, so this
+    // installs ring, the one the updater uses, unless a provider is there.
     if rustls::crypto::CryptoProvider::get_default().is_none() {
         let _ = rustls::crypto::ring::default_provider().install_default();
     }
@@ -268,7 +271,8 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
     state.status()
 }
 
-/// The release build, checked, in a file for wchisp.
+/// Downloads the release build, checks it and writes it to a file for
+/// wchisp.
 async fn download<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<PathBuf, String> {
     let (hex, signature) = match &release.source {
         Source::Local(path) => return Ok(path.clone()),
@@ -332,8 +336,8 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
                 Err(Stop::Cancelled) => Flash::Idle,
                 Err(Stop::Failed(error)) => Flash::Failed { error },
             };
-            // Free first: the window offers to try again once it shows the
-            // result.
+            // Freed first, because the window offers to try again as soon as
+            // it shows the result.
             owner
                 .state::<FirmwareState>()
                 .running
@@ -443,8 +447,8 @@ fn wait_for_bootloader<R: Runtime>(
         let flash = match &probe {
             Probe::Ready(chip) if chip.starts_with(wchisp::CHIP) => return Ok(()),
             Probe::Nothing => Some(waiting()),
-            // A bootloader that just appeared may not open at once: a
-            // problem shows when two probes in a row see it.
+            // A bootloader that just appeared may not open at once, so a
+            // problem shows only when two probes in a row see it.
             _ if previous.as_ref() != Some(&probe) => None,
             Probe::Ready(chip) => Some(Flash::OtherChip { chip: chip.clone() }),
             Probe::Several => Some(Flash::SeveralBootloaders),

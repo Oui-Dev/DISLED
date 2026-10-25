@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 //! DISLED desktop app: a tray icon with a popup for daily use, a
-//! Diagnostics window for tuning, the USB worker behind both, the app
-//! updates and the lamp firmware updates.
+//! Diagnostics window, the USB worker behind both, the app updates and the
+//! lamp firmware updates.
 
 mod device;
 mod firmware;
@@ -25,7 +25,8 @@ use tauri_plugin_opener::OpenerExt;
 use tray::TrayState;
 use updates::{UpdateState, UpdateStatus};
 
-/// Argument of the login item: started at login, the app stays in the tray.
+/// Argument of the login item. Started with it at login, the app stays in
+/// the tray.
 const AUTOSTART_ARG: &str = "--autostart";
 
 const EVENT_SETTINGS: &str = "settings-changed";
@@ -68,7 +69,7 @@ fn settings_set(
     let mut settings = app.state::<SettingsState>().get();
     settings.apply(&patch);
     settings::save(&app, settings)?;
-    // Every window keeps its own copy: tell them all.
+    // Every window keeps its own copy, so all of them hear of the change.
     let _ = app.emit(EVENT_SETTINGS, settings);
     if patch.color_mode.is_some() {
         app.set_theme(settings.color_mode.theme());
@@ -137,7 +138,7 @@ async fn update_check(app: AppHandle) -> UpdateStatus {
     updates::check(&app).await
 }
 
-/// Returns only on failure: on success the app restarts.
+/// Returns only on failure, since on success the app restarts.
 #[tauri::command]
 async fn update_install(app: AppHandle) -> Result<(), String> {
     updates::install(&app).await
@@ -164,8 +165,8 @@ fn firmware_cancel(app: AppHandle) {
     firmware::cancel(&app);
 }
 
-/// Async on purpose: a synchronous command that creates a window deadlocks
-/// on Windows (WebView2), leaving a blank window and a frozen app.
+/// Async on purpose, because a synchronous command that creates a window
+/// deadlocks WebView2 on Windows, leaving a blank window and a frozen app.
 #[tauri::command]
 async fn open_diagnostics(app: AppHandle) {
     windows::open_diagnostics(&app);
@@ -185,7 +186,7 @@ fn popup_resize(app: AppHandle, height: f64) -> f64 {
     windows::resize_popup(&app, height)
 }
 
-/// Escape in the popup.
+/// Escape pressed in the popup.
 #[tauri::command]
 fn popup_hide(app: AppHandle) {
     windows::hide_popup(&app);
@@ -218,9 +219,9 @@ fn quit(app: AppHandle) {
     app.exit(0);
 }
 
-/// Loads the settings; at the very first launch of an installed app, turns
-/// on start at login (never for `tauri dev`, which would register the debug
-/// executable).
+/// Loads the settings. At the very first launch of an installed app, it
+/// turns on start at login, but never under `tauri dev`, which would register
+/// the debug executable.
 fn init_settings(app: &AppHandle) -> Settings {
     let mut settings = settings::load(app);
     if !settings.autostart_initialized && !cfg!(debug_assertions) {
@@ -235,7 +236,8 @@ fn init_settings(app: &AppHandle) -> Settings {
 pub fn run() {
     let started_at_login = std::env::args().any(|arg| arg == AUTOSTART_ARG);
     let app = tauri::Builder::default()
-        // First: a second launch only shows the popup of the running app.
+        // First, so that a second launch only shows the popup of the running
+        // app.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             windows::show_popup(app);
         }))
@@ -248,7 +250,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        // Used from Rust only (open_link): no window permission.
+        // Only open_link uses it, from Rust, so no window has its permission.
         .plugin(tauri_plugin_opener::init())
         .manage(SettingsState::default())
         .manage(LocaleState::default())
@@ -257,7 +259,7 @@ pub fn run() {
         .manage(UpdateState::default())
         .manage(FirmwareState::default())
         .setup(move |app| {
-            // No Dock icon: the app lives in the menu bar.
+            // No Dock icon, since the app lives in the menu bar.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 

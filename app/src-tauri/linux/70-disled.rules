@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
-# DISLED USB status light: give the logged-in user access to the lamp,
-# which Linux otherwise reserves to root. Installed by the .deb package;
-# see app/README.md for the AppImage. "uaccess" grants access to the
-# active local session only, so the file must sort before 73-seat-late.
+# Gives the logged-in user access to the DISLED lamp, which Linux otherwise
+# reserves to root. The .deb package installs this file, and app/README.md
+# tells how to install it by hand. "uaccess" grants access to the active
+# local session only, so the file must sort before 73-seat-late.
 
-# The lamp's HID interface (release 1209:0001, debug 1209:0002).
+# The lamp's HID interface, release 1209:0001 and debug 1209:0002.
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="0001", TAG+="uaccess"
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="0002", TAG+="uaccess"
 

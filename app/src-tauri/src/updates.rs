@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! App updates: each app release publishes a signed
-//! `latest.json` on GitHub. The app checks it at start-up and then once a
-//! day, along with the lamp firmware; the popup offers the update,
-//! installed only when the user asks.
+//! App updates. Each app release publishes a signed `latest.json` on
+//! GitHub. The app checks it at start-up and then once a day, along with the
+//! lamp firmware, and the popup offers the update, installed only when the
+//! user asks.
 
 use std::sync::Mutex;
 use std::thread;
@@ -22,8 +22,8 @@ const EVENT_STATUS: &str = "update-status";
 /// The first automatic check waits for the network, which may still be
 /// coming up after a login.
 const FIRST_CHECK_DELAY: Duration = Duration::from_secs(30);
-/// The automatic checks look at the wall clock every hour: a plain 24 h
-/// sleep would not count the hours the computer spends asleep.
+/// The automatic checks look at the wall clock every hour, because a plain
+/// 24 h sleep would not count the hours the computer spends asleep.
 const TICK: Duration = Duration::from_secs(3600);
 const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 3600);
 
@@ -64,7 +64,7 @@ pub fn now() -> u64 {
         .unwrap_or(0)
 }
 
-/// No successful check yet, or the last one is a day old.
+/// Tells whether no check has succeeded yet or the last one is a day old.
 fn due(checked_at: Option<u64>) -> bool {
     checked_at.is_none_or(|at| now().saturating_sub(at) >= CHECK_INTERVAL.as_secs())
 }
@@ -156,8 +156,8 @@ pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 }
 
 /// Checks the app and the lamp firmware at start-up, then once a day while
-/// the setting allows it. Not in debug builds: `tauri dev` would offer to
-/// install the released app.
+/// the setting allows it. Debug builds skip them, because `tauri dev` would
+/// offer to install the released app.
 pub fn spawn_automatic_checks<R: Runtime>(app: AppHandle<R>) {
     if cfg!(debug_assertions) {
         return;

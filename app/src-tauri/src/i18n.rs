@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 //! The languages of the app, English and French. The windows translate
-//! themselves (vue-i18n); the backend reads the same message files
-//! (`app/src/locales`) for the few texts the system draws: the tray menu
+//! themselves with vue-i18n, and the backend reads the same message files,
+//! in `app/src/locales`, for the few texts the system draws: the tray menu
 //! and tooltip, and the window titles.
 
 use std::sync::{LazyLock, Mutex};
@@ -45,7 +45,8 @@ impl Locale {
         }
     }
 
-    /// A system language tag ("fr-FR", or "fr_FR.UTF-8" on Linux).
+    /// Reads a system language tag, such as "fr-FR", or "fr_FR.UTF-8" on
+    /// Linux.
     fn from_tag(tag: &str) -> Option<Self> {
         let language = tag.split(['-', '_', '.']).next()?;
         match language.to_ascii_lowercase().as_str() {
@@ -59,8 +60,9 @@ impl Locale {
         &MESSAGES[self as usize]
     }
 
-    /// The message at a dotted key ("tray.open"): in English when this
-    /// language lacks it, the key itself when no file has it.
+    /// The message at a dotted key such as "tray.open". It falls back to
+    /// English when this language lacks it, and to the key itself when no
+    /// file has it.
     pub fn t(self, key: &str) -> String {
         let find = |messages: &'static Value| {
             key.split('.')
@@ -126,8 +128,9 @@ mod tests {
         );
     }
 
-    /// The tray and the titles show the messages as they are: no vue-i18n
-    /// syntax (placeholders, links, plurals) in what the backend reads.
+    /// The tray and the titles show the messages as they are, so what the
+    /// backend reads has no vue-i18n syntax: no placeholders, links or
+    /// plurals.
     #[test]
     fn the_messages_of_the_backend_are_plain_text() {
         for locale in [Locale::En, Locale::Fr] {

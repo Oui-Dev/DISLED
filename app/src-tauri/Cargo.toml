@@ -1,7 +1,7 @@
 [package]
 name = "disled-app"
-# No version here: the app version lives in package.json, where release-please
-# bumps it, and tauri.conf.json reads it from there.
+# No version here. The app version lives in package.json, where
+# release-please bumps it, and tauri.conf.json reads it from there.
 description = "Desktop app for the DISLED USB status light"
 authors = ["The DISLED contributors"]
 edition.workspace = true
@@ -31,8 +31,8 @@ tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-opener = "2"
-# Lamp firmware updates: signed firmware files and wchisp (shared with the
-# production tool), and the HTTP client and TLS stack of the updater.
+# Lamp firmware updates: the signed firmware files and wchisp, shared with
+# the production tool, then the HTTP client and the TLS stack of the updater.
 disled-flash = { path = "../../crates/disled-flash" }
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "system-proxy"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
@@ -40,8 +40,8 @@ semver = "1"
 # The languages of the system, for the "System" language setting.
 sys-locale = "0.3"
 
-# The tests write the TypeScript types of the front end (ts-rs, see
-# .cargo/config.toml); release builds never compile ts-rs.
+# The tests write the TypeScript types of the front end with ts-rs, set up
+# in .cargo/config.toml. Release builds never compile ts-rs.
 [dev-dependencies]
 disled-flash = { path = "../../crates/disled-flash", features = ["ts"] }
 disled-protocol = { path = "../../crates/disled-protocol", features = ["ts"] }
