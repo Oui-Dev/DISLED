@@ -1,15 +1,40 @@
 # DISLED hardware
 
-Board `connected_status_light`, silkscreen "DISLED – Rev 1.0" (PCB v4):
-35 × 35 mm, 2 layers, assembled by JLCPCB (Economic PCBA, top side only).
+The board and the enclosure of the lamp. Each one has its own versions,
+released with its files on the
+[releases page](https://github.com/Oui-Dev/DISLED/releases): `pcb-vX.Y.Z`
+and `enclosure-vX.Y.Z` ([docs/releasing.md](../docs/releasing.md#hardware-releases)).
 
 | Path | Content |
 |---|---|
-| `easyeda/` | EasyEDA Pro projects v1 to v4. `v4_…_2026-10-10.epro2` is the board in production. |
-| `exports/v4/` | Schematic, PCB and 3D renders of v4. The STEP model is not versioned; export it again from EasyEDA. |
-| `review/` | Pre-production design review of v4 (in French) and the brief it answered |
+| `pcb/` | The board: EasyEDA Pro project (`connected_status_light.epro2`), 3D model (`connected_status_light.step`) and [changelog](pcb/CHANGELOG.md) |
+| `enclosure/` | The printed parts (3MF) and the tool that cuts the copper ring, with their [changelog](enclosure/CHANGELOG.md) |
 
-## v4 pin map (CH32V203G6U6, QFN28)
+Each folder holds the current version only: a new version replaces the
+files under the same names. The older versions are in their releases.
+
+## Versions
+
+The decision records and the measurements use the names the designs had
+when they were made:
+
+| Design | Version | |
+|---|---|---|
+| PCB v1, v2, v3 | pcb 0.1.0, 0.2.0, 0.3.0 | Never manufactured: pre-releases |
+| PCB v4, silkscreen "DISLED – Rev 1.0" | pcb 1.0.0 | The board in production |
+| Enclosure V1 | enclosure 0.1.0 | The first prototype |
+| Enclosure V2 | enclosure 1.0.0 | |
+
+A new board revision carries its version on the silkscreen: "Rev 1.1" for
+pcb 1.1.0.
+
+## PCB
+
+Board `connected_status_light`, pcb 1.0.0: 35 × 35 mm, 2 layers,
+assembled by JLCPCB (Economic PCBA, top side only; the JST connector of
+the touch electrode is soldered by hand).
+
+### Pin map (CH32V203G6U6, QFN28)
 
 | Signal | MCU pin | Function | Notes |
 |---|---|---|---|
@@ -25,11 +50,28 @@ Board `connected_status_light`, silkscreen "DISLED – Rev 1.0" (PCB v4):
 | NRST | 4 | Reset | RESET button, 100 nF |
 | Unused | PA0–PA5, PA9, PA15, PB3–PB5 | — | Configure as analog inputs |
 
-## Constraints the firmware must respect (from the review)
+### Constraints the firmware must respect
+
+From the pre-production design review of the board ([PDF, in
+French](https://github.com/Oui-Dev/DISLED/blob/d5e8749603c0b48a2b3b314eaaab88630da2aa92/hardware/review/Review_PCB_v4_connected_status_light_2026-10-10.pdf),
+kept in the history):
 
 - **N3, shared pins:** pin 19 bonds PA10 to PA11 (USB D−). Never drive PA10, never enable a pull-up on it and never route USART1 RX to it. Pin 1 bonds BOOT0 to PB8, so never drive PB8 at boot.
 - **N2, LED power:** typical currents at 100 % are R 75, G 52 and B 98 mA (worst case 86, 63 and 125 mA). White at 100 % draws about 225 mA and 1.1 W inside a closed PLA cube, so the firmware caps the total LED current. Declare `bMaxPower` = 300 mA.
 - **N1, touch:** the touch trace runs next to LED_B. Synchronize TouchKey sampling with the LED PWM.
+
+## Enclosure
+
+A white cube clipped on a black base. The copper ring under the lid of the
+cube is the touch electrode.
+
+| File | Part |
+|---|---|
+| `top.3mf` | The cube (white PLA), printed top face down, with the recess of the copper ring under its lid |
+| `bottom.3mf` | The base (black PETG): USB-C mask, light sensor window, clip pockets, feet recesses |
+| `als_light_cover.3mf` | The hood over the light sensor (black PETG), so that it sees its window only, not the LED |
+| `anti_slip_foot.3mf` | A foot (TPU), glued in a recess under the base: print four |
+| `copper_ring_cutter.3mf` | A rotary head for a drill press that cuts the Ø28.5/Ø17.5 mm ring from copper tape, with two snap-off blade segments clamped by M2.5 screws in heat-set inserts |
 
 ## License
 

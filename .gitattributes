@@ -8,6 +8,7 @@
 
 # Binary files are never converted or diffed as text.
 *.epro2 binary
+*.3mf binary
 *.pdf binary
 *.png binary
 *.jpg binary
