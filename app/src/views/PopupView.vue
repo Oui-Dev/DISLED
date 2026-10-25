@@ -29,7 +29,7 @@ const firmware = useFirmwareStore();
 const errors = useErrorStore();
 const errorText = useErrorText();
 
-// The page, then the footer: the window fits both, and the footer stays at
+// The page, then the footer. The window fits both, and the footer stays at
 // the bottom of a window taller than the content.
 const { fit } = usePopupAutoSize(
   useTemplateRef<HTMLElement>('body'),
@@ -57,7 +57,7 @@ async function reset(): Promise<void> {
 }
 
 onKeyStroke('Escape', async () => {
-  // An open menu closes first (it is still there while this runs); the
+  // An open menu, still in the page while this runs, closes first and the
   // popup stays.
   if (document.querySelector('[role="menu"]')) {
     return;
@@ -84,7 +84,7 @@ const status = computed(() => {
   return lamp.state ? t('status.connected') : t('status.connecting');
 });
 
-/** The app first: a new firmware may need a new app. */
+/** The app first, since a new firmware may need a new app. */
 const footerUpdate = computed(() => {
   const available = updates.status.available;
   if (available) {
@@ -126,7 +126,7 @@ const footerUpdate = computed(() => {
         <PopupSettings />
       </section>
 
-      <!-- UAlert has no role of its own: screen readers announce this one. -->
+      <!-- UAlert has no role of its own, so this one gets alert for screen readers. -->
       <UAlert
         v-if="errors.last"
         role="alert"

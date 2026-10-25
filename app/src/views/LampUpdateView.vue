@@ -2,9 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  The lamp update window: guides the user through a firmware update (the
-  BOOT and RESET buttons, the Windows driver) while the backend downloads,
-  checks and flashes the firmware.
+  The lamp update window. It guides the user through a firmware update, with
+  the BOOT and RESET buttons and the Windows driver, while the backend
+  downloads, checks and flashes the firmware.
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';

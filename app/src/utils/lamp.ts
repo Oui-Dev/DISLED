@@ -12,8 +12,8 @@ export const LAMP_COLORS = [
 ] as const satisfies readonly LampColor[];
 
 /**
- * How the swatches show the lamp colors, as the tray icon does
- * (src-tauri/src/tray.rs): close to the LEDs, whatever the color mode.
+ * How the swatches show the lamp colors, as the tray icon of
+ * src-tauri/src/tray.rs does, close to the LEDs whatever the color mode.
  */
 export const SWATCH_COLORS: Record<LampColor, string> = {
   green: '#2ecc71',
@@ -22,6 +22,9 @@ export const SWATCH_COLORS: Record<LampColor, string> = {
   warm_white: '#ffe2b8',
 };
 
-/** Limits of the automatic brightness correction, percent (AUTO_BIAS_MIN/MAX of the protocol crate). */
+/**
+ * Limits of the automatic brightness correction, in percent, as
+ * AUTO_BIAS_MIN and AUTO_BIAS_MAX of the protocol crate.
+ */
 export const AUTO_BIAS_MIN = -50;
 export const AUTO_BIAS_MAX = 50;

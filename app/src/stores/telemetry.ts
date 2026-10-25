@@ -16,19 +16,19 @@ import { useLampStore } from './lamp';
 
 /** Samples kept for the charts: 30 s at 50 ms, 10 min at 1 s. */
 const HISTORY_LENGTH = 600;
-/** The stream period when the window opens, ms: the charts hold the last 2.5 min. */
+/** The stream period when the window opens, in ms, at which the charts hold the last 2.5 min. */
 const DEFAULT_PERIOD_MS = 250;
 
 export const useTelemetryStore = defineStore('telemetry', () => {
   const errors = useErrorStore();
   const lamp = useLampStore();
 
-  /** 0: no stream. */
+  /** 0 stops the stream. */
   const periodMs = ref(DEFAULT_PERIOD_MS);
   const latest = ref<Telemetry | null>(null);
   /**
-   * The last samples, oldest first. A new array at each sample, outside
-   * deep reactivity: it changes up to 20 times per second.
+   * The last samples, oldest first. Each sample brings a new array, kept in
+   * a shallow ref since deep reactivity would cost too much at this rate.
    */
   const history = shallowRef<readonly Telemetry[]>([]);
   const recording = ref(false);
@@ -37,7 +37,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
 
   /** The connected lamp streams telemetry. */
   const supported = computed(() => lamp.connection.connected && (lamp.info?.telemetry ?? false));
-  /** Set by start(): only the Diagnostics window streams. */
+  /** Set by start(), so that only the Diagnostics window streams. */
   const following = ref(false);
 
   /** The period the user picked. */
@@ -56,9 +56,9 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   }
 
   // The stream starts with the window, and again for a lamp that comes
-  // back: a lamp streams nothing until asked. The backend stops it when the
-  // window closes. A lamp that leaves takes its charts along: the next one
-  // counts its uptime from zero.
+  // back, since a lamp streams nothing until asked. The backend stops it when
+  // the window closes. A lamp that leaves takes its charts along, because the
+  // next one counts its uptime from zero.
   watch(
     () => following.value && supported.value,
     (streaming) => {

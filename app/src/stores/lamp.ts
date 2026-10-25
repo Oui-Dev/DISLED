@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 // The lamp as one window sees it: the connection, its identity (INFO) and
-// its state (STATE). The lamp owns its state: the window only shows the
+// its state (STATE). The lamp owns its state, so the window only shows the
 // last STATE message and sends commands.
 
 import { defineStore } from 'pinia';
@@ -25,8 +25,8 @@ export const useLampStore = defineStore('lamp', () => {
 
   /**
    * Sends a command; a failure becomes the last error. A command the user
-   * asked for clears it once sent. One the app sends on its own (polling,
-   * a stream started again) leaves it on show: it says nothing of it.
+   * asked for clears it once sent. One the app sends on its own, to poll or
+   * to start a stream again, leaves it on show, since it says nothing of it.
    */
   async function send(command: Command, { automatic = false } = {}): Promise<void> {
     try {
@@ -39,7 +39,7 @@ export const useLampStore = defineStore('lamp', () => {
     }
   }
 
-  /** Power and color: the lamp's own state, not saved on this computer. */
+  /** Sets the power or the color, the lamp's own state, which this computer does not save. */
   function setLamp(changes: Pick<SetState, 'on' | 'color'>): Promise<void> {
     return send({ kind: 'set_state', ...changes });
   }

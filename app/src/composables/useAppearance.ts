@@ -12,7 +12,7 @@ import { useSettingsStore } from '@/stores/settings';
  */
 export function useAppearance(): void {
   const settings = useSettingsStore();
-  // The color mode Nuxt UI follows: the `dark` class on <html>.
+  // The color mode Nuxt UI follows, as the `dark` class on <html>.
   const { store: colorMode } = useColorMode();
 
   watchEffect(() => {

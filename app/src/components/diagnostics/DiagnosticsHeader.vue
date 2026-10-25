@@ -22,7 +22,7 @@ const faultText = useFaultText();
 const connected = computed(() => lamp.connection.connected);
 const crash = computed(() => (lamp.info?.fault ? faultText(lamp.info.fault) : null));
 
-/** Compact alerts, as in the popup: the header stays a bar. */
+/** Compact alerts, as in the popup, so the header stays a bar. */
 const alert = { root: 'gap-2 p-3', icon: 'size-4', description: 'text-sm wrap-break-word' };
 
 const confirmingRestart = ref(false);
@@ -49,7 +49,7 @@ function restart(): Promise<void> {
             <span class="text-sm text-muted">
               {{ t('diagnostics.firmware', { version: lamp.info?.firmware_version ?? '…' }) }}
             </span>
-            <!-- Neutral text: amber text on its tint is not readable; the icon carries the color. -->
+            <!-- Neutral text, because amber text on its tint is not readable; the icon carries the color. -->
             <UBadge
               v-if="lamp.connection.debug_build"
               color="neutral"

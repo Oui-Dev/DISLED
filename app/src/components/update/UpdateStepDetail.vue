@@ -3,8 +3,8 @@
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
   The active step of a lamp update: what it does, or what it needs from the
-  user (the BOOT and RESET buttons, the Windows driver, a device to
-  unplug).
+  user, such as the BOOT and RESET buttons, the Windows driver or a device
+  to unplug.
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';

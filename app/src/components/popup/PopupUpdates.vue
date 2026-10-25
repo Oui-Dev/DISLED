@@ -2,9 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  The update on offer, on top of the popup settings: the app first (a new
-  firmware may need a new app), then the lamp. Nothing when all is up to
-  date: checking by hand is in the settings menu.
+  The update on offer, on top of the popup settings: the app first, since a
+  new firmware may need a new app, then the lamp. Nothing shows when all is
+  up to date; checking by hand is in the settings menu.
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';

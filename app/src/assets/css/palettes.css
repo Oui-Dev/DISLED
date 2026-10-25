@@ -2,23 +2,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  *
- * The two color palettes of the app, for Tailwind and Nuxt UI:
- *
- * - `ink`, the neutral palette (backgrounds, text, borders): from the brand
- *   white (50, a warm off-white) to the brand black (900, a black with a
- *   hint of the green of the logo). Light mode sits on 50, dark mode on 900.
- *   The greys keep a faint tint only.
- * - `brand`, the primary palette, on the green of the logo (400, the
- *   primary of dark mode). Its 500, the primary of light mode, is a darker
- *   green.
- *
- * The other shades follow the lightness curves of the Tailwind palettes, in
- * OKLCH, at the hue of the logo. A change keeps the contrasts of the pairs
- * Nuxt UI draws: 4.5:1 for neutral text, about 3.8:1 for the primary, the
- * level of Nuxt UI's own palettes.
+ * The two color palettes of the app, for Tailwind and Nuxt UI. `ink`, the
+ * neutral one, goes from the brand white at 50, the light background, to
+ * the brand black at 900, the dark background, which has a hint of the
+ * green of the logo; its greys keep a faint tint only. `brand`, the primary
+ * one, is built on the logo green. Its 400 is the primary of dark mode, and
+ * the darker 500 that of light mode. The other shades follow the lightness
+ * curves of the Tailwind palettes, in OKLCH, at the hue of the logo.
+ * Nothing checks the contrasts, so a change must keep 4.5:1 for neutral
+ * text and about 3.8:1 for the primary, the level of Nuxt UI's own
+ * palettes.
  */
 
-/* Static: Nuxt UI reads these variables at run time. */
+/* Static, because Nuxt UI reads these variables at run time. */
 @theme static {
   --color-ink-50: #fefcf7; /* oklch(99.1% 0.007 89), brand white */
   --color-ink-100: #f5f5f1; /* oklch(96.9% 0.005 106) */

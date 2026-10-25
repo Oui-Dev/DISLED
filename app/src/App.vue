@@ -2,8 +2,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  One page for every window: the window label picks the view, loaded on its
-  own, and the stores it follows. main.ts has started the settings.
+  One page for every window. The window label picks the view, loaded on its
+  own, and the stores it follows; main.ts has started the settings.
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';

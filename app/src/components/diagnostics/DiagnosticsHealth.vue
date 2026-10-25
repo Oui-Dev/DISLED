@@ -2,9 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Health tab of the Diagnostics window: the lamp diagnostics (protocol 1.1
-  GET_DIAGNOSTICS) by theme, one value per row, and a warning on the rows
-  that need a look. The store asks for them every 2 s.
+  Health tab of the Diagnostics window: the lamp diagnostics (GET_DIAGNOSTICS)
+  by theme, one value per row, and a warning on the rows that need a look.
+  The diagnostics store keeps them current.
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -93,7 +93,7 @@ const groups = computed<{ title: string; rows: Row[] }[]>(() => {
 </script>
 
 <template>
-  <!-- The groups are h3: the tab names the panel for screen readers too. -->
+  <!-- The tab names the panel; this h2 names it for screen readers too, above the h3 of the groups. -->
   <h2 class="sr-only">{{ t('health.title') }}</h2>
   <p v-if="!lamp.connection.connected" class="text-sm text-muted">
     {{ t('diagnostics.noLamp') }}

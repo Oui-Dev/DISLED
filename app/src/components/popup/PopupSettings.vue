@@ -4,7 +4,7 @@
 
   The settings of the popup: start at login, daily update checks, color
   mode, language, and the versions under them. The rare actions are in the
-  menu next to the title (PopupMenu).
+  menu next to the title, PopupMenu.
 -->
 <script setup lang="ts">
 import { getVersion } from '@tauri-apps/api/app';
@@ -88,7 +88,7 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
       @update:model-value="settingsStore.update({ language: $event })"
     />
 
-    <!-- A development firmware has a long version: one line, whole on hover. -->
+    <!-- A development firmware has a long version, so the line truncates and shows it whole on hover. -->
     <p class="truncate text-xs text-muted" :title="versions">{{ versions }}</p>
   </div>
 </template>

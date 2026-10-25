@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 // Telemetry recordings as CSV, one row per sample, for the tuning campaigns
-// of docs/bringup.md. The columns are part of the tools that read them: add
-// new ones at the end.
+// of docs/bringup.md. Tools read the columns, so new ones go at the end.
 
 import type { LampState } from '@/bindings/LampState';
 import type { Telemetry } from '@/bindings/Telemetry';
@@ -30,7 +29,7 @@ const HEADER = [
   'applied_level',
 ].join(',');
 
-/** One sample, with the lamp state it was taken in (empty when unknown). */
+/** One sample, with the lamp state it was taken in, empty when unknown. */
 export function telemetryRow(t: Telemetry, state: LampState | null): string {
   return [
     t.uptime_ms,

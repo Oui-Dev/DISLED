@@ -24,7 +24,7 @@ export const useErrorStore = defineStore('errors', () => {
     last.value = error;
   }
 
-  /** A rejected backend command. */
+  /** Reports a rejected backend command. */
   function reportFailure(error: unknown): void {
     report({ kind: 'backend', detail: String(error) });
   }

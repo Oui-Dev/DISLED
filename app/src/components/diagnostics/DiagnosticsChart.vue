@@ -2,8 +2,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  A live chart of the telemetry history: newest sample on the right, drawn
-  at most ten times per second whatever the stream period, its legend
+  A live chart of the telemetry history, newest sample on the right, drawn
+  at most every REFRESH_MS whatever the stream period, with its legend
   under it on the right. The plot takes the height its parent gives the
   figure, down to a minimum. The tooltip gives the lamp's uptime and the
   values.

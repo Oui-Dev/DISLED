@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Lamp firmware updates: the backend looks for a new firmware
-// with the app updates and runs the update; the popup offers it, the lamp
-// update window guides it.
+// Lamp firmware updates. The backend looks for a new firmware along with the
+// app updates and runs the update; the popup offers it, and the lamp update
+// window guides it.
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';

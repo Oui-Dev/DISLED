@@ -7,12 +7,12 @@
 //   node scripts/updater-manifest.mjs <version> <download URL> <signature dir> [notes file]
 //
 // <download URL> is where the installers are, such as
-// https://github.com/Oui-Dev/DISLED/releases/download/app-v0.2.0.
+// https://github.com/Oui-Dev/DISLED/releases/download/app-vX.Y.Z.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Installer name ending → updater target. The app looks for
+// Installer name endings and their updater targets. The app looks for
 // `{os}-{arch}-{bundle}` first, then `{os}-{arch}`.
 const TARGETS = [
   { ending: '_x64-setup.exe', os: 'windows', arch: 'x86_64', bundle: 'nsis' },

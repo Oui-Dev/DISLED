@@ -2,8 +2,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Off, then the four lamp colors, as a radio group (arrow keys move the
-  choice). The lamp owns its state: the selection is its last STATE
+  Off, then the four lamp colors, as a radio group whose choice the arrow
+  keys move. The lamp owns its state, so the selection is its last STATE
   message.
 -->
 <script setup lang="ts">
@@ -42,8 +42,8 @@ function select(choice: Choice): void {
 
 <template>
   <!-- A radio group mounted without a value keeps its own selection for
-       good (Reka's passive v-model): it mounts again once the state is
-       known, so a command the lamp did not apply never shows as chosen. -->
+       good, through Reka's passive v-model. It mounts again once the state
+       is known, so a command the lamp did not apply never shows as chosen. -->
   <URadioGroup
     :key="selected === undefined ? 'unknown' : 'known'"
     :model-value="selected"
@@ -76,8 +76,8 @@ function select(choice: Choice): void {
 </template>
 
 <style scoped>
-/* Off: an unlit grey square, struck through; light grey in light mode,
-   dark grey in dark mode. */
+/* Off is an unlit grey square, struck through, light grey in light mode
+   and dark grey in dark mode. */
 .off {
   --off-fill: var(--ui-color-neutral-200);
   --off-line: var(--ui-color-neutral-400);
@@ -91,7 +91,8 @@ function select(choice: Choice): void {
     var(--off-fill);
 }
 
-/* Whole selector global: Vue keeps only the class of `:global(.dark) .off`. */
+/* The whole selector is global, because Vue keeps only the class of
+   `:global(.dark) .off`. */
 :global(.dark .off) {
   --off-fill: var(--ui-color-neutral-800);
   --off-line: var(--ui-color-neutral-600);

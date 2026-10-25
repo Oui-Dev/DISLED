@@ -4,7 +4,7 @@
 // Firmware faults as the lamp reports them: RISC-V trap registers, or a
 // failed assertion that the firmware encodes in mcause.
 
-/** A fault, from INFO (mcause, mepc) or from DIAGNOSTICS (with mtval). */
+/** A fault, from INFO with mcause and mepc, or from DIAGNOSTICS with mtval too. */
 export interface FaultRegisters {
   mcause: number;
   mepc: number;
@@ -15,7 +15,7 @@ export type FaultSummary =
   | { kind: 'assertion'; line: number; caller: string }
   | { kind: 'trap'; mcause: string; mepc: string; mtval: string | null };
 
-/** mcause 0x0A55nnnn: the firmware's assertions, nnnn being the source line. */
+/** mcause 0x0A55nnnn marks a failed assertion of the firmware, nnnn being its source line. */
 const ASSERTION = 0x0a55;
 
 /** A 32-bit register value, as the RISC-V tools print it. */

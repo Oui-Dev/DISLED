@@ -58,7 +58,7 @@ const figures = computed(() => {
         <UIcon :name="figure.icon" class="size-3.5 shrink-0" />
         {{ figure.label }}
       </dt>
-      <!-- Tabular figures: the values change up to 20 times per second. -->
+      <!-- Tabular figures, since the values change with every sample. -->
       <dd class="text-lg font-semibold text-highlighted tabular-nums first-letter:uppercase">
         {{ figure.value }}
       </dd>
