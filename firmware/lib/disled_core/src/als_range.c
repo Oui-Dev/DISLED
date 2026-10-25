@@ -26,7 +26,7 @@ typedef struct {
     uint8_t gain_eighths;
     uint16_t integration_ms;
     /* Light of one count, in units of 0.1 mlx: 0.0042 lx at gain 2 and
-     * 800 ms (datasheet rev. 1.8, 2024; the 2019 application note still gives
+     * 800 ms (datasheet rev. 1.8; the application note gives an older
      * 0.0036), times 16 / gain_eighths, times 800 / integration_ms. */
     uint16_t resolution;
 } step_t;

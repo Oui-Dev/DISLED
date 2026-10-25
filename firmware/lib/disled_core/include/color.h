@@ -36,7 +36,7 @@ rgb16_t color_compose(const color_config_t *config, lamp_color_t color, uint16_t
 /* Linear interpolation; `t` = 0 gives `from`, 65535 gives `to`. */
 rgb16_t color_mix(rgb16_t from, rgb16_t to, uint16_t t);
 
-/* Product of two 0..65535 fractions, rounded. */
+/* Product of two fractions of 65535, rounded. */
 uint16_t color_scale(uint16_t value, uint16_t factor);
 
 #endif /* DISLED_COLOR_H */

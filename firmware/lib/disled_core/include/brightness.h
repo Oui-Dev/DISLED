@@ -5,12 +5,11 @@
  *
  * Brightness level of the lamp, in per mille of perceived brightness.
  *
- * Automatic mode follows the ambient light on a logarithmic scale (the eye
- * adapts logarithmically) and maps it to a level through a curve
- * interpolated on that scale. A large change that lasts (a light switched on
- * or off) is followed quickly; a brief one (a hand or a shadow in front of
- * the sensor) is ignored; small ones are followed gently, and differences
- * within a hold band never move the lamp, so it never hunts. Manual mode
+ * Automatic mode follows the ambient light on a logarithmic scale, the way
+ * the eye adapts, and maps it to a level through a curve interpolated on
+ * that scale. The filter follows a lasting large change (a light switched
+ * on) fast, ignores a brief one (a hand in front of the sensor) and follows
+ * small ones slowly; a hold band keeps the lamp from hunting. Manual mode
  * uses the level chosen by the host.
  */
 #ifndef DISLED_BRIGHTNESS_H
@@ -42,7 +41,8 @@ typedef struct {
     uint16_t fallback_permille; /* automatic level without a lux reading */
 } brightness_config_t;
 
-/* Limits of the automatic brightness bias, percent (protocol 1.1). */
+/* Limits of the automatic brightness bias, in percent, as SET_AUTO_BIAS
+ * defines them. */
 #define BRIGHTNESS_BIAS_MIN (-50)
 #define BRIGHTNESS_BIAS_MAX 50
 
@@ -66,9 +66,10 @@ void brightness_init(brightness_t *b, const brightness_config_t *config);
  * mode the level is the automatic one at once (the LED output fades). */
 void brightness_set_mode(brightness_t *b, brightness_mode_t mode, uint8_t manual_percent);
 
-/* Shifts the automatic curve ("brighter" / "darker" in the app): the
- * automatic level is multiplied by (100 + bias) / 100 and kept within
- * 1..1000. Clamped to BRIGHTNESS_BIAS_MIN..MAX. Manual mode ignores it. */
+/* Shifts the automatic curve, "brighter" or "darker" in the app: the
+ * automatic level is multiplied by (100 + bias) / 100 and kept within 1 to
+ * 1000. The bias is clamped to the BRIGHTNESS_BIAS_ limits. Manual mode
+ * ignores it. */
 void brightness_set_auto_bias(brightness_t *b, int8_t bias_percent);
 int8_t brightness_auto_bias(const brightness_t *b);
 

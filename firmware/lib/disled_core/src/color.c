@@ -8,7 +8,7 @@
 /*
  * CIE 1976 lightness to relative luminance, one entry every 2.5 L*
  * (25 per mille): Y = ((L* + 16) / 116)^3 above L* = 8, L* / 903.3 below,
- * scaled to 0..65535.
+ * scaled to 0 to 65535.
  */
 #define LUT_STEP_PERMILLE 25u
 static const uint16_t perceived_lut[] = {

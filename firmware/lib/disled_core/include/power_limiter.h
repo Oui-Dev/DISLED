@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * LED current budget (review N2).
+ * LED current budget (constraint N2 in hardware/README.md).
  *
  * Each channel draws a fixed current while its MOSFET conducts, so the
  * average current is duty x full-scale current. The model uses worst-case

@@ -24,7 +24,8 @@
 #define PROTO_VERSION_MAJOR 1u
 #define PROTO_VERSION_MINOR 1u
 
-/* HID report IDs: commands go host -> device, messages device -> host. */
+/* HID report IDs: commands go from the host to the device, messages from
+ * the device to the host. */
 #define PROTO_REPORT_ID_COMMAND 1u
 #define PROTO_REPORT_ID_MESSAGE 2u
 
@@ -33,7 +34,7 @@
 #define PROTO_HEADER_SIZE   3u
 #define PROTO_MAX_BODY_SIZE (PROTO_REPORT_SIZE - PROTO_HEADER_SIZE)
 
-/* Host -> device. */
+/* From the host to the device. */
 #define PROTO_CMD_GET_INFO      0x01u
 #define PROTO_CMD_GET_STATE     0x02u
 #define PROTO_CMD_SET_STATE     0x03u
@@ -45,7 +46,7 @@
 #define PROTO_CMD_SELF_TEST        0x08u
 #define PROTO_CMD_ENTER_BOOTLOADER 0x09u
 
-/* Device -> host. */
+/* From the device to the host. */
 #define PROTO_MSG_INFO             0x81u
 #define PROTO_MSG_STATE            0x82u
 #define PROTO_MSG_TELEMETRY        0x83u
@@ -92,7 +93,7 @@
 
 #define PROTO_FW_VERSION_SIZE 24u
 
-/* Telemetry period limits, in ms (0 stops the stream). */
+/* Shortest telemetry period, in ms (0 stops the stream). */
 #define PROTO_TELEMETRY_MIN_MS 20u
 
 typedef enum {

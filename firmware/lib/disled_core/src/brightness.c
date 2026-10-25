@@ -70,7 +70,7 @@ void brightness_init(brightness_t *b, const brightness_config_t *config)
     brightness_lux_lost(b);
 }
 
-/* Automatic level with the bias applied, 1..1000. */
+/* Automatic level with the bias applied, 1 to 1000. */
 static uint16_t biased(const brightness_t *b, uint32_t level_permille)
 {
     const uint32_t factor = (uint32_t)(100 + (int32_t)b->bias_percent);

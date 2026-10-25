@@ -42,7 +42,7 @@ rgb16_t power_limit(const power_config_t *config, rgb16_t light, uint16_t cap_ma
     if (estimate <= cap) {
         return light;
     }
-    /* factor = cap / estimate as a 0..65535 fraction, rounded down so the
+    /* factor = cap / estimate as a fraction of 65535, rounded down so the
      * result never exceeds the cap. cap * 65535 < 2^32 for cap <= 1000 mA. */
     const uint16_t factor = (uint16_t)((cap * COLOR_LINEAR_MAX) / estimate);
     const rgb16_t limited = {

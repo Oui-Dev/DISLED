@@ -24,8 +24,8 @@
 
 /* Duties are given in sub-ticks, 1/16 of a timer tick: the PWM driver
  * dithers between two tick values over 16 periods. At the bottom of the
- * range a channel is only a few ticks long, and whole ticks gave visible
- * steps in color and brightness (seen at bring-up). */
+ * range a channel is only a few ticks long, and whole ticks would make
+ * visible steps in color and brightness. */
 #define LED_DUTY_SUBTICKS PWM_DITHER_SUBTICKS
 
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
     /* Sub-ticks of each pulse that give no light (driver edges), per
      * channel. They are added to any lit channel, so that very short pulses
      * keep their share of the color: at low levels the blue of warm white
-     * is a few ticks long and would otherwise vanish (seen at bring-up). */
+     * is a few ticks long and would otherwise vanish. */
     uint16_t pulse_loss[LED_CHANNEL_COUNT];
 } led_output_config_t;
 
@@ -69,8 +69,8 @@ typedef struct {
 void led_output_init(led_output_t *out, const led_output_config_t *config);
 
 /* Recomputes the output for `now_ms` and writes the PWM duties (sub-ticks,
- * one per channel, in led_channel_t order). Call it at a steady rate, e.g.
- * 100 Hz, for smooth fades. */
+ * one per channel, in led_channel_t order). Call it at a steady rate, for
+ * instance 100 Hz, for smooth fades. */
 void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_t now_ms,
                        uint16_t duty[LED_CHANNEL_COUNT]);
 
