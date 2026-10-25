@@ -2,11 +2,12 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Brightness, as on a phone: one slider that shows the level of the lamp,
-  and an Auto switch. In automatic mode the level follows the room light
-  and moving the slider corrects the curve; otherwise it sets a fixed
-  level. These are settings: saved on this computer and applied to the
-  lamp at every connection.
+  Brightness: automatic, with a "darker / brighter" correction of the
+  curve, or a fixed level, chosen with an Auto switch. The slider sets the
+  correction in automatic mode and the level otherwise: it only moves
+  under the user's hand, while the level in use shows next to the switch.
+  These are settings: saved on this computer and applied to the lamp at
+  every connection.
 -->
 <script setup lang="ts">
 import { useThrottleFn } from '@vueuse/core';
@@ -15,12 +16,12 @@ import { useI18n } from 'vue-i18n';
 import type { SettingsPatch } from '@/bindings/SettingsPatch';
 import { useLampStore } from '@/stores/lamp';
 import { useSettingsStore } from '@/stores/settings';
-import { AUTO_BIAS_MAX, AUTO_BIAS_MIN, correctionFor } from '@/utils/lamp';
+import { AUTO_BIAS_MAX, AUTO_BIAS_MIN } from '@/utils/lamp';
 
 /** How often a moving slider updates the lamp. */
 const MOVE_UPDATE_MS = 120;
-/** How long the slider keeps the chosen level after a move, while the lamp follows. */
-const SETTLE_MS = 600;
+/** The correction moves by this much, percent. */
+const BIAS_STEP = 5;
 
 const { t, n } = useI18n();
 const lamp = useLampStore();
@@ -28,38 +29,31 @@ const settingsStore = useSettingsStore();
 
 const settings = computed(() => settingsStore.settings);
 const auto = computed(() => settings.value?.brightness_mode !== 'manual');
-const bias = computed(() => settings.value?.auto_bias ?? 0);
 /** Unknown until INFO arrives: assume support rather than flash a warning. */
 const biasSupported = computed(() => lamp.info?.auto_bias ?? true);
 
-/** The level of the lamp, percent: in automatic mode, the one in use now. */
-const lampLevel = computed(() =>
-  auto.value ? (lamp.state?.applied_level ?? null) : (settings.value?.manual_level ?? null),
-);
-
-/** The level the user chose, kept while the slider moves and until the lamp follows. */
+/** The value under the user's hand, kept until saved: the thumb never jumps back. */
 const held = ref<number | null>(null);
-/** Where a move in automatic mode started from: the corrections derive from it. */
-let origin: { applied: number; bias: number } | null = null;
-let settle: number | undefined;
+let moving = false;
 
-const shown = computed(() => held.value ?? lampLevel.value);
-/** Unknown while no lamp answers in automatic mode: nothing is shown then. */
+/** The slider: the correction in automatic mode, the fixed level otherwise. */
+const value = computed(
+  () =>
+    held.value
+    ?? (auto.value ? (settings.value?.auto_bias ?? 0) : (settings.value?.manual_level ?? 50)),
+);
+
+/** The level in use, percent: in automatic mode, the one the lamp chose; unknown without it. */
+const level = computed(() => (auto.value ? (lamp.state?.applied_level ?? null) : value.value));
 const levelText = computed(() =>
-  shown.value === null ? undefined : n(shown.value / 100, 'percent'),
+  level.value === null ? undefined : n(level.value / 100, 'percent'),
+);
+const biasText = computed(() =>
+  value.value === 0 ? t('lamp.brightness.noCorrection') : n(value.value / 100, 'signedPercent'),
 );
 
-/** Automatic mode needs the level in use, and a lamp that takes a correction. */
-const disabled = computed(
-  () => !settings.value || (auto.value && (lamp.state === null || !biasSupported.value)),
-);
-
-function patchFor(level: number): SettingsPatch {
-  if (!auto.value) {
-    return { brightness_mode: 'manual', manual_level: level };
-  }
-  origin ??= { applied: lamp.state?.applied_level ?? level, bias: bias.value };
-  return { auto_bias: correctionFor(level, origin.applied, origin.bias) };
+function patchFor(next: number): SettingsPatch {
+  return auto.value ? { auto_bias: next } : { brightness_mode: 'manual', manual_level: next };
 }
 
 const saveWhileMoving = useThrottleFn(
@@ -68,37 +62,37 @@ const saveWhileMoving = useThrottleFn(
   true,
 );
 
-function move(value: number | number[] | undefined): void {
-  if (typeof value !== 'number') {
+function move(next: number | number[] | undefined): void {
+  if (typeof next !== 'number') {
     return;
   }
-  window.clearTimeout(settle);
-  held.value = value;
-  void saveWhileMoving(patchFor(value));
+  moving = true;
+  held.value = next;
+  void saveWhileMoving(patchFor(next));
 }
 
 async function release(): Promise<void> {
   // A key commits before it moves the slider: wait for the move.
   await nextTick();
+  moving = false;
   if (held.value === null) {
     return;
   }
-  void settingsStore.update(patchFor(held.value));
-  // Then show the lamp again: the level it reached, within the correction limits.
-  window.clearTimeout(settle);
-  settle = window.setTimeout(() => {
+  await settingsStore.update(patchFor(held.value));
+  // The settings hold the value now, unless the hand came back meanwhile.
+  if (!moving) {
     held.value = null;
-    origin = null;
-  }, SETTLE_MS);
+  }
 }
 
 function setAuto(on: boolean): void {
+  held.value = null;
   if (on) {
     void settingsStore.update({ brightness_mode: 'auto' });
   } else {
     // Keep the brightness the eye sees: the fixed level starts at the level in use.
-    const level = Math.max(1, lamp.state?.applied_level ?? settings.value?.manual_level ?? 50);
-    void settingsStore.update({ brightness_mode: 'manual', manual_level: level });
+    const start = Math.max(1, lamp.state?.applied_level ?? settings.value?.manual_level ?? 50);
+    void settingsStore.update({ brightness_mode: 'manual', manual_level: start });
   }
 }
 
@@ -109,14 +103,10 @@ const hint = computed(() => {
   if (!biasSupported.value) {
     return t('lamp.brightness.needsFirmware');
   }
-  let correction = t('lamp.brightness.noCorrection');
-  if (bias.value !== 0) {
-    const value = n(bias.value / 100, 'signedPercent');
-    const atLimit = bias.value === AUTO_BIAS_MIN || bias.value === AUTO_BIAS_MAX;
-    correction = t(atLimit ? 'lamp.brightness.correctionLimit' : 'lamp.brightness.correction', {
-      value,
-    });
-  }
+  const correction =
+    value.value === 0
+      ? t('lamp.brightness.noCorrection')
+      : t('lamp.brightness.correction', { value: biasText.value });
   return `${t('lamp.brightness.follows')} · ${correction}`;
 });
 </script>
@@ -129,7 +119,12 @@ const hint = computed(() => {
         {{ t('lamp.brightness.title') }}
       </span>
       <div class="flex items-center gap-3">
-        <span v-if="levelText" aria-hidden="true" class="text-sm text-muted tabular-nums">
+        <!-- In automatic mode, the level the lamp chose; a fixed level is read with its slider. -->
+        <span
+          v-if="levelText"
+          :aria-hidden="!auto || undefined"
+          class="text-sm text-muted tabular-nums"
+        >
           {{ levelText }}
         </span>
         <USwitch
@@ -142,13 +137,31 @@ const hint = computed(() => {
       </div>
     </div>
 
-    <div class="flex items-center gap-2.5">
+    <div v-if="auto" class="flex items-center gap-2.5">
+      <span class="text-xs text-muted">{{ t('lamp.brightness.darker') }}</span>
+      <USlider
+        :model-value="value"
+        :min="AUTO_BIAS_MIN"
+        :max="AUTO_BIAS_MAX"
+        :step="BIAS_STEP"
+        :disabled="!settings || !biasSupported"
+        :tooltip="{ text: biasText }"
+        :aria-label="t('lamp.brightness.correctionLabel')"
+        :aria-valuetext="biasText"
+        class="flex-1"
+        @update:model-value="move"
+        @change="release"
+      />
+      <span class="text-xs text-muted">{{ t('lamp.brightness.brighter') }}</span>
+    </div>
+
+    <div v-else class="flex items-center gap-2.5">
       <UIcon name="i-lucide-sun-dim" class="size-4 shrink-0 text-muted" />
       <USlider
-        :model-value="shown ?? 1"
+        :model-value="value"
         :min="1"
         :max="100"
-        :disabled="disabled"
+        :disabled="!settings"
         :aria-label="t('lamp.brightness.title')"
         :aria-valuetext="levelText"
         class="flex-1"

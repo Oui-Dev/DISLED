@@ -67,14 +67,13 @@ variable.
   popup; right click opens a menu (Open, Diagnostics, Quit). On Linux the
   menu is the only way in: tray click events do not exist there.
 - **Popup**: off (grey, struck through) and the four colors, as rounded
-  squares; the brightness as on a phone, one slider that shows the level of
-  the lamp and an Auto switch: in automatic mode the level follows the room
-  light and moving the slider corrects the curve, otherwise it sets a fixed
-  level; a settings page (start at login, daily update checks, color mode,
-  language, versions), with the update on offer on top and a "⋯" menu for
-  the rare actions (check for updates, Diagnostics, reinstall the lamp
-  firmware). It takes the height of its content, and hides when it loses
-  the focus or on Escape.
+  squares; the brightness, automatic with a "darker / brighter" correction
+  of the curve or a fixed level (one slider for either, an Auto switch, the
+  level in use); a settings page (start at login, daily update checks,
+  color mode, language, versions), with the update on offer on top and a
+  "⋯" menu for the rare actions (check for updates, Diagnostics, reinstall
+  the lamp firmware). It takes the height of its content, and hides when it
+  loses the focus or on Escape.
 - **Settings saved on the computer** and applied again every time the lamp
   connects (it restarts in automatic brightness with no correction): the
   brightness mode, the fixed level and the correction. Power and color are

@@ -27,10 +27,12 @@
     "brightness": {
       "title": "Luminosité",
       "auto": "Auto",
+      "darker": "Plus sombre",
+      "brighter": "Plus clair",
+      "correctionLabel": "Correction de la luminosité automatique",
       "fixed": "Niveau fixe",
       "follows": "Suit la lumière de la pièce",
       "correction": "correction {value}",
-      "correctionLimit": "correction {value} (limite)",
       "noCorrection": "sans correction",
       "needsFirmware": "Suit la lumière de la pièce ; la correction demande une mise à jour du firmware de la lampe"
     }
