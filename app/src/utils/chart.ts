@@ -14,14 +14,16 @@ export interface ChartSeries {
 
 export type ChartRow = Record<string, number | string>;
 
-/** The lamp's uptime as h:mm:ss.s, the x value of the charts. */
+/**
+ * The lamp's uptime as h:mm:ss.mmm, the x value of the charts: one per
+ * sample, since the chart merges the samples of a same value.
+ */
 function formatUptime(ms: number): string {
-  const tenths = Math.floor(ms / 100);
-  const seconds = Math.floor(tenths / 10) % 60;
-  const minutes = Math.floor(tenths / 600) % 60;
-  const hours = Math.floor(tenths / 36000);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${hours}:${pad(minutes)}:${pad(seconds)}.${tenths % 10}`;
+  const seconds = Math.floor(ms / 1000) % 60;
+  const minutes = Math.floor(ms / 60_000) % 60;
+  const hours = Math.floor(ms / 3_600_000);
+  const pad = (value: number, digits = 2) => String(value).padStart(digits, '0');
+  return `${hours}:${pad(minutes)}:${pad(seconds)}.${pad(ms % 1000, 3)}`;
 }
 
 /** One row per sample: its uptime, then the value of each series. */

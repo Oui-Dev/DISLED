@@ -28,13 +28,14 @@ const versions = computed(() =>
   t('settings.versions', { app: appVersion.value, firmware: lamp.info?.firmware_version ?? '–' }),
 );
 
-const colorModes = computed(() => [
+// A radio group emits the type of its items' values.
+const colorModes = computed<{ value: ColorMode; label: string; icon: string }[]>(() => [
   { value: 'system', label: t('settings.colorModes.system'), icon: 'i-lucide-monitor' },
   { value: 'light', label: t('settings.colorModes.light'), icon: 'i-lucide-sun' },
   { value: 'dark', label: t('settings.colorModes.dark'), icon: 'i-lucide-moon' },
 ]);
 // Each language under its own name, as language menus do.
-const languages = computed(() => [
+const languages = computed<{ value: Language; label: string }[]>(() => [
   { value: 'system', label: t('settings.systemLanguage') },
   { value: 'en', label: 'English' },
   { value: 'fr', label: 'Français' },
@@ -72,7 +73,7 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
       size="sm"
       :disabled="!settings"
       :ui="cards"
-      @update:model-value="settingsStore.update({ color_mode: $event as ColorMode })"
+      @update:model-value="settingsStore.update({ color_mode: $event })"
     />
     <URadioGroup
       :model-value="settings?.language"
@@ -84,7 +85,7 @@ const cards = { legend: 'text-sm', fieldset: 'flex-nowrap gap-2', item: 'min-w-0
       size="sm"
       :disabled="!settings"
       :ui="cards"
-      @update:model-value="settingsStore.update({ language: $event as Language })"
+      @update:model-value="settingsStore.update({ language: $event })"
     />
 
     <!-- A development firmware has a long version: one line, whole on hover. -->

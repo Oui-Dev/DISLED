@@ -128,7 +128,7 @@ const charts = computed<
           icon="i-lucide-timer"
           size="sm"
           class="w-32"
-          @update:model-value="telemetry.setPeriod($event as number)"
+          @update:model-value="telemetry.setPeriod($event)"
         />
       </div>
 

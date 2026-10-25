@@ -24,15 +24,14 @@ work with a keyboard and with a screen reader.
   components serve wherever one fits, charts included (TanStack Charts).
   Components are auto-imported; functions are imported explicitly. The
   Lucide icons are bundled, so the app stays offline and within its CSP.
-- **Design system.** Montserrat, self-hosted, and two palettes that
-  `app/branding/palette.mjs` generates in OKLCH at the hue of the logo:
+- **Design system.** Montserrat, self-hosted, and two palettes in OKLCH at
+  the hue of the logo (`app/src/assets/css/palettes.css`):
   - `ink`, the neutral palette, from the brand white (`#fefcf7`, the light
     background) to the brand black (`#050a06`, the dark background, with
     a hint of the green of the logo; the greys keep a faint tint only);
   - `brand`, the primary palette. The logo green (`#2ecc71`) is the
     primary of dark mode; a darker 500 serves light mode at about 4:1,
-    the level of Nuxt UI's own palettes. Neutral text keeps 4.5:1. The
-    script checks both, and CI runs it.
+    the level of Nuxt UI's own palettes. Neutral text keeps 4.5:1.
   - Nuxt UI's semantic colors (success, info, warning, error) stay as
     they are. Alerts keep their text in the neutral tokens, the color
     on their icon, background and border.
@@ -69,6 +68,6 @@ work with a keyboard and with a screen reader.
 - After a change to a Rust type the front end receives, `npm run
   bindings` writes the TypeScript types again; CI fails when they are
   out of date.
-- A palette changes in `branding/palette.mjs`, never in the generated
-  CSS; CI checks the file.
+- A palette changes in `palettes.css`, by hand: nothing checks its
+  contrasts, so a change keeps the levels above.
 - "The interface is in English" of ADR 0013 no longer holds.

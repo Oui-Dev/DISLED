@@ -17,7 +17,6 @@ use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::device::DeviceHandle;
 use crate::i18n::{Locale, LocaleState};
-use crate::settings::SettingsState;
 
 pub const POPUP: &str = "popup";
 pub const DIAGNOSTICS: &str = "diagnostics";
@@ -146,14 +145,15 @@ fn title(label: &str, locale: Locale) -> String {
         .unwrap_or_default()
 }
 
-/// A window opened on demand, in the language and the color mode in force.
+/// A window opened on demand, in the language in force. Its frame takes the
+/// color mode set on the app and follows it: a theme of its own would
+/// outlast a change of mode on Windows.
 fn builder<'a, R: Runtime>(
     app: &'a AppHandle<R>,
     label: &str,
 ) -> WebviewWindowBuilder<'a, R, AppHandle<R>> {
     WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
         .title(title(label, app.state::<LocaleState>().get()))
-        .theme(app.state::<SettingsState>().get().color_mode.theme())
 }
 
 /// Titles the open windows in another language.

@@ -24,6 +24,10 @@ export default defineConfig(() => ({
         directoryAsNamespace: true,
         collapseSamePrefixes: true,
       },
+      // Only the themes of the Nuxt UI components in use reach the CSS
+      // (117 kB instead of 210). They are detected when Vite starts: restart
+      // `tauri dev` after using a Nuxt UI component for the first time.
+      experimental: { componentDetection: true },
       ui: {
         colors: {
           primary: 'brand',
@@ -42,8 +46,8 @@ export default defineConfig(() => ({
       // it uses are bundled, never fetched.
       icon: { clientBundle: { scan: true } },
     }),
-    // The messages are compiled at build time: no message compiler at run
-    // time, nothing for the CSP to block.
+    // The messages are compiled at build time: a malformed message fails the
+    // build, and the bundle ships without the message compiler.
     VueI18nPlugin({ include: [path('./src/locales/**')] }),
   ],
 

@@ -25,7 +25,9 @@ export function useUpdateStatus() {
         progress: n((progress ?? 0) / 100, 'percent'),
       });
     }
-    if (checking.value) {
+    // An update on offer keeps its line, the text of the popup alert, while
+    // a new check runs.
+    if (checking.value && !available) {
       return t('updates.checking');
     }
     if (error) {
@@ -43,7 +45,8 @@ export function useUpdateStatus() {
   /** The lamp: a failed check or a newer firmware; null otherwise. */
   const lampLine = computed(() => {
     const { checking, error } = firmware.status;
-    if (checking) {
+    // A lamp update on offer keeps its line too.
+    if (checking && !firmware.updateForLamp) {
       return null;
     }
     if (error) {

@@ -21,7 +21,8 @@ type Choice = LampColor | 'off';
 const { t } = useI18n();
 const lamp = useLampStore();
 
-const items = computed(() => [
+// A radio group emits the type of its items' values.
+const items = computed<{ value: Choice; label: string }[]>(() => [
   { value: 'off', label: t('lamp.colors.off') },
   ...LAMP_COLORS.map((color) => ({ value: color, label: t(`lamp.colors.${color}`) })),
 ]);
@@ -54,16 +55,14 @@ function select(choice: Choice): void {
       wrapper: 'w-full',
       label: 'flex cursor-pointer flex-col items-center gap-1.5 text-xs font-normal text-muted',
     }"
-    @update:model-value="select($event as Choice)"
+    @update:model-value="select($event)"
   >
     <template #label="{ item }">
       <span
         aria-hidden="true"
         class="block size-9 rounded-[20%] border border-accented ring-2 ring-transparent ring-offset-2 ring-offset-bg transition-shadow group-has-data-[state=checked]:ring-inverted"
         :class="{ off: item.value === 'off' }"
-        :style="
-          item.value === 'off' ? undefined : { background: SWATCH_COLORS[item.value as LampColor] }
-        "
+        :style="item.value === 'off' ? undefined : { background: SWATCH_COLORS[item.value] }"
       />
       <span :class="labels ? 'max-w-full text-center leading-tight' : 'sr-only'">
         {{ item.label }}

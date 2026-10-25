@@ -110,7 +110,9 @@ Vue 3 with [Nuxt UI](https://ui.nuxt.com) 4 through its Vite plugin (no
 Nuxt): its components wherever one fits, charts included. Components are
 auto-imported (`src/components.d.ts`, written by the plugin; a file starts
 with its folder: `lamp/LampColorPicker.vue` is `<LampColorPicker>`);
-functions are imported explicitly, through the `@/` alias of `src/`.
+functions are imported explicitly, through the `@/` alias of `src/`. Only
+the Nuxt UI components in use get their styles, found when Vite starts:
+after using one for the first time, restart `npm run tauri dev`.
 
 - **State**: one Pinia store per domain in `src/stores`, started by each
   window for what it shows (`src/App.vue`). They talk to the backend
@@ -127,13 +129,8 @@ functions are imported explicitly, through the `@/` alias of `src/`.
 (self-hosted) and the token overrides. The two palettes, `ink` (neutral:
 from the brand white `#fefcf7`, the light background, to the brand black
 `#050a06`, the dark one) and `brand` (primary, on the logo green
-`#2ecc71`), come from a script that also checks their contrast. Edit the
-script, never `palettes.css`:
-
-```sh
-node branding/palette.mjs           # writes src/assets/css/palettes.css
-node branding/palette.mjs --check   # what CI runs
-```
+`#2ecc71`), live in `src/assets/css/palettes.css`. A change there keeps
+neutral text at 4.5:1 and the primary at about 3.8:1.
 
 ### Translations
 
@@ -170,12 +167,12 @@ enums in Rust, and an entry in the language choices of the popup.
 | `src/bindings/`                     | Types generated from the Rust ones (ts-rs, `npm run bindings`)                      |
 | `src/locales/`, `src/i18n.ts`       | Messages in English and French (shared with the backend), vue-i18n setup            |
 | `src/composables/`, `src/utils/`    | Appearance, popup height, error wording; versions, update steps, CSV, faults        |
-| `src/assets/css/`                   | Tailwind, Nuxt UI, the font and the palettes (`palettes.css` is generated)          |
+| `src/assets/css/`                   | Tailwind, Nuxt UI, the font and the palettes                                        |
 | `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                 |
 | `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)     |
 | `scripts/updater-manifest.mjs`      | Writes the `latest.json` of a release (release workflow)                            |
-| `branding/`                         | The logo and its installer images (`render.py`), the palettes (`palette.mjs`)       |
-| `src-tauri/installer/`              | Windows installer bitmaps and macOS disk image background, made by `render.py`      |
+| `app-icon.png`                      | The logo, source of the app icons (`npx tauri icon`)                                |
+| `src-tauri/installer/`              | Windows installer bitmaps and macOS disk image background                           |
 
 The Rust code is one Cargo workspace at the repository root: this app
 (`src-tauri`) and the shared crates (`../crates`). Its build output goes to
@@ -187,13 +184,10 @@ backend-owned connection keeps working once the app runs in the background.
 ## Logo
 
 The logo is the lamp in isometric view, at the enclosure's dimensions, lit
-green. `branding/render.py` draws it (`branding/logo.png`) with the
-installer images; the app icons come from that logo. After a change, from
-the repository root:
+green. `app-icon.png` is the source of the app icons; after a change:
 
 ```sh
-uv run --with numpy --with pillow python app/branding/render.py
-cd app && npx tauri icon branding/logo.png
+npx tauri icon
 rm -r src-tauri/icons/android src-tauri/icons/ios src-tauri/icons/64x64.png
 ```
 
@@ -205,7 +199,6 @@ time in the color of the lamp.
 ```sh
 npm run typecheck      # vue-tsc, including the French messages against the English ones
 npm run check          # Biome: lint, format, import order (npm run fix applies the fixes)
-node branding/palette.mjs --check
 cd ..                  # the Rust workspace root
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
