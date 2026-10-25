@@ -5,7 +5,7 @@
  *
  * The single path from lamp settings to PWM duties:
  *
- *   palette -> balance -> brightness -> fade -> power limit -> duty
+ *   palette -> brightness -> fade -> power limit -> duty
  *
  * Nothing else may drive the LED, so the power limit always applies. Fades
  * run in linear light; a target change during a fade restarts it from the
@@ -59,17 +59,15 @@ typedef struct {
     rgb16_t target;
     rgb16_t shown; /* before the power limit */
     uint32_t fade_start_ms;
-    bool fading;
     uint16_t cap_ma;
     uint32_t estimate_ma_x10;
-    uint16_t duty[LED_CHANNEL_COUNT];
 } led_output_t;
 
 /* Starts dark. */
 void led_output_init(led_output_t *out, const led_output_config_t *config);
 
 /* Recomputes the output for `now_ms` and writes the PWM duties (sub-ticks,
- * one per channel, in led_channel_t order). Call it at a steady rate, for
+ * red, green and blue). Call it at a steady rate, for
  * instance 100 Hz, for smooth fades. */
 void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_t now_ms,
                        uint16_t duty[LED_CHANNEL_COUNT]);

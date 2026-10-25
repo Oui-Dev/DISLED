@@ -450,7 +450,7 @@ void app_run(void)
 {
     scheduler_start(tasks, TASK_COUNT, bsp_time_ms());
     for (;;) {
-        (void)scheduler_run_timed(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
+        scheduler_run(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
         /* No WFI: in this loop the core never wakes up from it. */

@@ -54,7 +54,6 @@ const touch_config_t app_touch_config = {
     .object_ms = 10000,
     .inverted_permille = 30,
     .inverted_ms = 1000,
-    .rising_touch = false, /* a finger lowers the TouchKey reading */
 };
 
 /* Ambient light to brightness. The lux are those the sensor reads behind
@@ -101,7 +100,6 @@ const color_config_t app_color_config = {
         [LAMP_COLOR_RED]        = { 65535,     0,    0 },
         [LAMP_COLOR_WARM_WHITE] = { 63000, 58000, 1600 }, /* tuned by eye through the PLA */
     },
-    .balance = { 65535, 65535, 65535 },
 };
 /* clang-format on */
 

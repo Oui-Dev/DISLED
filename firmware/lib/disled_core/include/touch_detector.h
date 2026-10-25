@@ -59,7 +59,6 @@ typedef struct {
     uint16_t object_ms;          /* contact or proximity time that means "object" */
     uint16_t inverted_permille;  /* rise above baseline that means "recalibrate" */
     uint16_t inverted_ms;        /* how long the rise must hold */
-    bool rising_touch;           /* set if a touch raises the reading */
 } touch_config_t;
 
 typedef struct {
@@ -75,9 +74,8 @@ typedef struct {
     uint32_t calibration_sum;
     uint8_t calibration_count;
     int16_t delta_permille; /* positive while touched */
-    /* Debounced contact tracking. */
-    bool contact;
-    bool pending; /* raw contact differs from `contact` */
+    /* Debounce: the raw contact differs from the state since pending_since_ms. */
+    bool pending;
     uint32_t pending_since_ms;
     uint32_t press_start_ms;
     /* Recent drops, for the floor; the floor is latched while touched. */

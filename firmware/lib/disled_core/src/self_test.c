@@ -11,23 +11,12 @@
 void self_test_init(self_test_t *t, const self_test_config_t *config)
 {
     DISLED_ASSERT(config->color_ms > 0u);
-    t->config = config;
-    t->phase = SELF_TEST_IDLE;
-    t->phase_start_ms = 0;
-    t->results = 0;
-    t->lux_centi = 0;
-    t->touch_baseline = 0;
-    t->touch_peak_permille = 0;
+    *t = (self_test_t){ .config = config, .phase = SELF_TEST_IDLE };
 }
 
 void self_test_start(self_test_t *t, uint32_t now_ms)
 {
-    t->phase = SELF_TEST_COLORS;
-    t->phase_start_ms = now_ms;
-    t->results = 0;
-    t->lux_centi = 0;
-    t->touch_baseline = 0;
-    t->touch_peak_permille = 0;
+    *t = (self_test_t){ .config = t->config, .phase = SELF_TEST_COLORS, .phase_start_ms = now_ms };
 }
 
 bool self_test_running(const self_test_t *t)

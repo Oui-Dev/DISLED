@@ -27,7 +27,6 @@ static const touch_config_t config = {
     .object_ms = 10000,
     .inverted_permille = 30,
     .inverted_ms = 1000,
-    .rising_touch = false,
 };
 
 static touch_detector_t td;
@@ -286,19 +285,6 @@ static void test_consume_expires_without_a_press(void)
     TEST_ASSERT_EQUAL_UINT(1, short_presses);
 }
 
-static void test_rising_touch_polarity(void)
-{
-    static touch_config_t rising;
-    rising = config;
-    rising.rising_touch = true;
-    touch_detector_init(&td, &rising);
-    hold(BASELINE, 200);
-
-    hold((uint16_t)(BASELINE + 100u), 300);
-    hold(BASELINE, 300);
-    TEST_ASSERT_EQUAL_UINT(1, short_presses);
-}
-
 int main(void)
 {
     UNITY_BEGIN();
@@ -319,6 +305,5 @@ int main(void)
     RUN_TEST(test_blip_right_after_a_release_is_ignored);
     RUN_TEST(test_a_consumed_touch_fires_nothing);
     RUN_TEST(test_consume_expires_without_a_press);
-    RUN_TEST(test_rising_touch_polarity);
     return UNITY_END();
 }

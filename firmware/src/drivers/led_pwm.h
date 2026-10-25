@@ -32,7 +32,7 @@ void led_pwm_start(void);
 /* Timer ticks for 100 % duty. */
 uint16_t led_pwm_period(void);
 
-/* New duties in sub-ticks (led_channel_t order), applied from the next
+/* New duties in sub-ticks (red, green, blue), applied from the next
  * period. */
 void led_pwm_set(const uint16_t duty[LED_CHANNEL_COUNT]);
 

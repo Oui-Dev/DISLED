@@ -60,14 +60,12 @@ uint16_t brightness_curve_permille(const brightness_config_t *config, uint32_t l
 
 void brightness_init(brightness_t *b, const brightness_config_t *config)
 {
-    b->config = config;
-    b->mode = BRIGHTNESS_MODE_AUTO;
-    b->manual_percent = BRIGHTNESS_MANUAL_MAX;
-    b->bias_percent = 0;
-    b->light_q8 = 0;
-    b->last_ms = 0;
-    b->auto_permille = config->fallback_permille;
-    brightness_lux_lost(b);
+    *b = (brightness_t){
+        .config = config,
+        .mode = BRIGHTNESS_MODE_AUTO,
+        .manual_percent = BRIGHTNESS_MANUAL_MAX,
+        .auto_permille = config->fallback_permille,
+    };
 }
 
 /* Automatic level with the bias applied, 1 to 1000. */

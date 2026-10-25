@@ -22,15 +22,12 @@
 typedef struct {
     /* Each lamp color at full brightness. */
     rgb16_t palette[LAMP_COLOR_COUNT];
-    /* Per-channel attenuation that evens out the LED and enclosure
-     * (65535 = none). */
-    uint16_t balance[LED_CHANNEL_COUNT];
 } color_config_t;
 
 /* Perceived brightness (per mille of L*) to linear light. */
 uint16_t color_perceived_to_linear(uint16_t level_permille);
 
-/* Palette color, balanced and scaled to a perceived brightness level. */
+/* Palette color scaled to a perceived brightness level. */
 rgb16_t color_compose(const color_config_t *config, lamp_color_t color, uint16_t level_permille);
 
 /* Linear interpolation; `t` = 0 gives `from`, 65535 gives `to`. */

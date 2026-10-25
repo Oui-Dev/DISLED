@@ -43,9 +43,9 @@ rgb16_t color_compose(const color_config_t *config, lamp_color_t color, uint16_t
     const rgb16_t base = config->palette[color];
     const uint16_t intensity = color_perceived_to_linear(level_permille);
     const rgb16_t result = {
-        .r = color_scale(color_scale(base.r, config->balance[LED_CHANNEL_RED]), intensity),
-        .g = color_scale(color_scale(base.g, config->balance[LED_CHANNEL_GREEN]), intensity),
-        .b = color_scale(color_scale(base.b, config->balance[LED_CHANNEL_BLUE]), intensity),
+        .r = color_scale(base.r, intensity),
+        .g = color_scale(base.g, intensity),
+        .b = color_scale(base.b, intensity),
     };
     return result;
 }

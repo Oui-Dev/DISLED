@@ -109,7 +109,28 @@ static void test_invalid_request_changes_nothing(void)
     };
     TEST_ASSERT_FALSE(lamp_request_is_valid(&bad_level));
     TEST_ASSERT_FALSE(lamp_fsm_apply(&lamp, &bad_level));
-    TEST_ASSERT_EQUAL_MEMORY(&before, &lamp, sizeof lamp);
+    TEST_ASSERT_EQUAL(before.on, lamp.on);
+    TEST_ASSERT_EQUAL(before.color, lamp.color);
+    TEST_ASSERT_EQUAL(before.brightness_mode, lamp.brightness_mode);
+    TEST_ASSERT_EQUAL_UINT8(before.manual_level, lamp.manual_level);
+}
+
+static void test_states_differing_in_one_field_are_not_equal(void)
+{
+    const lamp_state_t base = lamp;
+    lamp_state_t other = base;
+    TEST_ASSERT_TRUE(lamp_state_equal(&base, &other));
+    other.on = !base.on;
+    TEST_ASSERT_FALSE(lamp_state_equal(&base, &other));
+    other = base;
+    other.color = LAMP_COLOR_RED;
+    TEST_ASSERT_FALSE(lamp_state_equal(&base, &other));
+    other = base;
+    other.brightness_mode = BRIGHTNESS_MODE_MANUAL;
+    TEST_ASSERT_FALSE(lamp_state_equal(&base, &other));
+    other = base;
+    other.manual_level = (uint8_t)(base.manual_level + 1u);
+    TEST_ASSERT_FALSE(lamp_state_equal(&base, &other));
 }
 
 static void test_request_validation_limits(void)
@@ -145,6 +166,7 @@ int main(void)
     RUN_TEST(test_request_setting_the_current_values_reports_no_change);
     RUN_TEST(test_color_set_while_off_stays_off);
     RUN_TEST(test_invalid_request_changes_nothing);
+    RUN_TEST(test_states_differing_in_one_field_are_not_equal);
     RUN_TEST(test_request_validation_limits);
     return UNITY_END();
 }

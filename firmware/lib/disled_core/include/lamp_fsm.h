@@ -59,6 +59,9 @@ bool lamp_fsm_long_press(lamp_state_t *state);
  * bit is set. */
 bool lamp_request_is_valid(const lamp_request_t *request);
 
+/* True if both states have the same power, color and brightness settings. */
+bool lamp_state_equal(const lamp_state_t *a, const lamp_state_t *b);
+
 /* Applies a valid request atomically and returns true if the state changed.
  * An invalid request changes nothing and returns false. */
 bool lamp_fsm_apply(lamp_state_t *state, const lamp_request_t *request);

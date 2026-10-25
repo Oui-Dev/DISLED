@@ -29,9 +29,7 @@ uint32_t power_estimate_ma_x10(const power_config_t *config, rgb16_t light)
     const uint32_t sum = (uint32_t)light.r * config->full_scale_ma[LED_CHANNEL_RED] +
                          (uint32_t)light.g * config->full_scale_ma[LED_CHANNEL_GREEN] +
                          (uint32_t)light.b * config->full_scale_ma[LED_CHANNEL_BLUE];
-    /* sum * 10 / 65535, rounded: split to stay within 32 bits. */
-    return (sum / COLOR_LINEAR_MAX) * 10u +
-           ((sum % COLOR_LINEAR_MAX) * 10u + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX;
+    return (sum * 10u + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX;
 }
 
 rgb16_t power_limit(const power_config_t *config, rgb16_t light, uint16_t cap_ma)

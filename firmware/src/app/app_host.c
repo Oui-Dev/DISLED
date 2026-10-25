@@ -58,15 +58,9 @@ static state_content_t observe(void)
     return content;
 }
 
-static bool same_lamp(const lamp_state_t *a, const lamp_state_t *b)
-{
-    return a->on == b->on && a->color == b->color && a->brightness_mode == b->brightness_mode &&
-           a->manual_level == b->manual_level;
-}
-
 static bool same_content(const state_content_t *a, const state_content_t *b)
 {
-    return same_lamp(&a->lamp, &b->lamp) && a->applied_percent == b->applied_percent &&
+    return lamp_state_equal(&a->lamp, &b->lamp) && a->applied_percent == b->applied_percent &&
            a->link == b->link;
 }
 
@@ -74,7 +68,7 @@ static bool same_content(const state_content_t *a, const state_content_t *b)
 static void observe_changes(void)
 {
     const state_content_t now = observe();
-    if (!same_lamp(&now.lamp, &s_seen.lamp)) {
+    if (!lamp_state_equal(&now.lamp, &s_seen.lamp)) {
         s_source = app.source;
     } else if (now.link != s_seen.link) {
         s_source = CHANGE_SOURCE_USB;
@@ -95,7 +89,7 @@ static bool notification_pending(void)
 /* Only the automatic brightness changed since the last STATE message. */
 static bool only_level_pending(void)
 {
-    return same_lamp(&s_seen.lamp, &s_sent.lamp) && s_seen.link == s_sent.link;
+    return lamp_state_equal(&s_seen.lamp, &s_sent.lamp) && s_seen.link == s_sent.link;
 }
 
 /* Sends the current state; `seq` is the request it answers (0: none). */

@@ -14,7 +14,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "color.h"
+#include "disled_types.h"
 
 /* Results, same bits as the SELF_TEST_RESULT message. */
 #define SELF_TEST_LIGHT_OK      (1u << 0)

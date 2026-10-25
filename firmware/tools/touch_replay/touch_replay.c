@@ -30,7 +30,6 @@ static touch_config_t config = {
     .object_ms = 10000,
     .inverted_permille = 30,
     .inverted_ms = 1000,
-    .rising_touch = false,
 };
 
 typedef struct {

@@ -15,7 +15,6 @@ static const color_config_t config = {
             [LAMP_COLOR_RED] = {65535, 0, 0},
             [LAMP_COLOR_WARM_WHITE] = {65535, 36000, 9000},
         },
-    .balance = {65535, 32768, 65535},
 };
 
 void setUp(void)
@@ -57,11 +56,13 @@ static void test_dimmest_manual_level_stays_visible(void)
     TEST_ASSERT_TRUE(ticks >= 3);
 }
 
-static void test_compose_applies_balance_and_level(void)
+static void test_compose_applies_the_level(void)
 {
     const rgb16_t full = color_compose(&config, LAMP_COLOR_GREEN, 1000);
     TEST_ASSERT_EQUAL_UINT16(0, full.r);
-    TEST_ASSERT_UINT16_WITHIN(1, 32768, full.g);
+    TEST_ASSERT_EQUAL_UINT16(65535, full.g);
+    TEST_ASSERT_EQUAL_UINT16(color_perceived_to_linear(500),
+                             color_compose(&config, LAMP_COLOR_GREEN, 500).g);
     TEST_ASSERT_EQUAL_UINT16(0, full.b);
 
     const rgb16_t dark = color_compose(&config, LAMP_COLOR_RED, 0);
@@ -106,7 +107,7 @@ int main(void)
     RUN_TEST(test_perceived_mid_grey_is_18_percent);
     RUN_TEST(test_perceived_scale_is_strictly_increasing);
     RUN_TEST(test_dimmest_manual_level_stays_visible);
-    RUN_TEST(test_compose_applies_balance_and_level);
+    RUN_TEST(test_compose_applies_the_level);
     RUN_TEST(test_compose_keeps_the_hue_when_dimming);
     RUN_TEST(test_mix_ends_and_middle);
     RUN_TEST(test_scale);
