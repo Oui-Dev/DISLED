@@ -8,14 +8,16 @@ enclosure has to be open ([ADR 0010](decisions/0010-firmware-updates-from-the-ap
 ## From the desktop app
 
 The app offers a new firmware in its popup when the connected lamp runs an
-older one (Settings, **Update the lamp**), and guides the update in a
-window of its own. It downloads the release build, checks its signature
+older one (**Update the lamp**, at the bottom of the popup and on its
+settings page), and guides the update in a window of its own. It
+downloads the release build, checks its signature
 ([ADR 0016](decisions/0016-lamp-updates.md)), asks for BOOT and RESET,
 flashes the lamp and checks the version it then reports. On Windows it
-also shows the driver steps below when they are needed.
+also shows the driver steps below when they are needed. The
+[user guide](user-guide.md#updates) walks through it.
 
-A lamp that no longer starts gets its firmware the same way: Settings,
-**Lamp not detected? Reinstall its firmware**.
+A lamp that no longer starts gets its firmware the same way: on the
+settings page of the popup, **⋯**, **Reinstall the lamp firmware…**.
 
 The rest of this page is for development and for flashing by hand.
 

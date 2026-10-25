@@ -33,7 +33,7 @@ Each contact triggers at most one action. Releasing the touch re-arms it.
 - Every change, whatever its source (touch, host or automatic brightness),
   produces a state notification with an increasing sequence number.
 - In `AUTO` mode the notification carries the level currently applied, so
-  the app can show it on a disabled slider.
+  the app can show it next to its Auto switch.
 - The host can shift the automatic curve ("brighter" or "darker", −50 to
   +50 %). The lamp forgets it when it restarts: the app sends it again
   after each connection. Manual mode ignores it.
@@ -96,7 +96,8 @@ Run them on a board connected to a computer, with the desktop app open.
    is ignored. Removing the phone does nothing, and the touch works again
    afterwards.
 8. In the app, switch to manual at 30 %: the lamp dims. Switch back to auto:
-   the slider shows the applied level and follows the room light.
+   the level shown next to the switch follows the room light, and the
+   slider sets the correction again.
 9. Put the computer to sleep: the lamp turns off and the touch does
    nothing. Wake it up: the previous state comes back.
 10. Plug the lamp into a phone charger: it works on its own and the LED

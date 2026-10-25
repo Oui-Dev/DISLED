@@ -3,8 +3,11 @@
 Run these steps on each new board, in order: each one relies on the ones
 before. The first board's results and the lessons drawn from them are in
 [measurements](measurements/F1B9ABCD5A9BBD15E339E339.md) and
-[ADR 0009](decisions/0009-bring-up-corrections.md). Write the results in `docs/measurements/` (one file per board,
-named after its serial number). The measurements of the tuning campaigns
+[ADR 0009](decisions/0009-bring-up-corrections.md); those of the final
+board, which set the touch thresholds, in
+[measurements](measurements/F1B5ABCD5A97BD15E339E339.md). Write the
+results in `docs/measurements/` (one file per board, named after its
+serial number). The measurements of the tuning campaigns
 (V1, V2, V4, named after the design review) set the values marked "tune" in
 `firmware/src/app/app_config.c` for phase 2.
 

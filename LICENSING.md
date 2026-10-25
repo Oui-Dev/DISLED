@@ -63,8 +63,10 @@ permission above.
 
 ## USB identifiers
 
-During development the firmware uses VID:PID `1209:0001`, the
-[pid.codes test PID](https://pid.codes/1209/0001/). It is reserved for
-private testing and must not ship on devices that are redistributed, sold
-or manufactured. A dedicated PID will be requested from pid.codes before
-the first batch is built.
+During development the firmware uses the
+[pid.codes test PIDs](https://pid.codes/1209/0001/) `1209:0001` (release
+builds) and `1209:0002` (debug builds). They are reserved for private
+testing and must not ship on devices that are redistributed, sold or
+manufactured. Dedicated PIDs are requested from pid.codes, `1209:D1ED`
+for the release builds and `1209:D1EE` for the debug builds; the firmware
+moves to them once they are granted, before the first batch is built.

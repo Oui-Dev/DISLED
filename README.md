@@ -3,11 +3,13 @@
 A USB status light that sits on top of a monitor. The 4 cm white cube glows
 green, orange or red to tell colleagues whether you are available. A touch
 on the lid cycles the colors, the brightness follows the room light, and a
-desktop app gives full control.
+desktop app gives full control ([user guide](docs/user-guide.md)).
 
-> **Status:** phase 1 (bring-up and MVP) complete on the first board
-> (PCB 1.0.0); the Mac, current and thermal tests wait for the enclosure
-> 1.0.0. Binaries and hardware files are on the
+> **Status:** the product works on the final board (PCB 1.0.0, enclosure
+> 1.0.0): the tray app, lamp updates from the app and the production tool
+> are released. Still to come: the lamp's own USB IDs, requested from
+> pid.codes, then the Mac, current and thermal tests. Binaries and
+> hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout
@@ -20,7 +22,7 @@ desktop app gives full control.
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
 | [`hardware/`](hardware/) | PCB (EasyEDA Pro, STEP) and enclosure (3MF) design files |
-| [`docs/`](docs/) | Architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
+| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
 
 ## Hardware at a glance
 
@@ -34,8 +36,10 @@ desktop app gives full control.
 
 | I want to… | Read |
 |---|---|
+| Use the lamp and install its app | [docs/user-guide.md](docs/user-guide.md) |
+| Contribute a change | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
-| Run the desktop app | [app/README.md](app/README.md) |
+| Run the desktop app from source | [app/README.md](app/README.md) |
 | Understand the design | [docs/architecture.md](docs/architecture.md), [decision records](docs/decisions/) |
 | Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
 | Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |

@@ -173,7 +173,7 @@ then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 
 - The installers carry no publisher certificate (the update signatures
   above only serve the updater): Windows SmartScreen and macOS Gatekeeper
-  warn on first launch ([app/README.md](../app/README.md#install)). Code
+  warn on first launch ([user guide](user-guide.md#install-the-app)). Code
   signing is a later choice ([ADR 0006](decisions/0006-desktop-app.md)).
 - The macOS app is still signed ad hoc (`signingIdentity` `-` in
   `tauri.conf.json`): Apple Silicon calls a downloaded app without any
