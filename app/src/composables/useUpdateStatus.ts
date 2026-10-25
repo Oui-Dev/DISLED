@@ -44,9 +44,9 @@ export function useUpdateStatus() {
 
   /** The lamp: a failed check or a newer firmware; null otherwise. */
   const lampLine = computed(() => {
-    const { checking, error } = firmware.status;
+    const { checking: lampChecking, error } = firmware.status;
     // A lamp update on offer keeps its line too.
-    if (checking && !firmware.updateForLamp) {
+    if (lampChecking && !firmware.updateForLamp) {
       return null;
     }
     if (error) {

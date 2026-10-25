@@ -22,6 +22,8 @@ const items = computed(() => {
       label: t('updates.check'),
       icon: 'i-lucide-refresh-cw',
       loading: checking.value,
+      // One check at a time: a loading item still takes clicks.
+      disabled: checking.value,
       // The menu stays open: its last lines show the outcome.
       onSelect: (event) => {
         event.preventDefault();

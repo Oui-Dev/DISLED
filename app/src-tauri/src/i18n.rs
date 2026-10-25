@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn a_missing_message_falls_back_to_english_then_to_its_key() {
+    fn a_missing_message_falls_back_to_its_key() {
         assert_eq!(Locale::Fr.t("tray.open"), "Ouvrir DISLED");
         assert_eq!(Locale::Fr.t("no.such.key"), "no.such.key");
     }

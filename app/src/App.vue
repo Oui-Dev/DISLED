@@ -17,13 +17,13 @@ import { useSettingsStore } from '@/stores/settings';
 import { useTelemetryStore } from '@/stores/telemetry';
 import { useUpdatesStore } from '@/stores/updates';
 
-interface Window {
+interface WindowSetup {
   view: Component;
   stores: (() => { start(): Promise<void> })[];
 }
 
 /** The windows of src-tauri/src/windows.rs. */
-const WINDOWS: Record<string, Window> = {
+const WINDOWS: Record<string, WindowSetup> = {
   popup: {
     view: defineAsyncComponent(() => import('@/views/PopupView.vue')),
     stores: [useLampStore, useFirmwareStore, useUpdatesStore],

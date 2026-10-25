@@ -42,14 +42,14 @@ const checks = computed(() => {
     {
       label: t('selfTest.touchIdle'),
       status: status(r?.touch_idle_ok),
-      detail: r ? t('selfTest.baseline', { value: r.touch_baseline }) : '',
+      detail: r ? t('selfTest.baseline', { value: n(r.touch_baseline) }) : '',
     },
     {
       label: t('selfTest.touchPressed'),
       status: status(r?.touch_pressed),
       detail: r
         ? t('selfTest.peak', {
-            value: t('telemetry.permille', { value: r.touch_peak_permille }),
+            value: t('telemetry.permille', { value: n(r.touch_peak_permille) }),
           })
         : '',
     },

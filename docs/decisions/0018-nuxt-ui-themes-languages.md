@@ -55,16 +55,20 @@ work with a keyboard and with a screen reader.
 - **Accessibility.** WCAG 2.2 AA is the target, the primary contrast
   aside (above). The colors are a radio group; sliders and switches are
   labelled; switching pages in the popup moves the focus to the page
-  title; statuses are announced; animations respect reduced motion. An
-  axe-core audit of the three windows in both color modes finds nothing
-  else.
+  title; statuses are announced; our own animations and Nuxt UI's
+  looping ones respect reduced motion (its loading spinners and the short
+  opening of menus and tooltips do not). An axe-core audit of the three
+  windows in both color modes finds nothing else.
 
 ## Consequences
 
 - The bundle grows (Nuxt UI, the charts); each window loads only its own
   view.
-- A new language means a JSON file, a variant of the `Language` and
-  `Locale` enums in Rust, and an entry in the language select.
+- A new language means a JSON file; a variant of the `Language` and
+  `Locale` enums in Rust, with its message file and system tag in
+  `i18n.rs`; its messages, formats and Nuxt UI words in `app/src/i18n.ts`;
+  and an entry in the language choices of the popup (step by step in
+  `app/README.md`).
 - After a change to a Rust type the front end receives, `npm run
   bindings` writes the TypeScript types again; CI fails when they are
   out of date.

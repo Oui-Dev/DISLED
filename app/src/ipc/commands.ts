@@ -60,7 +60,7 @@ export function updateCheck(): Promise<UpdateStatus> {
   return invoke('update_check');
 }
 
-/** Resolves only on failure: once installed, the app restarts. */
+/** Rejects on failure; on success the app restarts. */
 export function updateInstall(): Promise<void> {
   return invoke('update_install');
 }

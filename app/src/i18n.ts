@@ -21,6 +21,8 @@ declare module 'vue-i18n' {
 
 const numberFormats = {
   decimal: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+  /** A chart value: 2, or 0.5 between whole ticks. */
+  tick: { maximumFractionDigits: 1 },
   /** From a fraction: 0.37 is 37 %. */
   percent: { style: 'percent', maximumFractionDigits: 1 },
   /** A correction: +10 %, −20 %, 0 %. */

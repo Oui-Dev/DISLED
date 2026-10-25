@@ -126,8 +126,10 @@ const footerUpdate = computed(() => {
         <PopupSettings />
       </section>
 
+      <!-- UAlert has no role of its own: screen readers announce this one. -->
       <UAlert
         v-if="errors.last"
+        role="alert"
         color="error"
         variant="subtle"
         icon="i-lucide-triangle-alert"

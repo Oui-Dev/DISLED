@@ -143,8 +143,18 @@ that lacks a message, and `cargo test` checks that both files have the
 same keys. Errors from the backend's libraries stay in English, inside a
 translated sentence.
 
-To add a language: a JSON file, a variant of the `Language` and `Locale`
-enums in Rust, and an entry in the language choices of the popup.
+To add a language:
+
+- **Messages**: `src/locales/<code>.json`, with every message of `en.json`.
+- **Rust**: a variant of `Language` (`src-tauri/src/settings.rs`) and of
+  `Locale` (`src-tauri/src/i18n.rs`); in `i18n.rs`, its file in `MESSAGES`
+  (in the order of `Locale`), its arm in `Locale::of`, its system tag in
+  `from_tag` and its keys in the test that compares the files. Then
+  `npm run bindings`.
+- **Windows**: in `src/i18n.ts`, its messages, number and date formats,
+  plural rule when vue-i18n's default does not fit, and Nuxt UI words
+  (`nuxtUiLocales`); in `src/components/popup/PopupSettings.vue`, its
+  entry in the language choices, named in that language.
 
 ## Layout
 
@@ -202,6 +212,7 @@ npm run check          # Biome: lint, format, import order (npm run fix applies 
 cd ..                  # the Rust workspace root
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
+rm -r app/src/bindings # written again by the tests: no file left from a removed type
 cargo test --workspace # protocol codec, message keys of both languages, TypeScript types
-git diff --exit-code -- app/src/bindings
+git status --porcelain -- app/src/bindings # nothing listed: the types are up to date
 ```

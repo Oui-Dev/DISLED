@@ -192,7 +192,8 @@ object time), so it cannot drift under the hand and blunt the next touch.
   update window follows `firmware-status`.
 - **Vue front end** (`app/src`, Nuxt UI, [ADR
   0018](decisions/0018-nuxt-ui-themes-languages.md)). Each window runs its
-  own Pinia stores (lamp, settings, telemetry, diagnostics, updates),
+  own Pinia stores (lamp, settings, telemetry, diagnostics, updates,
+  firmware, errors),
   fed by the backend events through a typed layer (`ipc/`); the
   components only render them and send commands. The types they exchange
   with the backend are generated from the Rust types (ts-rs,

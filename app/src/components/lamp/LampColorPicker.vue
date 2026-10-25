@@ -41,7 +41,11 @@ function select(choice: Choice): void {
 </script>
 
 <template>
+  <!-- A radio group mounted without a value keeps its own selection for
+       good (Reka's passive v-model): it mounts again once the state is
+       known, so a command the lamp did not apply never shows as chosen. -->
   <URadioGroup
+    :key="selected === undefined ? 'unknown' : 'known'"
     :model-value="selected"
     :items="items"
     :legend="t('lamp.colors.legend')"

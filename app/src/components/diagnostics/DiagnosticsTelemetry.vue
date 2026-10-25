@@ -46,9 +46,11 @@ const placeholder = computed(() => {
   return { loading: true, description: t('telemetry.waiting') };
 });
 
-const permille = (value: number) => t('telemetry.permille', { value: n(Math.round(value)) });
+// The samples are whole numbers, but the axis of a small range has ticks
+// every 0.5: one decimal at most keeps them apart.
+const permille = (value: number) => t('telemetry.permille', { value: n(value, 'tick') });
 const lux = (value: number) => t('telemetry.lux', { value: n(value, 'decimal') });
-const count = (value: number) => n(Math.round(value));
+const count = (value: number) => n(value, 'tick');
 
 const charts = computed<
   {
