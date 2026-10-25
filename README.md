@@ -9,7 +9,8 @@ warm white or a fixed brightness, and updates the lamp
 > **Status.** Released: the board (PCB 1.0.0), the enclosure (1.0.0), the
 > tray app with lamp updates, and the production tool. Still to come: the
 > lamp's own USB IDs, requested from pid.codes, and the tests on a Mac, of
-> the LED current and of the heat. Binaries and hardware files are on the
+> the LED current, of the current in USB suspend and of the heat. Binaries
+> and hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout

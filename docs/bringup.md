@@ -47,7 +47,8 @@ Equipment:
 - [ ] `set color 0` to `3` show green, orange, red and warm white, without
       flicker and with smooth 300 ms fades. Judge the colors through the
       closed enclosure, because the PLA shifts them. The palette is
-      `app_color_config`.
+      `app_color_config`, and the self-test repeats its warm white in
+      `app_self_test_config.white`.
 - [ ] Warm white keeps the same hue at 3, 10, 30 and 100 % (`set level`).
       If the low levels drift, yellow when blue is missing or pink when
       green is, raise the pulse loss of the missing channel,
@@ -69,6 +70,11 @@ Equipment:
 - [ ] With a flashlight inside the closed enclosure and the window covered,
       the lux must **not** move, which shows that the LED cannot leak into
       the sensor.
+- [ ] The lamp's own light comes back to its sensor from the desk and the
+      walls. In a dark room, read the lux with the lamp off, then at a few
+      levels (`set level`). What the lamp adds must stay well under the lux
+      at which the curve chooses that level, or the lamp keeps itself lit
+      in the dark.
 - [ ] Compare with the phone light meter held next to the window, at three
       light levels. Only the trend matters, since the absolute values may
       differ.
@@ -81,7 +87,9 @@ Equipment:
 
 Tune the brightness curve, `app_brightness_curve`, until the automatic
 level looks right in each situation. Its points use the lux the lamp reads
-behind its window, not those of the phone.
+behind its window, not those of the phone. A steeper low end leaves less
+room for the lamp's own light, so check it again in the dark after a
+change.
 
 ## 6. Touch
 
@@ -123,6 +131,9 @@ thresholds before flashing them.
 
 - [ ] Put the computer to sleep: the lamp turns off within a second and
       touches do nothing.
+- [ ] Asleep, the board draws at most 2.5 mA, the most USB allows a
+      suspended device. Measured: ____ mA. Above that, a deeper clock
+      divider in `firmware/src/bsp/bsp_power.c` is the first remedy.
 - [ ] Wake it up: the previous color and brightness come back, and the app
       reconnects.
 
