@@ -1,0 +1,272 @@
+{
+  "common": {
+    "settings": "Réglages",
+    "back": "Retour",
+    "quit": "Quitter",
+    "cancel": "Annuler",
+    "close": "Fermer"
+  },
+  "status": {
+    "noLamp": "Aucune lampe connectée",
+    "connecting": "Connexion…",
+    "connected": "Lampe connectée"
+  },
+  "popup": {
+    "lampPage": "Lampe"
+  },
+  "lamp": {
+    "unplugged": "Branchez la lampe à cet ordinateur. Les réglages ci-dessous lui seront appliqués.",
+    "colors": {
+      "legend": "Couleur de la lampe",
+      "off": "Éteinte",
+      "green": "Vert",
+      "orange": "Orange",
+      "red": "Rouge",
+      "warm_white": "Blanc chaud"
+    },
+    "brightness": {
+      "title": "Luminosité",
+      "auto": "Auto",
+      "darker": "Plus sombre",
+      "brighter": "Plus clair",
+      "correctionLabel": "Correction de la luminosité automatique",
+      "fixed": "Niveau fixe",
+      "follows": "Suit la lumière de la pièce",
+      "correction": "correction {value}",
+      "noCorrection": "sans correction",
+      "needsFirmware": "Suit la lumière de la pièce ; la correction demande une mise à jour du firmware de la lampe"
+    }
+  },
+  "settings": {
+    "autostart": "Lancer DISLED à l’ouverture de session",
+    "checkUpdates": "Rechercher les mises à jour chaque jour",
+    "colorMode": "Apparence",
+    "colorModes": {
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "language": "Langue",
+    "systemLanguage": "Système",
+    "diagnostics": "Ouvrir les diagnostics…",
+    "versions": "App {app} · firmware de la lampe {firmware}",
+    "more": "Plus d’actions"
+  },
+  "updates": {
+    "install": "Installer et redémarrer",
+    "updateLamp": "Mettre à jour la lampe…",
+    "check": "Rechercher les mises à jour",
+    "downloading": "Téléchargement de {version}… {progress}",
+    "checking": "Recherche des mises à jour…",
+    "error": "Erreur de mise à jour : {detail}",
+    "available": "DISLED {version} est disponible.",
+    "upToDate": "À jour (vérifié le {date}).",
+    "lampError": "Erreur de recherche du firmware de la lampe : {detail}",
+    "lampAvailable": "Le firmware {version} de la lampe est disponible.",
+    "reinstall": "Réinstaller le firmware de la lampe…",
+    "toApp": "Mettre à jour en {version}",
+    "toLamp": "Mettre à jour la lampe"
+  },
+  "diagnostics": {
+    "connected": "Connectée",
+    "firmware": "Firmware {version}",
+    "debugBuild": "version debug",
+    "serial": "N° de série {serial}",
+    "resetCause": "Cause du redémarrage : {cause}",
+    "restart": "Redémarrer",
+    "restartTitle": "Redémarrer le firmware de la lampe ?",
+    "restartDescription": "La lampe redémarre et revient en vert en quelques secondes.",
+    "crashed": "Le firmware a planté avant son dernier redémarrage : {fault}.",
+    "assertion": "assertion échouée à la ligne {line}, appelée depuis {caller}",
+    "trap": "mcause {mcause}, mepc {mepc}",
+    "trapValue": "mcause {mcause}, mepc {mepc}, mtval {mtval}",
+    "lamp": "Lampe",
+    "waiting": "En attente de la lampe…",
+    "state": "État n° {seq} · dernier changement : {source} · USB {link}",
+    "noLamp": "Aucune lampe connectée."
+  },
+  "health": {
+    "title": "Santé",
+    "issues": "{n} point à vérifier | {n} points à vérifier",
+    "issue": "à vérifier",
+    "unsupported": "Le firmware de cette lampe ne fournit pas de diagnostics.",
+    "reading": "Lecture…",
+    "stability": "Stabilité",
+    "boots": "Démarrages",
+    "watchdogResets": "Redémarrages par le watchdog",
+    "faults": "Plantages",
+    "lastFault": "Dernier : {fault}",
+    "stackMargin": "Marge de pile",
+    "bytes": "{n} octet | {n} octets",
+    "sensors": "Capteurs",
+    "lightSensor": "Capteur de lumière",
+    "present": "Présent",
+    "absent": "Absent",
+    "probes": "{n} détection | {n} détections",
+    "i2cErrors": "{n} erreur I2C | {n} erreurs I2C",
+    "touchSamplesLost": "Mesures tactiles perdues",
+    "rebaselines": "{n} recalibrage | {n} recalibrages",
+    "usbClock": "USB et horloge",
+    "usbSuspends": "Mises en veille USB",
+    "crystal": "Quartz",
+    "crystalRunning": "Oscille",
+    "crystalFailed": "En panne",
+    "brightness": "Luminosité",
+    "correction": "Correction automatique",
+    "uptime": "En marche depuis"
+  },
+  "selfTest": {
+    "title": "Autotest",
+    "unsupported": "Le firmware de cette lampe n’a pas d’autotest.",
+    "instructions": "La lampe affiche rouge, vert, bleu et blanc chaud (vérifiez-les), puis brille en bleu : touchez le couvercle dans les 10 s.",
+    "run": "Lancer l’autotest",
+    "running": "En cours…",
+    "lightSensor": "Capteur de lumière",
+    "touchIdle": "Tactile au repos",
+    "touchPressed": "Toucher du couvercle",
+    "completed": "Test terminé",
+    "baseline": "référence {value}",
+    "peak": "plus forte baisse {value}",
+    "passed": "réussi",
+    "failed": "échoué",
+    "pending": "pas encore testé"
+  },
+  "telemetry": {
+    "title": "Télémétrie",
+    "period": "Période",
+    "off": "Arrêtée",
+    "touch": "Tactile",
+    "light": "Lumière",
+    "ledCurrent": "Courant des LED",
+    "level": "Niveau",
+    "duty": "R/V/B {duty}",
+    "touchChart": "Mesure tactile",
+    "touchAverage": "moyenne tactile",
+    "baseline": "référence",
+    "touchDescription": "Comptes TouchKey des derniers échantillons, et la référence à laquelle la détection les compare.",
+    "deltaChart": "Baisse sous la référence",
+    "deltaSeries": "baisse sous la référence",
+    "deltaDescription": "De combien la mesure tactile descend sous sa référence, en pour mille.",
+    "lightChart": "Lumière ambiante",
+    "lightSeries": "lumière ambiante",
+    "lightDescription": "La lumière que lit le capteur, en lux.",
+    "record": "Enregistrer",
+    "stop": "Arrêter",
+    "rows": "{n} ligne | {n} lignes",
+    "export": "Exporter en CSV…",
+    "saveTitle": "Exporter l’enregistrement",
+    "permille": "{value} ‰",
+    "lux": "{value} lx",
+    "unsupported": "Le firmware de cette lampe n’envoie pas de télémétrie.",
+    "stopped": "Télémétrie arrêtée",
+    "stoppedHint": "Choisissez une période pour recevoir les mesures de la lampe.",
+    "waiting": "En attente des mesures…",
+    "drop": "baisse de {value}",
+    "raw": "brut {value}",
+    "milliamps": "{value} mA",
+    "limit": "limite {value} mA"
+  },
+  "lampUpdate": {
+    "title": "Mise à jour de la lampe",
+    "noFirmware": "Aucun firmware à installer.",
+    "notFound": "Aucun firmware trouvé : {detail}",
+    "noLamp": "Aucune lampe connectée. Une lampe qui ne démarre plus peut quand même recevoir le firmware {version} par son mode mise à jour.",
+    "connecting": "Connexion à la lampe…",
+    "newer": "Firmware {current} → {next}",
+    "current": "La lampe utilise le firmware {version}.",
+    "already": "La lampe utilise déjà le firmware {version}.",
+    "intro": "Cela prend environ une minute. Vous allez ouvrir la lampe : son mode mise à jour se lance avec deux boutons de sa carte, {boot} et {reset}. Laissez la lampe branchée à cet ordinateur.",
+    "steps": {
+      "download": "Télécharger le firmware",
+      "bootloader": "Passer la lampe en mode mise à jour",
+      "install": "Installer le firmware",
+      "restart": "Redémarrer la lampe"
+    },
+    "downloading": "Téléchargement du firmware {version} et vérification de sa signature…",
+    "restartingInUpdateMode": "La lampe redémarre en mode mise à jour…",
+    "buttons": "Ouvrez la lampe. Maintenez {boot}, appuyez sur {reset} puis relâchez-le, et relâchez enfin {boot}.",
+    "waitingForBootloader": "En attente de la lampe en mode mise à jour…",
+    "driver": {
+      "intro": "Windows a besoin d’un pilote pour le mode mise à jour, une seule fois :",
+      "download": "Téléchargez {zadig} et lancez-le.",
+      "options": "Dans {options}, choisissez {listAll}.",
+      "select": "Sélectionnez le périphérique dont l’ID USB est {id} (ou {otherId}).",
+      "install": "Choisissez {winusb}, puis {install} (ou {replace}).",
+      "waiting": "La mise à jour reprend d’elle-même une fois le pilote installé."
+    },
+    "noPermission": "Cet ordinateur ne laisse pas l’app ouvrir la lampe en mode mise à jour. Réinstallez le paquet DISLED (il ajoute la règle d’accès), puis relancez le mode mise à jour.",
+    "severalBootloaders": "Plusieurs périphériques sont en mode mise à jour. Débranchez-les tous sauf la lampe.",
+    "otherChip": "Un périphérique qui n’est pas une lampe DISLED est en mode mise à jour ({chip}). Débranchez-le.",
+    "stages": {
+      "erasing": "Effacement de l’ancien firmware…",
+      "writing": "Écriture du nouveau firmware…",
+      "verifying": "Vérification de ce qui a été écrit…",
+      "restarting": "Redémarrage de la lampe…"
+    },
+    "doNotUnplug": "Ne débranchez pas la lampe.",
+    "waitingForLamp": "La lampe démarre son nouveau firmware : cela prend quelques secondes.",
+    "done": "Terminé : la lampe utilise le firmware {version}. Vous pouvez la refermer.",
+    "failed": "La mise à jour s’est arrêtée : {detail}",
+    "notDamaged": "La lampe n’est pas abîmée : son mode mise à jour fonctionne toujours. Réessayez, ou suivez le {guide}.",
+    "guide": "guide de flashage",
+    "start": "Lancer la mise à jour",
+    "reinstall": "Le réinstaller",
+    "retry": "Réessayer"
+  },
+  "errors": {
+    "backend": "Erreur : {detail}",
+    "rejected": "La lampe a refusé la commande {command} : {error}",
+    "unreadable": "Message illisible de la lampe : {detail}"
+  },
+  "enums": {
+    "protocolError": {
+      "unknown_command": "commande inconnue",
+      "bad_length": "longueur incorrecte",
+      "bad_value": "valeur invalide",
+      "busy": "occupée"
+    },
+    "resetCause": {
+      "unknown": "inconnue",
+      "power_on": "mise sous tension",
+      "pin": "broche reset",
+      "software": "logiciel",
+      "watchdog": "watchdog",
+      "window_watchdog": "watchdog fenêtré",
+      "low_power": "basse consommation"
+    },
+    "changeSource": {
+      "boot": "démarrage",
+      "touch": "toucher",
+      "host": "cet ordinateur",
+      "auto_brightness": "luminosité automatique",
+      "usb": "USB"
+    },
+    "usbLink": {
+      "unconfigured": "non configuré",
+      "configured": "configuré",
+      "suspended": "en veille"
+    },
+    "touchState": {
+      "calibrating": "calibrage",
+      "idle": "au repos",
+      "pressed": "appuyé"
+    }
+  },
+  "tray": {
+    "open": "Ouvrir DISLED",
+    "diagnostics": "Diagnostics…",
+    "quit": "Quitter DISLED",
+    "tooltip": {
+      "noLamp": "DISLED : aucune lampe",
+      "off": "DISLED : éteinte",
+      "green": "DISLED : vert",
+      "orange": "DISLED : orange",
+      "red": "DISLED : rouge",
+      "warm_white": "DISLED : blanc chaud"
+    }
+  },
+  "window": {
+    "diagnostics": "Diagnostics DISLED",
+    "lampUpdate": "Mise à jour de la lampe DISLED"
+  }
+}

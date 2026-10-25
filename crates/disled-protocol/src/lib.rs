@@ -63,6 +63,7 @@ macro_rules! wire_enum {
     ($(#[$meta:meta])* $name:ident { $($variant:ident = $value:expr),+ $(,)? }) => {
         $(#[$meta])*
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+        #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
         #[serde(rename_all = "snake_case")]
         pub enum $name { $($variant = $value),+ }
 
@@ -100,6 +101,7 @@ wire_enum!(ProtocolError {
 
 /// Lamp settings to change; `None` leaves a setting as it is.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export, optional_fields))]
 pub struct SetState {
     pub on: Option<bool>,
     pub color: Option<LampColor>,
@@ -109,6 +111,7 @@ pub struct SetState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Command {
     GetInfo,
@@ -177,12 +180,14 @@ impl Command {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Fault {
     pub mcause: u32,
     pub mepc: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Info {
     pub protocol: [u8; 2],
     pub firmware: [u8; 3],
@@ -203,6 +208,7 @@ pub struct Info {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export, rename = "LampState"))]
 pub struct State {
     pub state_seq: u16,
     pub on: bool,
@@ -216,6 +222,7 @@ pub struct State {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Telemetry {
     pub uptime_ms: u32,
     pub touch_raw: u16,
@@ -233,6 +240,7 @@ pub struct Telemetry {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Diagnostics {
     pub uptime_ms: u32,
     /// Since power-up (kept across resets).
@@ -256,6 +264,7 @@ pub struct Diagnostics {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct FaultDetail {
     pub mcause: u32,
     pub mepc: u32,
@@ -263,6 +272,7 @@ pub struct FaultDetail {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct SelfTestResult {
     pub light_sensor_ok: bool,
     pub touch_idle_ok: bool,
@@ -281,6 +291,7 @@ impl SelfTestResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Message {
     Info(Info),
@@ -294,6 +305,7 @@ pub enum Message {
 
 /// A decoded message and the sequence number it answers (0: unsolicited).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct Frame {
     pub seq: u8,
     pub message: Message,

@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 The DISLED contributors
+#
+# TypeScript types of the desktop app, generated from the Rust types by
+# ts-rs when the tests run (`cargo test`, or `npm run bindings` in app/).
+[env]
+TS_RS_EXPORT_DIR = { value = "app/src/bindings", relative = true }
+# The only 64-bit integers that cross are timestamps in seconds.
+TS_RS_LARGE_INT = "number"

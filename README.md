@@ -14,7 +14,7 @@ desktop app gives full control.
 | Path | Content |
 |---|---|
 | [`firmware/`](firmware/) | CH32V203 firmware (PlatformIO, C11, TinyUSB) |
-| [`app/`](app/) | Desktop app (Tauri 2, Rust and Vue 3) |
+| [`app/`](app/) | Desktop app (Tauri 2, Rust, Vue 3 and Nuxt UI), in English and French |
 | [`tools/`](tools/) | Production tool, `disled-factory` (Rust) |
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |

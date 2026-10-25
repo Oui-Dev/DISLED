@@ -8,16 +8,39 @@
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use disled_protocol::Command;
+use tauri::{
+    AppHandle, LogicalSize, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent,
+};
 use tauri_plugin_positioner::{Position, WindowExt};
+
+use crate::device::DeviceHandle;
+use crate::i18n::{Locale, LocaleState};
 
 pub const POPUP: &str = "popup";
 pub const DIAGNOSTICS: &str = "diagnostics";
 pub const LAMP_UPDATE: &str = "lamp-update";
 
+/// The windows opened on demand, with the message key of their title.
+const TITLED: [(&str, &str); 2] = [
+    (DIAGNOSTICS, "window.diagnostics"),
+    (LAMP_UPDATE, "window.lampUpdate"),
+];
+
 /// A click on the tray icon first takes the focus away from an open popup,
 /// which hides it; the click itself must then not reopen it.
 const REOPEN_GUARD: Duration = Duration::from_millis(300);
+
+/// The width of the popup, as in tauri.conf.json; its height follows its
+/// content.
+const POPUP_WIDTH: f64 = 320.0;
+/// The popup is never shorter, as in tauri.conf.json: the lamp page gets
+/// some room, the footer staying at the bottom.
+const POPUP_MIN_HEIGHT: f64 = 360.0;
+/// Room kept on the screen around a popup taller than the screen, whose
+/// content then scrolls.
+const SCREEN_MARGIN: f64 = 48.0;
 
 #[derive(Default)]
 pub struct PopupState {
@@ -61,6 +84,31 @@ pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
+/// Fits the popup to the height of its content (logical pixels), from its
+/// minimum up to the screen, and keeps it against the tray icon. Returns
+/// the height it took: when shorter than the content, the content scrolls.
+pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) -> f64 {
+    let Some(window) = popup(app) else {
+        return height;
+    };
+    let screen = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .map(|monitor| f64::from(monitor.work_area().size.height) / monitor.scale_factor())
+        .unwrap_or(f64::INFINITY);
+    // On a screen too small for the minimum, the screen wins.
+    let height = height
+        .max(POPUP_MIN_HEIGHT)
+        .min(screen - SCREEN_MARGIN)
+        .max(1.0);
+    let resized = window.set_size(LogicalSize::new(POPUP_WIDTH, height));
+    if resized.is_ok() && window.is_visible().unwrap_or(false) {
+        place(&window);
+    }
+    height
+}
+
 pub fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {
     let Some(window) = popup(app) else { return };
     if window.is_visible().unwrap_or(false) {
@@ -89,17 +137,55 @@ fn raise<R: Runtime>(app: &AppHandle<R>, label: &str) -> bool {
     true
 }
 
+fn title(label: &str, locale: Locale) -> String {
+    TITLED
+        .iter()
+        .find(|(titled, _)| *titled == label)
+        .map(|(_, key)| locale.t(key))
+        .unwrap_or_default()
+}
+
+/// A window opened on demand, in the language in force. Its frame takes the
+/// color mode set on the app and follows it: a theme of its own would
+/// outlast a change of mode on Windows.
+fn builder<'a, R: Runtime>(
+    app: &'a AppHandle<R>,
+    label: &str,
+) -> WebviewWindowBuilder<'a, R, AppHandle<R>> {
+    WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
+        .title(title(label, app.state::<LocaleState>().get()))
+}
+
+/// Titles the open windows in another language.
+pub fn retitle<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+    for (label, key) in TITLED {
+        if let Some(window) = app.get_webview_window(label) {
+            let _ = window.set_title(&locale.t(key));
+        }
+    }
+}
+
 pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
     hide_popup(app);
     if raise(app, DIAGNOSTICS) {
         return;
     }
-    let built = WebviewWindowBuilder::new(app, DIAGNOSTICS, WebviewUrl::App("index.html".into()))
-        .title("DISLED diagnostics")
+    let built = builder(app, DIAGNOSTICS)
         .inner_size(1040.0, 760.0)
         .min_inner_size(760.0, 560.0)
         .build();
     if let Ok(window) = built {
+        // The window starts the telemetry: a lamp streams until told to
+        // stop, so the stream ends with the window.
+        let owner = app.clone();
+        window.on_window_event(move |event| {
+            if let WindowEvent::Destroyed = event
+                && let Some(device) = owner.try_state::<DeviceHandle>()
+            {
+                // Without a lamp, nothing streams.
+                let _ = device.send(Command::SetTelemetry { period_ms: 0 });
+            }
+        });
         let _ = window.set_focus();
     }
 }
@@ -111,9 +197,9 @@ pub fn open_lamp_update<R: Runtime>(app: &AppHandle<R>) {
     if raise(app, LAMP_UPDATE) {
         return;
     }
-    let built = WebviewWindowBuilder::new(app, LAMP_UPDATE, WebviewUrl::App("index.html".into()))
-        .title("DISLED lamp update")
-        .inner_size(460.0, 560.0)
+    // The longest step, the Windows driver in French, fits without scrolling.
+    let built = builder(app, LAMP_UPDATE)
+        .inner_size(480.0, 640.0)
         .resizable(false)
         .build();
     if let Ok(window) = built {

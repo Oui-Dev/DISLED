@@ -171,10 +171,13 @@ object time), so it cannot drift under the hand and blunt the next touch.
   time from the lamp state. Three windows share one page, chosen by the
   window label: the popup (daily use), the Diagnostics window (tuning)
   and the lamp update window.
-- **Settings** (brightness mode, fixed level, correction) are saved with
-  the store plugin; the USB worker applies them as soon as the lamp
-  answers `INFO`, so they hold across lamp restarts. Changes are broadcast
-  to every window (`settings-changed`).
+- **Settings** are saved with the store plugin and broadcast to every
+  window (`settings-changed`). The USB worker applies the brightness ones
+  (mode, fixed level, correction) as soon as the lamp answers `INFO`, so
+  they hold across lamp restarts. The backend applies the color mode to
+  the window frames and the language to the tray and the window titles
+  (`i18n.rs`, [ADR 0018](decisions/0018-nuxt-ui-themes-languages.md)),
+  and tells the windows the language in force (`locale-changed`).
 - **Updates** ([ADR 0014](decisions/0014-app-updates.md)). A thread checks
   the `latest.json` of the latest GitHub release at start-up and once a
   day (`updates.rs`, updater plugin); the popup shows the result
@@ -187,9 +190,15 @@ object time), so it cannot drift under the hand and blunt the next touch.
   is a separate program next to the app, driven through its log lines
   (`crates/disled-flash`, shared with the production tool); the lamp
   update window follows `firmware-status`.
-- **Vue front end** (`app/src`). One reactive store per window
-  (`lib/device.ts`) holds the connection, the lamp state, the settings and
-  the telemetry history; the components only render it and send commands.
+- **Vue front end** (`app/src`, Nuxt UI, [ADR
+  0018](decisions/0018-nuxt-ui-themes-languages.md)). Each window runs its
+  own Pinia stores (lamp, settings, telemetry, diagnostics, updates,
+  firmware, errors),
+  fed by the backend events through a typed layer (`ipc/`); the
+  components only render them and send commands. The types they exchange
+  with the backend are generated from the Rust types (ts-rs,
+  `bindings/`), and the messages of both languages live in `locales/`,
+  shared with the backend.
 - USB access stays in Rust: the macOS web view has no WebHID, and a
   backend-owned connection keeps working while every window is hidden.
 

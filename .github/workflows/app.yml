@@ -15,6 +15,7 @@ on:
       - "protocol/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - ".cargo/**"
       - ".github/workflows/app.yml"
 
 permissions:
@@ -62,9 +63,20 @@ jobs:
           npx biome ci .
           npm run build
 
+      # The tests write the TypeScript types of the front end again (ts-rs),
+      # into an emptied folder: a type renamed or removed in Rust leaves no
+      # file behind.
       - name: Rust workspace (app, shared crates, tools)
         working-directory: .
         run: |
           cargo fmt --all --check
           cargo clippy --workspace --all-targets -- -D warnings
+          rm -r app/src/bindings
           cargo test --workspace
+
+      # A changed, new or missing file fails the check.
+      - name: TypeScript types up to date with the Rust types
+        working-directory: .
+        run: |
+          git status --porcelain -- app/src/bindings
+          test -z "$(git status --porcelain -- app/src/bindings)"

@@ -7,6 +7,7 @@
 
 mod device;
 mod firmware;
+mod i18n;
 mod settings;
 mod tray;
 mod updates;
@@ -15,17 +16,20 @@ mod windows;
 use device::{Connection, DeviceHandle};
 use disled_protocol::{Command, SetState};
 use firmware::{FirmwareState, FirmwareStatus};
+use i18n::{Locale, LocaleState};
 use serde::Deserialize;
-use settings::{Settings, SettingsPatch, SettingsState};
+use settings::{Language, Settings, SettingsPatch, SettingsState};
 use tauri::{AppHandle, Emitter, Manager, RunEvent, State, WindowEvent};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_opener::OpenerExt;
+use tray::TrayState;
 use updates::{UpdateState, UpdateStatus};
 
 /// Argument of the login item: started at login, the app stays in the tray.
 const AUTOSTART_ARG: &str = "--autostart";
 
 const EVENT_SETTINGS: &str = "settings-changed";
+const EVENT_LOCALE: &str = "locale-changed";
 
 /// Current connection, for a frontend that starts after the first event.
 #[tauri::command]
@@ -53,7 +57,8 @@ fn settings_get(settings: State<'_, SettingsState>) -> Settings {
     settings.get()
 }
 
-/// Changes settings, saves them, and applies what changed to the lamp.
+/// Changes settings, saves them, and applies what changed to the app and to
+/// the lamp.
 #[tauri::command]
 fn settings_set(
     app: AppHandle,
@@ -65,6 +70,12 @@ fn settings_set(
     settings::save(&app, settings)?;
     // Every window keeps its own copy: tell them all.
     let _ = app.emit(EVENT_SETTINGS, settings);
+    if patch.color_mode.is_some() {
+        app.set_theme(settings.color_mode.theme());
+    }
+    if patch.language.is_some() {
+        apply_language(&app, settings.language);
+    }
     if device.connection().connected {
         if patch.brightness_mode.is_some() || patch.manual_level.is_some() {
             device.send(Command::SetState(SetState {
@@ -80,6 +91,23 @@ fn settings_set(
         }
     }
     Ok(settings)
+}
+
+/// Puts the tray and the window titles in the language of the setting, and
+/// tells the windows when it changes.
+fn apply_language(app: &AppHandle, language: Language) {
+    let locale = Locale::of(language);
+    if app.state::<LocaleState>().replace(locale) != locale {
+        tray::relabel(app, locale);
+        windows::retitle(app, locale);
+        let _ = app.emit(EVENT_LOCALE, locale);
+    }
+}
+
+/// The language of the app now, for a window that starts.
+#[tauri::command]
+fn locale_get(locale: State<'_, LocaleState>) -> Locale {
+    locale.get()
 }
 
 #[tauri::command]
@@ -150,8 +178,22 @@ async fn open_lamp_update(app: AppHandle) {
     windows::open_lamp_update(&app);
 }
 
+/// The popup measures its content and asks for that height; it gets the
+/// height that fits its minimum and the screen.
+#[tauri::command]
+fn popup_resize(app: AppHandle, height: f64) -> f64 {
+    windows::resize_popup(&app, height)
+}
+
+/// Escape in the popup.
+#[tauri::command]
+fn popup_hide(app: AppHandle) {
+    windows::hide_popup(&app);
+}
+
 /// Pages the windows may open in the browser.
 #[derive(Deserialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(rename_all = "snake_case")]
 enum Link {
     /// The tool that installs the WinUSB driver of the lamp's bootloader.
@@ -179,13 +221,14 @@ fn quit(app: AppHandle) {
 /// Loads the settings; at the very first launch of an installed app, turns
 /// on start at login (never for `tauri dev`, which would register the debug
 /// executable).
-fn init_settings(app: &AppHandle) {
+fn init_settings(app: &AppHandle) -> Settings {
     let mut settings = settings::load(app);
     if !settings.autostart_initialized && !cfg!(debug_assertions) {
         let _ = app.autolaunch().enable();
         settings.autostart_initialized = true;
     }
     let _ = settings::save(app, settings);
+    settings
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -208,6 +251,8 @@ pub fn run() {
         // Used from Rust only (open_link): no window permission.
         .plugin(tauri_plugin_opener::init())
         .manage(SettingsState::default())
+        .manage(LocaleState::default())
+        .manage(TrayState::default())
         .manage(windows::PopupState::default())
         .manage(UpdateState::default())
         .manage(FirmwareState::default())
@@ -217,8 +262,11 @@ pub fn run() {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let handle = app.handle().clone();
-            init_settings(&handle);
-            tray::create(&handle)?;
+            let settings = init_settings(&handle);
+            handle.set_theme(settings.color_mode.theme());
+            let locale = Locale::of(settings.language);
+            handle.state::<LocaleState>().replace(locale);
+            tray::create(&handle, locale)?;
             if let Some(popup) = app.get_webview_window(windows::POPUP) {
                 let owner = handle.clone();
                 popup.on_window_event(move |event| {
@@ -240,6 +288,7 @@ pub fn run() {
             save_csv,
             settings_get,
             settings_set,
+            locale_get,
             autostart_get,
             autostart_set,
             update_status,
@@ -251,6 +300,8 @@ pub fn run() {
             firmware_cancel,
             open_diagnostics,
             open_lamp_update,
+            popup_resize,
+            popup_hide,
             open_link,
             quit
         ])

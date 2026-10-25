@@ -72,6 +72,7 @@ struct GitHubAsset {
 
 /// Where a lamp update stands, shown by the update window.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 #[serde(tag = "step", rename_all = "snake_case")]
 pub enum Flash {
     #[default]
@@ -107,6 +108,7 @@ pub enum Flash {
 
 /// What the popup and the update window show about firmware updates.
 #[derive(Debug, Clone, Default, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 pub struct FirmwareStatus {
     /// A check is running.
     pub checking: bool,

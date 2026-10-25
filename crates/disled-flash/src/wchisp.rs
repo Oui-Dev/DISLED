@@ -40,6 +40,7 @@ pub enum Probe {
 
 /// Steps of `wchisp flash`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 #[serde(rename_all = "snake_case")]
 pub enum Stage {
     Erasing,

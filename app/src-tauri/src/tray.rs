@@ -4,12 +4,15 @@
 //! The menu bar (macOS) or notification area (Windows) icon: a square in
 //! the color of the lamp, a short menu, and the click that opens the popup.
 
+use std::sync::Mutex;
+
 use disled_protocol::LampColor;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Runtime};
+use tauri::{AppHandle, Manager, Runtime};
 
+use crate::i18n::{Locale, LocaleState};
 use crate::windows;
 
 const TRAY_ID: &str = "disled";
@@ -21,31 +24,31 @@ const HALF: f32 = 14.0;
 const CORNER: f32 = 8.0;
 
 /// What the icon shows.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Look {
+    #[default]
     NoLamp,
     Off,
     On(LampColor),
 }
 
 impl Look {
-    pub fn tooltip(self) -> String {
-        match self {
-            Look::NoLamp => "DISLED: no lamp".into(),
-            Look::Off => "DISLED: off".into(),
-            Look::On(color) => format!("DISLED: {}", color_name(color)),
-        }
+    pub fn tooltip(self, locale: Locale) -> String {
+        let key = match self {
+            Look::NoLamp => "noLamp",
+            Look::Off => "off",
+            Look::On(LampColor::Green) => "green",
+            Look::On(LampColor::Orange) => "orange",
+            Look::On(LampColor::Red) => "red",
+            Look::On(LampColor::WarmWhite) => "warm_white",
+        };
+        locale.t(&format!("tray.tooltip.{key}"))
     }
 }
 
-fn color_name(color: LampColor) -> &'static str {
-    match color {
-        LampColor::Green => "green",
-        LampColor::Orange => "orange",
-        LampColor::Red => "red",
-        LampColor::WarmWhite => "warm white",
-    }
-}
+/// The look on show, to word the tooltip again when the language changes.
+#[derive(Default)]
+pub struct TrayState(Mutex<Look>);
 
 fn color_rgb(color: LampColor) -> [u8; 3] {
     match color {
@@ -111,19 +114,27 @@ pub fn render(look: Look) -> Image<'static> {
     Image::new_owned(rgba, SIZE, SIZE)
 }
 
+fn menu<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<Menu<R>> {
+    let item =
+        |id: &str| MenuItem::with_id(app, id, locale.t(&format!("tray.{id}")), true, None::<&str>);
+    Menu::with_items(
+        app,
+        &[
+            &item("open")?,
+            &item("diagnostics")?,
+            &PredefinedMenuItem::separator(app)?,
+            &item("quit")?,
+        ],
+    )
+}
+
 /// Creates the icon and its menu. On Linux the click events do not exist:
 /// the menu gives access to the popup.
-pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open DISLED", true, None::<&str>)?;
-    let diagnostics = MenuItem::with_id(app, "diagnostics", "Diagnostics…", true, None::<&str>)?;
-    let separator = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit DISLED", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &diagnostics, &separator, &quit])?;
-
+pub fn create<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<()> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(render(Look::NoLamp))
-        .tooltip(Look::NoLamp.tooltip())
-        .menu(&menu)
+        .tooltip(Look::NoLamp.tooltip(locale))
+        .menu(&menu(app, locale)?)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "open" => windows::show_popup(app),
@@ -148,9 +159,28 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
 
 /// Shows the lamp state in the icon and its tooltip.
 pub fn show<R: Runtime>(app: &AppHandle<R>, look: Look) {
+    if let Ok(mut shown) = app.state::<TrayState>().0.lock() {
+        *shown = look;
+    }
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
         let _ = tray.set_icon(Some(render(look)));
-        let _ = tray.set_tooltip(Some(look.tooltip()));
+        let _ = tray.set_tooltip(Some(look.tooltip(app.state::<LocaleState>().get())));
+    }
+}
+
+/// Words the menu and the tooltip in another language.
+pub fn relabel<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+    let look = app
+        .state::<TrayState>()
+        .0
+        .lock()
+        .map(|look| *look)
+        .unwrap_or_default();
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        if let Ok(menu) = menu(app, locale) {
+            let _ = tray.set_menu(Some(menu));
+        }
+        let _ = tray.set_tooltip(Some(look.tooltip(locale)));
     }
 }
 
@@ -181,5 +211,29 @@ mod tests {
         assert!(pixel(&image, 16, 3)[3] > 200, "the outline is drawn");
         let faint = render(Look::NoLamp);
         assert!(pixel(&faint, 16, 3)[3] < pixel(&image, 16, 3)[3]);
+    }
+
+    #[test]
+    fn every_look_has_a_tooltip_in_every_language() {
+        let looks = [
+            Look::NoLamp,
+            Look::Off,
+            Look::On(LampColor::Green),
+            Look::On(LampColor::Orange),
+            Look::On(LampColor::Red),
+            Look::On(LampColor::WarmWhite),
+        ];
+        for locale in [Locale::En, Locale::Fr] {
+            for look in looks {
+                assert!(
+                    look.tooltip(locale).starts_with("DISLED"),
+                    "{look:?} in {locale:?}"
+                );
+            }
+        }
+        assert_eq!(
+            Look::On(LampColor::WarmWhite).tooltip(Locale::En),
+            "DISLED: warm white"
+        );
     }
 }

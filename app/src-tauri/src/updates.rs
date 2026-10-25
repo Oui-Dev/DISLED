@@ -29,6 +29,7 @@ const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 3600);
 
 /// What the popup shows about updates.
 #[derive(Debug, Clone, Default, Serialize)]
+#[cfg_attr(test, derive(ts_rs::TS), ts(export))]
 pub struct UpdateStatus {
     /// A check is running.
     pub checking: bool,

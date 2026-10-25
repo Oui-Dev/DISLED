@@ -1,6 +1,7 @@
 # 0013 — A tray app with a popup
 
-- Status: Accepted
+- Status: Accepted, amended by [0018](0018-nuxt-ui-themes-languages.md)
+  (French as well as English, color modes)
 - Date: 2026-10-21
 
 ## Context

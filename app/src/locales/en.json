@@ -1,0 +1,272 @@
+{
+  "common": {
+    "settings": "Settings",
+    "back": "Back",
+    "quit": "Quit",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "status": {
+    "noLamp": "No lamp connected",
+    "connecting": "Connecting…",
+    "connected": "Lamp connected"
+  },
+  "popup": {
+    "lampPage": "Lamp"
+  },
+  "lamp": {
+    "unplugged": "Plug the lamp into this computer. The settings below will apply to it.",
+    "colors": {
+      "legend": "Lamp color",
+      "off": "Off",
+      "green": "Green",
+      "orange": "Orange",
+      "red": "Red",
+      "warm_white": "Warm white"
+    },
+    "brightness": {
+      "title": "Brightness",
+      "auto": "Auto",
+      "darker": "Darker",
+      "brighter": "Brighter",
+      "correctionLabel": "Correction of the automatic brightness",
+      "fixed": "Fixed level",
+      "follows": "Follows the room light",
+      "correction": "correction {value}",
+      "noCorrection": "no correction",
+      "needsFirmware": "Follows the room light; the correction needs a lamp firmware update"
+    }
+  },
+  "settings": {
+    "autostart": "Start DISLED when I log in",
+    "checkUpdates": "Check for updates every day",
+    "colorMode": "Appearance",
+    "colorModes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": "Language",
+    "systemLanguage": "System",
+    "diagnostics": "Open diagnostics…",
+    "versions": "App {app} · lamp firmware {firmware}",
+    "more": "More actions"
+  },
+  "updates": {
+    "install": "Install and restart",
+    "updateLamp": "Update the lamp…",
+    "check": "Check for updates",
+    "downloading": "Downloading {version}… {progress}",
+    "checking": "Checking for updates…",
+    "error": "Update error: {detail}",
+    "available": "DISLED {version} is available.",
+    "upToDate": "Up to date (checked {date}).",
+    "lampError": "Lamp firmware check error: {detail}",
+    "lampAvailable": "Lamp firmware {version} is available.",
+    "reinstall": "Reinstall the lamp firmware…",
+    "toApp": "Update to {version}",
+    "toLamp": "Update the lamp"
+  },
+  "diagnostics": {
+    "connected": "Connected",
+    "firmware": "Firmware {version}",
+    "debugBuild": "debug build",
+    "serial": "Serial {serial}",
+    "resetCause": "Reset cause: {cause}",
+    "restart": "Restart",
+    "restartTitle": "Restart the lamp firmware?",
+    "restartDescription": "The lamp restarts and comes back green in a few seconds.",
+    "crashed": "The firmware crashed before its last restart: {fault}.",
+    "assertion": "assertion failed at line {line}, called from {caller}",
+    "trap": "mcause {mcause}, mepc {mepc}",
+    "trapValue": "mcause {mcause}, mepc {mepc}, mtval {mtval}",
+    "lamp": "Lamp",
+    "waiting": "Waiting for the lamp…",
+    "state": "State #{seq} · last change: {source} · USB {link}",
+    "noLamp": "No lamp connected."
+  },
+  "health": {
+    "title": "Health",
+    "issues": "{n} thing to check | {n} things to check",
+    "issue": "to check",
+    "unsupported": "This lamp firmware does not report diagnostics.",
+    "reading": "Reading…",
+    "stability": "Stability",
+    "boots": "Boots",
+    "watchdogResets": "Watchdog resets",
+    "faults": "Crashes",
+    "lastFault": "Last: {fault}",
+    "stackMargin": "Stack margin",
+    "bytes": "{n} byte | {n} bytes",
+    "sensors": "Sensors",
+    "lightSensor": "Light sensor",
+    "present": "Present",
+    "absent": "Missing",
+    "probes": "{n} probe | {n} probes",
+    "i2cErrors": "{n} I2C error | {n} I2C errors",
+    "touchSamplesLost": "Touch samples lost",
+    "rebaselines": "{n} re-baseline | {n} re-baselines",
+    "usbClock": "USB and clock",
+    "usbSuspends": "USB suspends",
+    "crystal": "Crystal",
+    "crystalRunning": "Running",
+    "crystalFailed": "Failed",
+    "brightness": "Brightness",
+    "correction": "Automatic correction",
+    "uptime": "Uptime"
+  },
+  "selfTest": {
+    "title": "Self-test",
+    "unsupported": "This lamp firmware has no self-test.",
+    "instructions": "The lamp shows red, green, blue and warm white (check them), then glows blue: touch the lid within 10 s.",
+    "run": "Run the self-test",
+    "running": "Running…",
+    "lightSensor": "Light sensor",
+    "touchIdle": "Touch at rest",
+    "touchPressed": "Touch on the lid",
+    "completed": "Test completed",
+    "baseline": "baseline {value}",
+    "peak": "largest drop {value}",
+    "passed": "passed",
+    "failed": "failed",
+    "pending": "not run yet"
+  },
+  "telemetry": {
+    "title": "Telemetry",
+    "period": "Period",
+    "off": "Off",
+    "touch": "Touch",
+    "light": "Light",
+    "ledCurrent": "LED current",
+    "level": "Level",
+    "duty": "R/G/B {duty}",
+    "touchChart": "Touch measurement",
+    "touchAverage": "touch average",
+    "baseline": "baseline",
+    "touchDescription": "TouchKey counts of the last samples, and the baseline the detection compares them with.",
+    "deltaChart": "Drop below the baseline",
+    "deltaSeries": "drop below baseline",
+    "deltaDescription": "How far the touch measurement falls below its baseline, per mille.",
+    "lightChart": "Ambient light",
+    "lightSeries": "ambient light",
+    "lightDescription": "The light the sensor reads, in lux.",
+    "record": "Record",
+    "stop": "Stop",
+    "rows": "{n} row | {n} rows",
+    "export": "Export CSV…",
+    "saveTitle": "Save the recording",
+    "permille": "{value} ‰",
+    "lux": "{value} lx",
+    "unsupported": "This lamp firmware sends no telemetry.",
+    "stopped": "Telemetry is off",
+    "stoppedHint": "Choose a period to stream measurements from the lamp.",
+    "waiting": "Waiting for measurements…",
+    "drop": "{value} drop",
+    "raw": "raw {value}",
+    "milliamps": "{value} mA",
+    "limit": "limit {value} mA"
+  },
+  "lampUpdate": {
+    "title": "Lamp update",
+    "noFirmware": "No firmware to install.",
+    "notFound": "No firmware found: {detail}",
+    "noLamp": "No lamp connected. A lamp that does not start can still get firmware {version} through its update mode.",
+    "connecting": "Connecting to the lamp…",
+    "newer": "Firmware {current} → {next}",
+    "current": "The lamp runs firmware {version}.",
+    "already": "The lamp already runs firmware {version}.",
+    "intro": "It takes about a minute. You will open the lamp: its update mode starts with two buttons on its board, {boot} and {reset}. Keep the lamp plugged into this computer.",
+    "steps": {
+      "download": "Download the firmware",
+      "bootloader": "Put the lamp in update mode",
+      "install": "Install the firmware",
+      "restart": "Restart the lamp"
+    },
+    "downloading": "Downloading firmware {version} and checking its signature…",
+    "restartingInUpdateMode": "The lamp restarts in update mode…",
+    "buttons": "Open the lamp. Hold {boot}, press and release {reset}, then release {boot}.",
+    "waitingForBootloader": "Waiting for the lamp in update mode…",
+    "driver": {
+      "intro": "Windows needs a driver for the update mode, once:",
+      "download": "Download {zadig} and run it.",
+      "options": "In {options}, choose {listAll}.",
+      "select": "Select the device whose USB ID is {id} (or {otherId}).",
+      "install": "Choose {winusb}, then {install} (or {replace}).",
+      "waiting": "The update goes on by itself once the driver is installed."
+    },
+    "noPermission": "This computer does not let the app open the lamp in update mode. Reinstall the DISLED package (it adds the access rule), then start the update mode again.",
+    "severalBootloaders": "Several devices are in update mode. Unplug them all but the lamp.",
+    "otherChip": "A device that is not a DISLED lamp is in update mode ({chip}). Unplug it.",
+    "stages": {
+      "erasing": "Erasing the old firmware…",
+      "writing": "Writing the new firmware…",
+      "verifying": "Checking what was written…",
+      "restarting": "Restarting the lamp…"
+    },
+    "doNotUnplug": "Do not unplug the lamp.",
+    "waitingForLamp": "The lamp starts its new firmware: it takes a few seconds.",
+    "done": "Done: the lamp runs firmware {version}. You can put it back together.",
+    "failed": "The update stopped: {detail}",
+    "notDamaged": "The lamp is not damaged: its update mode always works. Try again, or follow the {guide}.",
+    "guide": "flashing guide",
+    "start": "Start the update",
+    "reinstall": "Install it again",
+    "retry": "Try again"
+  },
+  "errors": {
+    "backend": "Error: {detail}",
+    "rejected": "The lamp rejected command {command}: {error}",
+    "unreadable": "Unreadable message from the lamp: {detail}"
+  },
+  "enums": {
+    "protocolError": {
+      "unknown_command": "unknown command",
+      "bad_length": "wrong length",
+      "bad_value": "invalid value",
+      "busy": "busy"
+    },
+    "resetCause": {
+      "unknown": "unknown",
+      "power_on": "power on",
+      "pin": "reset pin",
+      "software": "software",
+      "watchdog": "watchdog",
+      "window_watchdog": "window watchdog",
+      "low_power": "low power"
+    },
+    "changeSource": {
+      "boot": "start-up",
+      "touch": "touch",
+      "host": "this computer",
+      "auto_brightness": "automatic brightness",
+      "usb": "USB"
+    },
+    "usbLink": {
+      "unconfigured": "not configured",
+      "configured": "configured",
+      "suspended": "suspended"
+    },
+    "touchState": {
+      "calibrating": "calibrating",
+      "idle": "idle",
+      "pressed": "pressed"
+    }
+  },
+  "tray": {
+    "open": "Open DISLED",
+    "diagnostics": "Diagnostics…",
+    "quit": "Quit DISLED",
+    "tooltip": {
+      "noLamp": "DISLED: no lamp",
+      "off": "DISLED: off",
+      "green": "DISLED: green",
+      "orange": "DISLED: orange",
+      "red": "DISLED: red",
+      "warm_white": "DISLED: warm white"
+    }
+  },
+  "window": {
+    "diagnostics": "DISLED diagnostics",
+    "lampUpdate": "DISLED lamp update"
+  }
+}
