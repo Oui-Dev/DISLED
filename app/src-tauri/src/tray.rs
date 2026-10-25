@@ -158,9 +158,14 @@ pub fn create(app: &AppHandle, locale: Locale) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Shows the lamp state in the icon and its tooltip.
+/// Shows the lamp state in the icon and its tooltip. An unchanged look is
+/// skipped, since in automatic brightness the lamp reports its level up to
+/// twice a second.
 pub fn show(app: &AppHandle, look: Look) {
     if let Ok(mut shown) = app.state::<TrayState>().0.lock() {
+        if *shown == look {
+            return;
+        }
         *shown = look;
     }
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
