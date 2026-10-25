@@ -3,7 +3,10 @@
 #
 # One-off (ADR 0019): releases the hardware designs made before the
 # hardware releases, oldest first, each from the commit that brought it.
-# Run it once by hand on main, then delete this file.
+# PCB 0.1.0 to 1.0.0 went out on its first run; the workflow token could
+# not tag the commit of enclosure 0.1.0, whose workflow files differ from
+# main's. Push the tag enclosure-v0.1.0 (d8a4430) by hand, run this once
+# by hand on main, then delete this file.
 name: hardware backfill
 
 on: workflow_dispatch
@@ -12,45 +15,7 @@ permissions:
   contents: write
 
 jobs:
-  pcb-0-1-0:
-    uses: ./.github/workflows/hardware-release.yml
-    with:
-      design: pcb
-      version: 0.1.0
-      prerelease: true
-      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92 # the boards v1 to v4
-      files: hardware/easyeda/v1_ProPrj_connected_status_light_2026-10-03.epro2
-
-  pcb-0-2-0:
-    needs: pcb-0-1-0
-    uses: ./.github/workflows/hardware-release.yml
-    with:
-      design: pcb
-      version: 0.2.0
-      prerelease: true
-      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92
-      files: hardware/easyeda/v2_ProPrj_connected_status_light_2026-10-06.epro2
-
-  pcb-0-3-0:
-    needs: pcb-0-2-0
-    uses: ./.github/workflows/hardware-release.yml
-    with:
-      design: pcb
-      version: 0.3.0
-      prerelease: true
-      ref: d5e8749603c0b48a2b3b314eaaab88630da2aa92
-      files: hardware/easyeda/v3_ProPrj_connected_status_light_2026-10-07.epro2
-
-  # v4 and its STEP model, from main.
-  pcb-1-0-0:
-    needs: pcb-0-3-0
-    uses: ./.github/workflows/hardware-release.yml
-    with:
-      design: pcb
-      version: 1.0.0
-
   enclosure-0-1-0:
-    needs: pcb-1-0-0
     uses: ./.github/workflows/hardware-release.yml
     with:
       design: enclosure

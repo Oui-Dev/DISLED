@@ -36,6 +36,8 @@ on:
       prerelease:
         type: boolean
         default: false
+      # The workflow token may not tag a commit whose workflow files differ
+      # from main's (HTTP 403): push the tag of such a commit by hand first.
       ref:
         description: Commit to tag and to take the files from, instead of the one that runs
         type: string
@@ -74,9 +76,15 @@ jobs:
             echo "::error::$VERSION is not X.Y.Z."
             exit 1
           fi
+          # A tag pushed by hand (ref input above) must point at the commit.
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null &&
+            [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse "$REF^{commit}")" ]; then
+            echo "::error::$TAG points at another commit."
+            exit 1
+          fi
           # gh finds the drafts too: delete one left by a failed run.
-          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null || gh release view "$TAG" > /dev/null 2>&1; then
-            echo "::error::$TAG exists."
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::error::$TAG already has a release."
             exit 1
           fi
 
