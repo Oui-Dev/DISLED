@@ -10,7 +10,7 @@ use disled_protocol::{
     self as protocol, Command, DecodeError, Message, PAYLOAD_SIZE, REPORT_ID_COMMAND,
     REPORT_ID_MESSAGE, USB_VENDOR_ID,
 };
-use hidapi::{HidApi, HidDevice};
+use hidapi::{DeviceInfo, HidApi, HidDevice};
 
 const READ_SLICE_MS: i32 = 20;
 
@@ -26,12 +26,15 @@ fn scan(api: &mut HidApi) -> bool {
     api.reset_devices().is_ok() && api.add_devices(USB_VENDOR_ID, 0).is_ok()
 }
 
+/// The HID interface of a lamp among the devices of the last scan.
+fn lamp_interface(api: &HidApi) -> Option<&DeviceInfo> {
+    api.device_list()
+        .find(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))
+}
+
 /// Tells whether a lamp is connected.
 pub fn present(api: &mut HidApi) -> bool {
-    scan(api)
-        && api
-            .device_list()
-            .any(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))
+    scan(api) && lamp_interface(api).is_some()
 }
 
 impl Lamp {
@@ -40,10 +43,7 @@ impl Lamp {
         if !scan(api) {
             return None;
         }
-        let info = api
-            .device_list()
-            .find(|d| protocol::is_lamp_interface(d.vendor_id(), d.product_id(), d.usage_page()))?;
-        let device = info.open_device(api).ok()?;
+        let device = lamp_interface(api)?.open_device(api).ok()?;
         Some(Self { device, seq: 0 })
     }
 

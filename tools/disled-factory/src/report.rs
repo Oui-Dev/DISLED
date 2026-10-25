@@ -20,11 +20,13 @@ pub enum Check {
     Fail,
 }
 
-impl Check {
-    pub fn from(passed: bool) -> Self {
+impl From<bool> for Check {
+    fn from(passed: bool) -> Self {
         if passed { Check::Pass } else { Check::Fail }
     }
+}
 
+impl Check {
     fn as_str(self) -> &'static str {
         match self {
             Check::NotRun => "",

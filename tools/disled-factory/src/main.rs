@@ -45,11 +45,11 @@ struct Args {
 }
 
 /// The firmware of the session.
-pub struct Firmware {
-    pub path: PathBuf,
+struct Firmware {
+    path: PathBuf,
     /// The version the lamps must report; None for an unsigned firmware,
     /// which is not checked.
-    pub version: Option<Version>,
+    version: Option<Version>,
 }
 
 /// Reads the firmware and, unless `unsigned`, checks its signature.
@@ -68,7 +68,7 @@ fn load_firmware(path: &Path, unsigned: bool) -> Result<Firmware, String> {
     let version = firmware::version_of(name).ok_or_else(|| {
         format!("{name} is not a release build: give a disled-fw-X.Y.Z.hex from a release")
     })?;
-    let signature_path = path.with_file_name(format!("{name}.sig"));
+    let signature_path = path.with_file_name(firmware::signature_name(&version));
     let signature = std::fs::read_to_string(&signature_path).map_err(|e| {
         format!(
             "cannot read the signature {} ({e}): download it from the release, next to the firmware",
