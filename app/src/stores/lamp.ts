@@ -76,16 +76,12 @@ export const useLampStore = defineStore('lamp', () => {
     // Telemetry, diagnostics and self-test results go to their own stores.
     await on('device-message', ({ message }) => {
       switch (message.kind) {
-        case 'info': {
-          const { kind: _kind, ...rest } = message;
-          info.value = rest;
+        case 'info':
+          info.value = message;
           break;
-        }
-        case 'state': {
-          const { kind: _kind, ...rest } = message;
-          receiveState(rest);
+        case 'state':
+          receiveState(message);
           break;
-        }
         case 'error':
           errors.report({ kind: 'rejected', command: message.command, error: message.error });
           break;

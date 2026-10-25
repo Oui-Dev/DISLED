@@ -112,13 +112,15 @@ To add a language:
 | `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                    |
 | `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, download, update steps                |
 | `src-tauri/src/main.rs`             | Plugins, start-up, Tauri commands                                                   |
+| `src/App.vue`                       | One root for every window: its view, its stores, its color mode and language        |
 | `src/views/`                        | One view per window: popup, Diagnostics, lamp update                                |
 | `src/components/`                   | Their parts, by domain: `lamp/`, `popup/`, `diagnostics/`, `update/`                |
 | `src/stores/`                       | Pinia stores: lamp, settings, telemetry, diagnostics, updates, firmware, errors     |
 | `src/ipc/`                          | Typed Tauri commands and events                                                     |
 | `src/bindings/`                     | Types generated from the Rust ones (ts-rs, `npm run bindings`)                      |
 | `src/locales/`, `src/i18n.ts`       | Messages in English and French (shared with the backend), vue-i18n setup            |
-| `src/composables/`, `src/utils/`    | Appearance, popup height, error wording; versions, update steps, CSV, faults        |
+| `src/composables/`                  | Popup height, update status, error and fault wording                                |
+| `src/utils/`                        | Lamp colors and limits, Health tab checks, update steps, CSV, charts                |
 | `src/assets/css/`                   | Tailwind, Nuxt UI, the font and the palettes                                        |
 | `src-tauri/tauri.updater.conf.json` | Release builds: also create the signed update files                                 |
 | `src-tauri/tauri.wchisp.conf.json`  | Release builds: bundle wchisp, its license and notice (`src-tauri/third-party`)     |

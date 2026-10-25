@@ -14,20 +14,18 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } f
 import { useI18n } from 'vue-i18n';
 import { useErrorText } from '@/composables/useErrorText';
 import { usePopupAutoSize } from '@/composables/usePopupAutoSize';
+import { useUpdateStatus } from '@/composables/useUpdateStatus';
 import { popupHide, quit } from '@/ipc/commands';
 import { useErrorStore } from '@/stores/errors';
-import { useFirmwareStore } from '@/stores/firmware';
 import { useLampStore } from '@/stores/lamp';
-import { useUpdatesStore } from '@/stores/updates';
 
 type Page = 'lamp' | 'settings';
 
 const { t } = useI18n();
 const lamp = useLampStore();
-const updates = useUpdatesStore();
-const firmware = useFirmwareStore();
 const errors = useErrorStore();
 const errorText = useErrorText();
+const { offerLine } = useUpdateStatus();
 
 // The page, then the footer. The window fits both, and the footer stays at
 // the bottom of a window taller than the content.
@@ -83,15 +81,6 @@ const status = computed(() => {
   }
   return lamp.state ? t('status.connected') : t('status.connecting');
 });
-
-/** The app first, since a new firmware may need a new app. */
-const footerUpdate = computed(() => {
-  const available = updates.status.available;
-  if (available) {
-    return t('updates.toApp', { version: available });
-  }
-  return firmware.updateForLamp ? t('updates.toLamp') : null;
-});
 </script>
 
 <template>
@@ -107,7 +96,7 @@ const footerUpdate = computed(() => {
         <p v-if="!lamp.connection.connected" class="text-xs text-muted">
           {{ t('lamp.unplugged') }}
         </p>
-        <LampColorPicker labels />
+        <LampColorPicker />
         <LampBrightness />
       </section>
 
@@ -152,13 +141,13 @@ const footerUpdate = computed(() => {
         {{ page === 'lamp' ? t('common.settings') : t('common.back') }}
       </UButton>
       <UButton
-        v-if="footerUpdate && page === 'lamp'"
+        v-if="offerLine && page === 'lamp'"
         variant="link"
         size="sm"
         class="px-0 font-semibold"
         @click="show('settings')"
       >
-        {{ footerUpdate }}
+        {{ offerLine }}
       </UButton>
       <UButton
         color="neutral"

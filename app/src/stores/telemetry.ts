@@ -103,8 +103,7 @@ export const useTelemetryStore = defineStore('telemetry', () => {
   async function start(): Promise<void> {
     await on('device-message', ({ message }) => {
       if (message.kind === 'telemetry') {
-        const { kind: _kind, ...sample } = message;
-        receive(sample);
+        receive(message);
       }
     });
     // Once the samples have a listener.

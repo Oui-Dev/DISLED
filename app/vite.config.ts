@@ -1,15 +1,13 @@
-import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import ui from '@nuxt/ui/vite';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 
-const host = process.env.TAURI_DEV_HOST;
 const path = (relative: string) => fileURLToPath(new URL(relative, import.meta.url));
 
 // https://vite.dev/config/
-export default defineConfig(() => ({
+export default defineConfig({
   plugins: [
     vue(),
     ui({
@@ -61,17 +59,9 @@ export default defineConfig(() => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
-    hmr: host
-      ? {
-          protocol: 'ws',
-          host,
-          port: 1421,
-        }
-      : undefined,
     watch: {
       // Cargo rebuilds the backend itself.
       ignored: ['**/src-tauri/**'],
     },
   },
-}));
+});

@@ -26,10 +26,8 @@ interface Events {
   'firmware-status': FirmwareStatus;
 }
 
-export type EventName = keyof Events;
-
 /** Calls `handler` with the payload of each `event`. */
-export function on<E extends EventName>(
+export function on<E extends keyof Events>(
   event: E,
   handler: (payload: Events[E]) => void,
 ): Promise<UnlistenFn> {

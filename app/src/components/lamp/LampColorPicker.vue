@@ -13,9 +13,6 @@ import type { LampColor } from '@/bindings/LampColor';
 import { useLampStore } from '@/stores/lamp';
 import { LAMP_COLORS, SWATCH_COLORS } from '@/utils/lamp';
 
-/** Names under the swatches; without them, only screen readers get the names. */
-defineProps<{ labels?: boolean }>();
-
 type Choice = LampColor | 'off';
 
 const { t } = useI18n();
@@ -68,7 +65,7 @@ function select(choice: Choice): void {
         :class="{ off: item.value === 'off' }"
         :style="item.value === 'off' ? undefined : { background: SWATCH_COLORS[item.value] }"
       />
-      <span :class="labels ? 'max-w-full text-center leading-tight' : 'sr-only'">
+      <span class="max-w-full text-center leading-tight">
         {{ item.label }}
       </span>
     </template>

@@ -7,9 +7,9 @@
 -->
 <script setup lang="ts">
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { type Component, computed, defineAsyncComponent, onMounted } from 'vue';
-import { useAppearance } from '@/composables/useAppearance';
-import { nuxtUiLocales } from '@/i18n';
+import { useColorMode } from '@vueuse/core';
+import { type Component, computed, defineAsyncComponent, onMounted, watch, watchEffect } from 'vue';
+import { nuxtUiLocales, setLocale } from '@/i18n';
 import { useDiagnosticsStore } from '@/stores/diagnostics';
 import { useFirmwareStore } from '@/stores/firmware';
 import { useLampStore } from '@/stores/lamp';
@@ -40,9 +40,19 @@ const WINDOWS: Record<string, WindowSetup> = {
 
 const current = WINDOWS[getCurrentWebviewWindow().label] ?? WINDOWS.diagnostics;
 const settings = useSettingsStore();
-const nuxtUiLocale = computed(() => nuxtUiLocales[settings.locale]);
 
-useAppearance();
+// The color mode and the language of the settings, in this window. Nuxt UI
+// follows the `dark` class on <html>; the backend applies the color mode to
+// the window frames.
+const { store: colorMode } = useColorMode();
+watchEffect(() => {
+  const mode = settings.settings?.color_mode;
+  if (mode) {
+    colorMode.value = mode === 'system' ? 'auto' : mode;
+  }
+});
+watch(() => settings.locale, setLocale, { immediate: true });
+const nuxtUiLocale = computed(() => nuxtUiLocales[settings.locale]);
 
 onMounted(() => {
   for (const useStore of current.stores) {

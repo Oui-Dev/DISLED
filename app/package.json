@@ -7,10 +7,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "build": "vue-tsc && vite build",
     "tauri": "tauri",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "vue-tsc",
     "check": "biome check .",
     "fix": "biome check --write .",
     "bindings": "cargo test --workspace export_bindings"

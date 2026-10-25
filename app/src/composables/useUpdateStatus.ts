@@ -12,13 +12,16 @@ export function useUpdateStatus() {
   const updates = useUpdatesStore();
   const firmware = useFirmwareStore();
 
-  const app = computed(() => updates.status);
-  const installing = computed(() => app.value.progress !== null);
-  const checking = computed(() => app.value.checking || firmware.status.checking);
+  const installing = computed(() => updates.status.progress !== null);
+  const checking = computed(() => updates.status.checking || firmware.status.checking);
+  /** The update on offer: the app first, since a new firmware may need a new app. */
+  const offer = computed(() =>
+    updates.status.available ? 'app' : firmware.updateForLamp ? 'lamp' : null,
+  );
 
   /** The app: being installed, checked, failed, available or up to date; null before a check. */
   const appLine = computed(() => {
-    const { available, progress, error, checked_at } = app.value;
+    const { available, progress, error, checked_at } = updates.status;
     if (installing.value) {
       return t('updates.downloading', {
         version: available,
@@ -57,9 +60,17 @@ export function useUpdateStatus() {
       : null;
   });
 
+  /** The offer in a few words, for the link in the popup footer. */
+  const offerLine = computed(() => {
+    if (offer.value === 'app') {
+      return t('updates.toApp', { version: updates.status.available });
+    }
+    return offer.value === 'lamp' ? t('updates.toLamp') : null;
+  });
+
   function checkAll(): Promise<unknown> {
     return Promise.all([updates.check(), firmware.check()]);
   }
 
-  return { app, installing, checking, appLine, lampLine, checkAll };
+  return { installing, checking, offer, appLine, lampLine, offerLine, checkAll };
 }

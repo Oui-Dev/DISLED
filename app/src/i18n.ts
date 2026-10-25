@@ -12,7 +12,7 @@ import en from '@/locales/en.json';
 import fr from '@/locales/fr.json';
 
 /** English is the reference, so a message French lacks fails the typecheck. */
-export type MessageSchema = typeof en;
+type MessageSchema = typeof en;
 
 declare module 'vue-i18n' {
   // Typed keys for t() in every component.

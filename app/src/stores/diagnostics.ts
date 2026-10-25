@@ -41,12 +41,14 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
 
   // At once, then every REFRESH_MS, so that the Health tab and its badge stay
   // current whatever the tab on show.
-  const polling = useIntervalFn(() => void request(), REFRESH_MS, { immediate: false });
+  const polling = useIntervalFn(() => void request(), REFRESH_MS, {
+    immediate: false,
+    immediateCallback: true,
+  });
   watch(
     () => following.value && supported.value,
     (active) => {
       if (active) {
-        void request();
         polling.resume();
       } else {
         polling.pause();
@@ -65,17 +67,13 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
     });
     await on('device-message', ({ message }) => {
       switch (message.kind) {
-        case 'diagnostics': {
-          const { kind: _kind, ...rest } = message;
-          diagnostics.value = rest;
+        case 'diagnostics':
+          diagnostics.value = message;
           break;
-        }
-        case 'self_test_result': {
-          const { kind: _kind, ...rest } = message;
+        case 'self_test_result':
           selfTestRunning.value = false;
-          selfTestResult.value = rest;
+          selfTestResult.value = message;
           break;
-        }
         case 'error':
           if (message.command === COMMAND_SELF_TEST) {
             selfTestRunning.value = false;
@@ -87,5 +85,5 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
     following.value = true;
   }
 
-  return { diagnostics, selfTestRunning, selfTestResult, supported, startSelfTest, start };
+  return { diagnostics, selfTestRunning, selfTestResult, startSelfTest, start };
 });

@@ -107,9 +107,7 @@ const hint = computed(() => {
     return t('lamp.brightness.needsFirmware');
   }
   const correction =
-    value.value === 0
-      ? t('lamp.brightness.noCorrection')
-      : t('lamp.brightness.correction', { value: biasText.value });
+    value.value === 0 ? biasText.value : t('lamp.brightness.correction', { value: biasText.value });
   return `${t('lamp.brightness.follows')} · ${correction}`;
 });
 </script>

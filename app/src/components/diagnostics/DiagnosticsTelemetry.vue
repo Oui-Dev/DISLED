@@ -109,7 +109,7 @@ const charts = computed<
       {
         key: 'lux',
         label: t('telemetry.lightSeries'),
-        color: 'var(--color-yellow-500, #efb100)',
+        color: 'var(--color-yellow-500)',
         value: (s) => s.lux_centi / 100,
       },
     ],
