@@ -65,6 +65,20 @@ updates:
           - 'minor'
           - 'patch'
 
+  # Rust version of the workspace, in rust-toolchain.toml.
+  - package-ecosystem: 'rust-toolchain'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      timezone: 'UTC'
+    target-branch: 'main'
+    commit-message:
+      prefix: 'build'
+      include: 'scope'
+    labels:
+      - 'type:dependencies'
+      - 'service:app'
+
   # FIRMWARE build and check tools, PlatformIO and clang-format, through uv
   # in pyproject.toml and uv.lock. platformio.ini pins the PlatformIO
   # platform and the SDK by commit, and TinyUSB follows its releases by hand;

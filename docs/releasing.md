@@ -192,9 +192,10 @@ run `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 - Dependabot opens weekly update pull requests (`.github/dependabot.yml`)
   with Conventional Commit messages. `fix(deps)` covers what the app ships
   (npm production dependencies, Rust crates) and releases the app.
-  `chore(deps-dev)` (app tooling), `build(deps)` (firmware tools) and
-  `ci(deps)` (actions) release nothing. An update of the root `Cargo.lock`
-  alone belongs to no component and goes out with the next app release.
+  `chore(deps-dev)` (app tooling), `build(deps)` (firmware tools, Rust
+  version) and `ci(deps)` (actions) release nothing. An update of the root
+  `Cargo.lock` alone belongs to no component and goes out with the next app
+  release.
 - `protocol/`, `crates/`, `tools/`, `hardware/` and the root `Cargo.*`
   files belong to no component. A change there goes out with the component
   that the same commit touches, and a protocol change touches the firmware,
