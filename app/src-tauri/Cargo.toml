@@ -9,14 +9,8 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 
-[lib]
-# The `_lib` suffix keeps the library name distinct from the binary name
-# (https://github.com/rust-lang/cargo/issues/8519).
-name = "disled_app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = "2"
 
 [dependencies]
 disled-protocol = { path = "../../crates/disled-protocol" }

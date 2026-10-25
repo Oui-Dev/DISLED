@@ -11,7 +11,7 @@ use disled_protocol::LampColor;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Wry};
 
 use crate::i18n::{Locale, LocaleState};
 use crate::windows;
@@ -34,7 +34,7 @@ pub enum Look {
 }
 
 impl Look {
-    pub fn tooltip(self, locale: Locale) -> String {
+    fn tooltip(self, locale: Locale) -> String {
         let key = match self {
             Look::NoLamp => "noLamp",
             Look::Off => "off",
@@ -78,7 +78,7 @@ fn square(dx: f32, dy: f32, inset: f32) -> f32 {
 /// Renders the icon: a square in the lamp color with a darker rim, which
 /// keeps warm white visible on a light menu bar, a grey outline when the lamp
 /// is off, and a faint outline when no lamp is connected.
-pub fn render(look: Look) -> Image<'static> {
+fn render(look: Look) -> Image<'static> {
     let mut rgba = vec![0u8; (SIZE * SIZE * 4) as usize];
     let center = (SIZE as f32 - 1.0) / 2.0;
     for y in 0..SIZE {
@@ -115,7 +115,7 @@ pub fn render(look: Look) -> Image<'static> {
     Image::new_owned(rgba, SIZE, SIZE)
 }
 
-fn menu<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<Menu<R>> {
+fn menu(app: &AppHandle, locale: Locale) -> tauri::Result<Menu<Wry>> {
     let item =
         |id: &str| MenuItem::with_id(app, id, locale.t(&format!("tray.{id}")), true, None::<&str>);
     Menu::with_items(
@@ -131,7 +131,7 @@ fn menu<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<Menu<R>
 
 /// Creates the icon and its menu. Linux has no click events, so the menu
 /// gives access to the popup.
-pub fn create<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<()> {
+pub fn create(app: &AppHandle, locale: Locale) -> tauri::Result<()> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(render(Look::NoLamp))
         .tooltip(Look::NoLamp.tooltip(locale))
@@ -159,7 +159,7 @@ pub fn create<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<(
 }
 
 /// Shows the lamp state in the icon and its tooltip.
-pub fn show<R: Runtime>(app: &AppHandle<R>, look: Look) {
+pub fn show(app: &AppHandle, look: Look) {
     if let Ok(mut shown) = app.state::<TrayState>().0.lock() {
         *shown = look;
     }
@@ -170,7 +170,7 @@ pub fn show<R: Runtime>(app: &AppHandle<R>, look: Look) {
 }
 
 /// Words the menu and the tooltip in another language.
-pub fn relabel<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+pub fn relabel(app: &AppHandle, locale: Locale) {
     let look = app
         .state::<TrayState>()
         .0

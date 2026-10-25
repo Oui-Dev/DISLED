@@ -23,9 +23,9 @@ use crate::tray::{self, Look};
 const SCAN_INTERVAL: Duration = Duration::from_millis(1000);
 const READ_TIMEOUT_MS: i32 = 20;
 
-pub const EVENT_CONNECTION: &str = "device-connection";
-pub const EVENT_MESSAGE: &str = "device-message";
-pub const EVENT_PROTOCOL_ERROR: &str = "device-protocol-error";
+const EVENT_CONNECTION: &str = "device-connection";
+const EVENT_MESSAGE: &str = "device-message";
+const EVENT_PROTOCOL_ERROR: &str = "device-protocol-error";
 
 #[derive(Debug, Clone, Default, Serialize)]
 #[cfg_attr(test, derive(ts_rs::TS), ts(export))]
@@ -185,25 +185,20 @@ impl Worker {
         device.write(&report).is_ok()
     }
 
-    /// Warns when the firmware speaks another major protocol version.
-    fn check_protocol_version(&self, message: &Message) {
-        if let Message::Info(info) = message
-            && info.protocol[0] != PROTOCOL_MAJOR
-        {
-            let warning = format!(
-                "the lamp speaks protocol {}.{}, this app expects {}.x: update one of them",
-                info.protocol[0], info.protocol[1], PROTOCOL_MAJOR
-            );
-            let _ = self.app.emit(EVENT_PROTOCOL_ERROR, warning);
-        }
-    }
-
-    /// Reacts to the lamp's messages: settings re-applied once its
-    /// capabilities are known, state shown in the tray icon. Returns false
-    /// if the lamp is gone.
+    /// Reacts to the lamp's messages: a warning when it speaks another major
+    /// protocol version, the settings applied once its capabilities are
+    /// known, and its state shown in the tray icon. Returns false if the
+    /// lamp is gone.
     fn follow(&mut self, device: &HidDevice, message: &Message) -> bool {
         match message {
             Message::Info(info) => {
+                let [major, minor] = info.protocol;
+                if major != PROTOCOL_MAJOR {
+                    let warning = format!(
+                        "the lamp speaks protocol {major}.{minor}, this app expects {PROTOCOL_MAJOR}.x: update one of them"
+                    );
+                    let _ = self.app.emit(EVENT_PROTOCOL_ERROR, warning);
+                }
                 self.set_info(Some(info.clone()));
                 let settings = self.app.state::<SettingsState>().get();
                 for command in settings.commands(info.auto_bias) {
@@ -248,7 +243,6 @@ impl Worker {
                 Ok(length) if buffer[0] == REPORT_ID_MESSAGE => {
                     match protocol::decode_message(&buffer[1..length]) {
                         Ok(frame) => {
-                            self.check_protocol_version(&frame.message);
                             if !self.follow(device, &frame.message) {
                                 return Exit::Disconnected;
                             }

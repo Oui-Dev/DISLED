@@ -13,12 +13,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use disled_flash::firmware::{self as files, file_name};
+use disled_flash::firmware::{self as files, file_name, signature_name};
 use disled_flash::wchisp::{self, Probe, Stage, Wchisp};
-use disled_protocol::Command;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::device::DeviceHandle;
 use crate::updates::now;
@@ -32,9 +31,6 @@ const TAG_PREFIX: &str = "fw-v";
 
 /// How often the app looks for the bootloader.
 const POLL: Duration = Duration::from_secs(1);
-/// A lamp that restarts in its bootloader by itself gets this long before
-/// the app asks for the buttons.
-const COMMAND_GRACE: Duration = Duration::from_secs(10);
 /// wchisp failures in a row before the update gives up.
 const PROBE_FAILURES: u32 = 5;
 /// After the flash the lamp restarts through its bootloader, which takes
@@ -79,11 +75,9 @@ pub enum Flash {
     #[default]
     Idle,
     Downloading,
-    /// Waiting for the ROM bootloader: the user holds BOOT and presses
-    /// RESET, or the lamp restarts in it by itself (`by_command`).
-    WaitingForBootloader {
-        by_command: bool,
-    },
+    /// Waiting for the ROM bootloader. The CH32V203 starts it only from a
+    /// reset with BOOT held, so the user holds BOOT and presses RESET.
+    WaitingForBootloader,
     /// On Windows, the bootloader needs the WinUSB driver, installed once
     /// with Zadig.
     DriverMissing,
@@ -143,7 +137,7 @@ impl FirmwareState {
 }
 
 /// Changes the status and tells every window.
-fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut FirmwareStatus)) {
+fn change(app: &AppHandle, edit: impl FnOnce(&mut FirmwareStatus)) {
     let status = match app.state::<FirmwareState>().status.lock() {
         Ok(mut status) => {
             edit(&mut status);
@@ -154,7 +148,7 @@ fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut FirmwareStatus)
     let _ = app.emit(EVENT_STATUS, status);
 }
 
-fn show<R: Runtime>(app: &AppHandle<R>, flash: Flash) {
+fn show(app: &AppHandle, flash: Flash) {
     if app.state::<FirmwareState>().status().flash != flash {
         change(app, |s| s.flash = flash);
     }
@@ -174,10 +168,9 @@ fn newest(releases: &[GitHubRelease]) -> Option<Release> {
                     .find(|asset| asset.name == name)
                     .map(|asset| asset.browser_download_url.clone())
             };
-            let hex = file_name(&version);
             let source = Source::GitHub {
-                signature: url(format!("{hex}.sig"))?,
-                hex: url(hex)?,
+                hex: url(file_name(&version))?,
+                signature: url(signature_name(&version))?,
             };
             Some(Release { version, source })
         })
@@ -216,7 +209,7 @@ fn flasher() -> Result<Wchisp, String> {
 }
 
 /// Downloads a file; GitHub wants a user agent.
-async fn get<R: Runtime>(app: &AppHandle<R>, url: &str) -> Result<Vec<u8>, String> {
+async fn get(app: &AppHandle, url: &str) -> Result<Vec<u8>, String> {
     // reqwest is built without a TLS provider, `rustls-no-provider`, so this
     // installs ring, the one the updater uses, unless a provider is there.
     if rustls::crypto::CryptoProvider::get_default().is_none() {
@@ -239,7 +232,7 @@ async fn get<R: Runtime>(app: &AppHandle<R>, url: &str) -> Result<Vec<u8>, Strin
 }
 
 /// Looks for the newest firmware on GitHub.
-pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
+pub async fn check(app: &AppHandle) -> FirmwareStatus {
     change(app, |s| s.checking = true);
     let result = match local_release() {
         Some(release) => Ok(Some(release)),
@@ -273,7 +266,7 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
 
 /// Downloads the release build, checks it and writes it to a file for
 /// wchisp.
-async fn download<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<PathBuf, String> {
+async fn download(app: &AppHandle, release: &Release) -> Result<PathBuf, String> {
     let (hex, signature) = match &release.source {
         Source::Local(path) => return Ok(path.clone()),
         Source::GitHub { hex, signature } => (hex, signature),
@@ -305,15 +298,9 @@ impl From<String> for Stop {
     }
 }
 
-impl From<&str> for Stop {
-    fn from(error: &str) -> Self {
-        Stop::Failed(error.to_owned())
-    }
-}
-
 /// Updates the lamp with the firmware found by the last check, on its own
 /// thread; the update window follows the status.
-pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+pub fn install(app: &AppHandle) -> Result<(), String> {
     let state = app.state::<FirmwareState>();
     let release = state
         .release
@@ -352,7 +339,7 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 }
 
 /// Stops an update that waits for the bootloader.
-pub fn cancel<R: Runtime>(app: &AppHandle<R>) {
+pub fn cancel(app: &AppHandle) {
     app.state::<FirmwareState>()
         .cancel
         .store(true, Ordering::SeqCst);
@@ -360,7 +347,7 @@ pub fn cancel<R: Runtime>(app: &AppHandle<R>) {
 
 /// Forgets the result of the last update, when the update window opens
 /// again.
-pub fn clear_result<R: Runtime>(app: &AppHandle<R>) {
+pub fn clear_result(app: &AppHandle) {
     let state = app.state::<FirmwareState>();
     let finished = matches!(
         state.status().flash,
@@ -372,22 +359,16 @@ pub fn clear_result<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// The update itself; returns once the lamp runs the new firmware.
-fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop> {
+fn update(app: &AppHandle, release: &Release) -> Result<(), Stop> {
     show(app, Flash::Downloading);
     let flasher = flasher()?;
     let file = tauri::async_runtime::block_on(download(app, release))?;
 
-    // Into the ROM bootloader. A lamp that announces ENTER_BOOTLOADER
-    // restarts in it by itself; for the others the user presses the
-    // buttons (the CH32V203 cannot start it from software).
-    let device = app.state::<DeviceHandle>();
-    let by_command = device.info().is_some_and(|info| info.enter_bootloader)
-        && device.send(Command::EnterBootloader).is_ok();
-    wait_for_bootloader(app, &flasher, by_command)?;
-
+    wait_for_bootloader(app, &flasher)?;
     flasher.flash(&file, |stage| show(app, Flash::Flashing { stage }))?;
 
     show(app, Flash::WaitingForLamp);
+    let device = app.state::<DeviceHandle>();
     let since = Instant::now();
     loop {
         if let Some(info) = device.info() {
@@ -402,10 +383,10 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
             };
         }
         if since.elapsed() > LAMP_TIMEOUT {
-            return Err(
+            return Err(Stop::Failed(
                 "the lamp did not start again: press RESET, or unplug it and plug it back in"
                     .into(),
-            );
+            ));
         }
         thread::sleep(Duration::from_millis(250));
     }
@@ -413,17 +394,9 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
 
 /// Waits until the lamp's bootloader can be flashed, showing what holds it
 /// up.
-fn wait_for_bootloader<R: Runtime>(
-    app: &AppHandle<R>,
-    flasher: &Wchisp,
-    by_command: bool,
-) -> Result<(), Stop> {
+fn wait_for_bootloader(app: &AppHandle, flasher: &Wchisp) -> Result<(), Stop> {
     let state = app.state::<FirmwareState>();
-    let since = Instant::now();
-    let waiting = || Flash::WaitingForBootloader {
-        by_command: by_command && since.elapsed() < COMMAND_GRACE,
-    };
-    show(app, waiting());
+    show(app, Flash::WaitingForBootloader);
     let mut previous = None;
     let mut failures = 0;
     loop {
@@ -446,7 +419,7 @@ fn wait_for_bootloader<R: Runtime>(
         };
         let flash = match &probe {
             Probe::Ready(chip) if chip.starts_with(wchisp::CHIP) => return Ok(()),
-            Probe::Nothing => Some(waiting()),
+            Probe::Nothing => Some(Flash::WaitingForBootloader),
             // A bootloader that just appeared may not open at once, so a
             // problem shows only when two probes in a row see it.
             _ if previous.as_ref() != Some(&probe) => None,

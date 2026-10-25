@@ -22,10 +22,6 @@ const { t } = useI18n();
       {{ t('lampUpdate.downloading', { version: latest }) }}
     </p>
 
-    <UpdateWaiting
-      v-else-if="flash.step === 'waiting_for_bootloader' && flash.by_command"
-      :text="t('lampUpdate.restartingInUpdateMode')"
-    />
     <template v-else-if="flash.step === 'waiting_for_bootloader'">
       <i18n-t keypath="lampUpdate.buttons" tag="p" scope="global">
         <template #boot><strong>BOOT</strong></template>

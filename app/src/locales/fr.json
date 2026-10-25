@@ -183,7 +183,6 @@
       "restart": "Redémarrer la lampe"
     },
     "downloading": "Téléchargement du firmware {version} et vérification de sa signature…",
-    "restartingInUpdateMode": "La lampe redémarre en mode mise à jour…",
     "buttons": "Ouvrez la lampe. Maintenez {boot}, appuyez sur {reset} puis relâchez-le, et relâchez enfin {boot}.",
     "waitingForBootloader": "En attente de la lampe en mode mise à jour…",
     "driver": {

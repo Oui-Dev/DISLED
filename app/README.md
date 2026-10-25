@@ -111,7 +111,7 @@ To add a language:
 | `src-tauri/src/windows.rs`          | Popup placement, height and hiding, Diagnostics and lamp update windows             |
 | `src-tauri/src/updates.rs`          | Update checks (start-up, then daily) and install                                    |
 | `src-tauri/src/firmware.rs`         | Lamp updates: newest signed firmware release, download, update steps                |
-| `src-tauri/src/lib.rs`              | Plugins, start-up, Tauri commands                                                   |
+| `src-tauri/src/main.rs`             | Plugins, start-up, Tauri commands                                                   |
 | `src/views/`                        | One view per window: popup, Diagnostics, lamp update                                |
 | `src/components/`                   | Their parts, by domain: `lamp/`, `popup/`, `diagnostics/`, `update/`                |
 | `src/stores/`                       | Pinia stores: lamp, settings, telemetry, diagnostics, updates, firmware, errors     |

@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
 use crate::firmware::{self, FirmwareState};
@@ -70,7 +70,7 @@ fn due(checked_at: Option<u64>) -> bool {
 }
 
 /// Changes the status and tells every window.
-fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut UpdateStatus)) {
+fn change(app: &AppHandle, edit: impl FnOnce(&mut UpdateStatus)) {
     let status = match app.state::<UpdateState>().status.lock() {
         Ok(mut status) => {
             edit(&mut status);
@@ -82,7 +82,7 @@ fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut UpdateStatus)) 
 }
 
 /// Asks GitHub for a newer version.
-pub async fn check<R: Runtime>(app: &AppHandle<R>) -> UpdateStatus {
+pub async fn check(app: &AppHandle) -> UpdateStatus {
     change(app, |s| s.checking = true);
     let result = match app.updater() {
         Ok(updater) => updater.check().await,
@@ -113,7 +113,7 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> UpdateStatus {
 /// Downloads and installs the update found by the last check, then
 /// restarts the app. On Windows the installer closes the app and starts it
 /// again itself.
-pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+pub async fn install(app: &AppHandle) -> Result<(), String> {
     let update = app
         .state::<UpdateState>()
         .pending
@@ -158,7 +158,7 @@ pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 /// Checks the app and the lamp firmware at start-up, then once a day while
 /// the setting allows it. Debug builds skip them, because `tauri dev` would
 /// offer to install the released app.
-pub fn spawn_automatic_checks<R: Runtime>(app: AppHandle<R>) {
+pub fn spawn_automatic_checks(app: AppHandle) {
     if cfg!(debug_assertions) {
         return;
     }
