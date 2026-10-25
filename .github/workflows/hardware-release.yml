@@ -2,11 +2,12 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 #
 # Hardware releases (docs/releasing.md, ADR 0019), run by hand on main: the
-# PCB or the enclosure, which release-please leaves alone. The release gets
-# the files of hardware/<design>/ but its changelog and, as notes, the
-# section of that changelog for the version. Like the other releases it is
-# drafted, then published complete (ADR 0015), and never as the "latest"
-# one: that one is the app's, where the updater looks.
+# PCB or the enclosure, which release-please leaves alone. The release tags
+# the commit that runs, gets the files of hardware/<design>/ but its
+# changelog and, as notes, the section of that changelog for the version.
+# Like the other releases it is drafted, then published complete (ADR
+# 0015), and never as the "latest" one: that one is the app's, where the
+# updater looks.
 name: hardware release
 
 on:
@@ -24,28 +25,6 @@ on:
         description: Pre-release (a design that will not be manufactured)
         type: boolean
         default: false
-  # The designs released after the fact (hardware-backfill.yml).
-  workflow_call:
-    inputs:
-      design:
-        type: string
-        required: true
-      version:
-        type: string
-        required: true
-      prerelease:
-        type: boolean
-        default: false
-      # The workflow token may not tag a commit whose workflow files differ
-      # from main's (HTTP 403): push the tag of such a commit by hand first.
-      ref:
-        description: Commit to tag and to take the files from, instead of the one that runs
-        type: string
-        default: ""
-      files:
-        description: Files at that commit, separated by spaces, each as path or path=published name
-        type: string
-        default: ""
 
 permissions:
   contents: write
@@ -57,14 +36,12 @@ jobs:
       DESIGN: ${{ inputs.design }}
       VERSION: ${{ inputs.version }}
       TAG: ${{ inputs.design }}-v${{ inputs.version }}
-      REF: ${{ inputs.ref || github.sha }}
-      FILES: ${{ inputs.files }}
       PRERELEASE: ${{ inputs.prerelease }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # the tags, and the files of an older commit
+          fetch-depth: 0 # the tags
 
       - name: Check the version
         run: |
@@ -76,15 +53,9 @@ jobs:
             echo "::error::$VERSION is not X.Y.Z."
             exit 1
           fi
-          # A tag pushed by hand (ref input above) must point at the commit.
-          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null &&
-            [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse "$REF^{commit}")" ]; then
-            echo "::error::$TAG points at another commit."
-            exit 1
-          fi
           # gh finds the drafts too: delete one left by a failed run.
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            echo "::error::$TAG already has a release."
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null || gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::error::$TAG exists."
             exit 1
           fi
 
@@ -101,24 +72,18 @@ jobs:
 
       - name: Collect the files
         run: |
-          if [ -z "$FILES" ]; then
-            FILES=$(git ls-tree --name-only "$REF" "hardware/$DESIGN/" | grep -v '/CHANGELOG\.md$')
-          fi
-          names=()
-          for entry in $FILES; do names+=("$(basename "${entry#*=}")"); done
+          files=$(git ls-tree --name-only HEAD "hardware/$DESIGN/" | grep -v '/CHANGELOG\.md$')
           mkdir dist
-          i=0
-          for entry in $FILES; do
-            name=${names[i]}
-            i=$((i + 1))
+          for path in $files; do
+            name=$(basename "$path")
             ext=${name##*.}
             # The only file of its type is named after the version alone.
-            if [ "$(printf '%s\n' "${names[@]}" | grep -c "\.$ext\$")" -eq 1 ]; then
+            if [ "$(printf '%s\n' $files | grep -c "\.$ext\$")" -eq 1 ]; then
               out="disled-$DESIGN-$VERSION.$ext"
             else
               out="disled-$DESIGN-$VERSION-${name%.*}.$ext"
             fi
-            git cat-file blob "$REF:${entry%%=*}" > "dist/$out"
+            cp "$path" "dist/$out"
           done
           ls -l dist
 
@@ -126,7 +91,7 @@ jobs:
         run: |
           prerelease=()
           if [ "$PRERELEASE" = true ]; then prerelease=(--prerelease); fi
-          gh release create "$TAG" dist/* --draft --target "$REF" \
+          gh release create "$TAG" dist/* --draft --target "$GITHUB_SHA" \
             --title "$DESIGN: v$VERSION" --notes-file notes.md "${prerelease[@]}"
 
       - name: Publish the release

@@ -97,6 +97,13 @@ print), not a sum of commits
 
 A failed run may leave a draft: delete it, then run the workflow again.
 
+The workflow releases the commit that runs. For an older commit whose
+workflow files differ from those of `main`, GitHub refuses the workflow
+token both the tag and the release (HTTP 403), even with the tag pushed
+by hand: release such a version by hand on the releases page, with its
+files named as above, its changelog section as notes, and **Set as the
+latest release** unticked (enclosure 0.1.0 went out this way).
+
 ## The "Latest" release
 
 GitHub marks one release per repository as "Latest", whatever the
