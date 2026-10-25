@@ -10,42 +10,43 @@ implement it, and the scenarios at the end verify it on a real board.
 |---|---|
 | Power | `ON`, `OFF` |
 | Color | `GREEN`, `ORANGE`, `RED`, `WARM_WHITE` |
-| Brightness mode | `AUTO` (follows the room light) or `MANUAL` (1–100 %) |
+| Brightness mode | `AUTO` (follows the room light) or `MANUAL` (1 to 100 %) |
 | USB state | `UNCONFIGURED`, `CONFIGURED`, `SUSPENDED` |
 
-At power-up the lamp is `ON`, `GREEN`, `AUTO`. Nothing is stored in flash;
-the desktop app applies its saved settings again when it connects.
+At power-up the lamp is `ON`, `GREEN`, `AUTO`. The firmware stores nothing
+in flash, and the desktop app applies its saved settings again when it
+connects.
 
 ## Touch
 
 | Gesture | Lamp on | Lamp off |
 |---|---|---|
-| Short press (released before 2 s) | Next color: green → orange → red → green. Warm white → green. | Ignored |
+| Short press (released before 2 s) | Next color, in the order green, orange, red, then green again. Warm white goes to green. | Ignored |
 | Long press (held for 2 s) | Turns off at 2 s, while the finger is still down | Turns on at 2 s, with the last color |
-| Contact longer than 10 s | Treated as an object on the lid: no further action, baseline recalibrated | Same |
+| Contact longer than 10 s | Taken for an object on the lid: no further action, and the baseline recalibrates | Same |
 
 Each contact triggers at most one action. Releasing the touch re-arms it.
 
 ## Host control (USB HID)
 
 - The host reads the state and can set any subset of: power, color (one of
-  the four), brightness mode, manual level (1–100 %).
+  the four), brightness mode, manual level (1 to 100 %).
 - Every change, whatever its source (touch, host or automatic brightness),
   produces a state notification with an increasing sequence number.
 - In `AUTO` mode the notification carries the level currently applied, so
   the app can show it next to its Auto switch.
 - The host can shift the automatic curve ("brighter" or "darker", −50 to
-  +50 %). The lamp forgets it when it restarts: the app sends it again
-  after each connection. Manual mode ignores it.
+  +50 %). The lamp forgets it when it restarts, so the app sends it
+  again after each connection. Manual mode ignores it.
 - The host can read diagnostics (resets, faults, stack margin, error
   counters) and run the self-test below.
 
 ## Transitions
 
 Color and power changes fade over about 300 ms. In `AUTO` mode the level
-follows the room light on a logarithmic scale: a light switched on or off
-is followed in about 1.5 s, a hand or a shadow passing in front of the
-sensor is ignored, and small changes are followed gently without ever
+follows the room light on a logarithmic scale. The lamp follows a light
+switched on or off in about 1.5 s, ignores a hand or a shadow passing in
+front of the sensor, and follows small changes slowly, without ever
 hunting.
 
 ## USB states and LED power limits
@@ -53,33 +54,34 @@ hunting.
 | USB state | When | Lamp | Touch | LED current cap |
 |---|---|---|---|---|
 | `UNCONFIGURED` | Power-up, plain charger, hub without a host | Works locally | Active | 70 mA |
-| `CONFIGURED` | Enumerated by a host | Normal | Active | 125 mA (tuned after thermal test V2) |
+| `CONFIGURED` | Enumerated by a host | Normal | Active | 125 mA |
 | `SUSPENDED` | Host asleep | Off at once | Ignored | 0 |
 
-Suspend turns the LED off without a fade: a suspended USB device must
-drop its current within a few milliseconds. The touch and the light
+Suspend turns the LED off without a fade, because a suspended USB device
+must drop its current within a few milliseconds. The touch and the light
 sensor stop, and the chip slows down to 1 MHz. On resume, the lamp fades
 back to its previous state.
 
-The caps use the worst-case LED model: 86 mA (red), 63 mA (green) and
-125 mA (blue) at 100 % duty. When a color would exceed the cap, the three
-channels are scaled down together, which keeps the hue. A pure color fits
-within 125 mA; warm white is limited to about half of its full power.
+The caps use the worst-case LED currents at 100 % duty: 86 mA for red,
+63 mA for green and 125 mA for blue. When a color would exceed the cap,
+the firmware scales the three channels down together, which keeps the hue.
+A pure color fits within 125 mA, and warm white gets about half of its
+full power.
 
 ## Self-test (production)
 
-On request from the host (or the debug console), the lamp shows red,
+On request from the host or the debug console, the lamp shows red,
 green, blue and warm white for 1.5 s each, checks that the light sensor
 answers and that the idle touch reading is plausible, then glows blue and
 waits up to 10 s for a touch on the lid. It then restores its state and
-reports the results. A person checks the colors; the touch that ends the
-test does not change the lamp. Meanwhile, the touch does nothing and the
-host's lamp changes are refused ("busy").
+reports the results. A person checks the colors, and the touch that ends the
+test does not change the lamp. During the test the touch does nothing, and
+the lamp refuses the host's changes ("busy").
 
-## Out of scope for now
+## Out of scope
 
-Custom RGB colors (the internal color model is RGB so they can be added
-later) and integrations with other software.
+Custom RGB colors and integrations with other software. The color model
+inside the firmware is RGB, so custom colors would not change it.
 
 ## Test scenarios
 
@@ -92,9 +94,9 @@ Run them on a board connected to a computer, with the desktop app open.
    down. Releasing does nothing more.
 5. Short press while off: nothing happens.
 6. Long press while off: the lamp turns on at 2 s with the last color.
-7. Leave a phone on the lid for 15 s: one action at 2 s, then the contact
-   is ignored. Removing the phone does nothing, and the touch works again
-   afterwards.
+7. Leave a phone on the lid for 15 s: one action at 2 s, then the lamp
+   ignores the contact. Removing the phone does nothing, and the touch
+   works again afterwards.
 8. In the app, switch to manual at 30 %: the lamp dims. Switch back to auto:
    the level shown next to the switch follows the room light, and the
    slider sets the correction again.

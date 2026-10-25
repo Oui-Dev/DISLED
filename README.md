@@ -1,15 +1,15 @@
 # DISLED
 
-A USB status light that sits on top of a monitor. The 4 cm white cube glows
-green, orange or red to tell colleagues whether you are available. A touch
-on the lid cycles the colors, the brightness follows the room light, and a
-desktop app gives full control ([user guide](docs/user-guide.md)).
+DISLED is a USB status light. The 4 cm white cube glows green, orange or red
+to tell colleagues whether you are available. A touch on the lid cycles the
+colors and the brightness follows the room light. The desktop app also sets
+warm white or a fixed brightness, and updates the lamp
+([user guide](docs/user-guide.md)).
 
-> **Status:** the product works on the final board (PCB 1.0.0, enclosure
-> 1.0.0): the tray app, lamp updates from the app and the production tool
-> are released. Still to come: the lamp's own USB IDs, requested from
-> pid.codes, then the Mac, current and thermal tests. Binaries and
-> hardware files are on the
+> **Status.** Released: the board (PCB 1.0.0), the enclosure (1.0.0), the
+> tray app with lamp updates, and the production tool. Still to come: the
+> lamp's own USB IDs, requested from pid.codes, and the tests on a Mac, of
+> the LED current and of the heat. Binaries and hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout

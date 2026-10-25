@@ -5,17 +5,17 @@ sends **commands**; the lamp answers with **messages** and also sends
 messages on its own (state changes, telemetry). The lamp owns the lamp
 state: the host reads it, changes it and follows its notifications.
 
-> Status: version 1.1, **frozen**.
-> Only the compatible changes listed in [Compatibility](#compatibility)
-> remain allowed; anything else needs version 2. The board (PCB 1.0.0) announces
-> every capability of 1.1 except `ENTER_BOOTLOADER`: the CH32V203 starts
-> its ROM bootloader only from a reset with BOOT0 held.
+> **Status.** Version 1.1 is **frozen**. Only the compatible changes listed
+> in [Compatibility](#compatibility) remain allowed, and anything else needs
+> version 2. The board (PCB 1.0.0) announces every capability of 1.1 except
+> `ENTER_BOOTLOADER`, since the CH32V203 starts its ROM bootloader only
+> from a reset with BOOT0 held.
 
 ## Transport
 
 | Item | Value |
 |---|---|
-| USB IDs | `1209:0001` (release builds), `1209:0002` (debug builds); pid.codes test PIDs for phase 1 |
+| USB IDs | `1209:0001` (release builds), `1209:0002` (debug builds), pid.codes test PIDs ([LICENSING.md](../LICENSING.md#usb-identifiers)) |
 | Interface | HID, usage page `0xFF00` (vendor), usage `0x01` |
 | Command report | Output report, ID `1`, 63 bytes |
 | Message report | Input report, ID `2`, 63 bytes |

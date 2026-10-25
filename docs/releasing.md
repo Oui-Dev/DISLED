@@ -1,9 +1,9 @@
 # Releasing
 
-The firmware and the desktop app are released with
-[release-please](https://github.com/googleapis/release-please),
-separately, each with its own version, tag and changelog. The hardware is
-released by hand ([Hardware releases](#hardware-releases)).
+[release-please](https://github.com/googleapis/release-please) releases the
+firmware and the desktop app separately, each with its own version, tag and
+changelog. The maintainers release the hardware by hand
+([Hardware releases](#hardware-releases)).
 
 | Component | Path | Tag | Changelog | Version source |
 |---|---|---|---|---|
@@ -12,69 +12,66 @@ released by hand ([Hardware releases](#hardware-releases)).
 
 ## Flow
 
-1. Work on a branch and merge it into `main` with a pull request. Commit
-   messages follow [Conventional Commits](https://www.conventionalcommits.org/):
-   `feat` adds a feature, `fix` fixes a bug, `feat!` or a
-   `BREAKING CHANGE:` footer breaks compatibility. `feat`, `fix`, `perf`,
-   `refactor` and `revert` trigger a release and are listed in the
-   changelog; `docs`, `style`, `build`, `chore`, `test` and `ci` are not
-   (`changelog-sections` in `release-please-config.json`).
-2. On each push to `main`, the `release` workflow opens or updates a
-   single release pull request. It bumps only the components that have
-   releasable commits, with their next version (computed from the
-   commits) and their changelog entries. Commits are assigned to a
-   component by the files they change.
-3. Optionally, write a few lines on what the release brings at the top of
-   a component's section in the body of the release pull request, just
-   before merging it: release-please writes the body again on each push to
-   `main`, and the release notes are taken from it.
-4. Merge the release pull request when you want to release.
-   release-please then tags the merge commit for each bumped component and
-   creates one **draft** release per component with its changelog: drafts
-   are visible to the maintainers only. The workflow builds each tag,
-   attaches the binaries to its draft, and publishes the release only once
-   all of them are attached:
-   - **firmware:** release and debug builds as `.hex`, `.bin` and `.elf`,
-     with `SHA256SUMS`; for the app, the signature of the release build
-     (`disled-fw-X.Y.Z.hex.sig`);
-   - **app:** Windows installer (`.exe`), macOS disk image for Apple
-     Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives); for
+1. Work on a branch and merge it into `main` with a pull request. The
+   commit types decide what gets released
+   ([CONTRIBUTING.md](../CONTRIBUTING.md#commit-messages)), and
+   `changelog-sections` in `release-please-config.json` lists them.
+2. On each push to `main`, the `release` workflow opens or updates a single
+   release pull request. It bumps only the components that have releasable
+   commits, with their next version, computed from the commits, and their
+   changelog entries. release-please assigns each commit to a component by
+   the files it changes.
+3. Just before merging, you may write a few lines on what the release
+   brings at the top of a component's section, in the body of the release
+   pull request. release-please writes the body again on each push to
+   `main`, and takes the release notes from it.
+4. Merge the release pull request when you want to release. release-please
+   then tags the merge commit for each bumped component and creates one
+   **draft** release per component, with its changelog. Only the
+   maintainers see drafts. The workflow builds each tag, attaches the
+   binaries to its draft, and publishes the release only once all of them
+   are attached:
+   - **Firmware.** Release and debug builds as `.hex`, `.bin` and `.elf`,
+     with `SHA256SUMS`, and the signature of the release build for the app
+     (`disled-fw-X.Y.Z.hex.sig`).
+   - **App.** Windows installer (`.exe`), macOS disk image for Apple
+     Silicon (`.dmg`), Linux `.deb` (Debian, Ubuntu and derivatives). For
      the updater, the macOS app archive (`.app.tar.gz`), one signature
-     (`.sig`) per installer and `latest.json`; the source of the wchisp
-     inside the installers and its notice
-     (`wchisp-X.Y.Z-source.tar.gz`, `wchisp-NOTICE.md`).
+     (`.sig`) per installer and `latest.json`. The source of the wchisp
+     inside the installers and its notice (`wchisp-X.Y.Z-source.tar.gz`,
+     `wchisp-NOTICE.md`).
 
-   Published releases are immutable (repository setting, Settings,
-   General, Releases): their files and tag can no longer change, only their
+   Published releases are immutable, a repository setting (Settings,
+   General, Releases). Their files and tag can no longer change, only their
    title and notes.
 
 From 1.0.0 (the app), a breaking change raises the major version, `feat`
 the minor version and the other releasing types the patch version. Below
-1.0.0 (the firmware), a breaking change raises the minor version, as
-`feat` does.
+1.0.0 (the firmware), a breaking change raises the minor version, as `feat`
+does.
 
-The notes of a published release can still change (above), but the
-installed apps have already read those of the app in `latest.json`:
-anything to add goes in the release pull request (step 3).
+The notes of a published release can still change, but the installed apps
+have already read those of the app in `latest.json`. Anything to add goes
+in the release pull request (step 3).
 
 ## When a release build fails
 
-The release stays a draft, with its tag: nothing is published.
+The release stays a draft, with its tag, and nothing is published.
 
 - If the cause is outside the code (runner, secret), re-run the failed
-  jobs; the publication follows.
-- If the code must change, fix it on `main`: the fix goes out with the
+  jobs, and the publication follows.
+- If the code must change, fix it on `main`, and the fix goes out with the
   next version. Leave the unpublished draft as it is.
-- Never delete a release or a tag made by release-please: it finds the
-  previous release of each component through them (drafts included), and
-  without it the next changelog would take the whole history. The name of
-  a deleted published release cannot be used again either.
+- Never delete a release or a tag made by release-please. It finds the
+  previous release of each component through them, drafts included, and
+  without them the next changelog would take the whole history. A deleted
+  published release also leaves its name unusable.
 
 ## Hardware releases
 
 The PCB and the enclosure have their own versions, tags and changelogs,
-written by hand: a hardware version is a decision (a board order, a
-print), not a sum of commits.
+written by hand, because a hardware version is a decision (a board order,
+a print), not a sum of commits.
 
 | Design | Path | Tag | Changelog |
 |---|---|---|---|
@@ -84,8 +81,8 @@ print), not a sum of commits.
 1. Merge the new files into `main`, over the old ones, with a section for
    the version at the top of the changelog: `## X.Y.Z (YYYY-MM-DD)`, the
    date of the design, then the changes. Links in a section must be
-   absolute: the section becomes the notes of the release. A new board
-   revision carries its version on the silkscreen: "Rev 1.1" for
+   absolute, because the section becomes the notes of the release. A new
+   board revision carries its version on the silkscreen, "Rev 1.1" for
    pcb 1.1.0.
 2. Run the **hardware release** workflow on `main` (Actions, hardware
    release, Run workflow) with the design and the version. Tick
@@ -95,22 +92,22 @@ print), not a sum of commits.
    `disled-<design>-X.Y.Z-<name>.<ext>` when the folder has several of
    that type, and publishes the release, never as the "Latest" one.
 
-A failed run may leave a draft: delete it, then run the workflow again.
+A failed run may leave a draft. Delete it, then run the workflow again.
 
 The workflow releases the commit that runs. For an older commit whose
 workflow files differ from those of `main`, GitHub refuses the workflow
-token both the tag and the release (HTTP 403), even with the tag pushed
-by hand: release such a version by hand on the releases page, with its
-files named as above, its changelog section as notes, and **Set as the
-latest release** unticked (enclosure 0.1.0 went out this way).
+token both the tag and the release (HTTP 403), even with the tag pushed by
+hand. Release such a version by hand on the releases page, with its files
+named as above, its changelog section as notes, and **Set as the latest
+release** unticked.
 
 ## The "Latest" release
 
 GitHub marks one release per repository as "Latest", whatever the
-component. It is always the newest app release: the installed apps read
-`releases/latest/download/latest.json`. Firmware and hardware releases
-are published without the flag; the app finds the newest firmware by its
-`fw-v*` tag.
+component. It is always the newest app release, because the installed apps
+read `releases/latest/download/latest.json`. The workflows publish firmware
+and hardware releases without the flag, and the app finds the newest
+firmware by its `fw-v*` tag.
 
 ## App updates
 
@@ -126,7 +123,7 @@ The installed apps update themselves from the latest GitHub release:
   a forged manifest cannot pair a newer version number with an older signed
   installer.
 
-Local builds (`npm run tauri build`) need no key: only the release
+Local builds (`npm run tauri build`) need no key, because only the release
 workflow adds `src-tauri/tauri.updater.conf.json`, which asks for the
 update files.
 
@@ -147,69 +144,66 @@ update files.
    password.
 3. Put the content of `disled-updater.key.pub` in `plugins.updater.pubkey`
    of `app/src-tauri/tauri.conf.json`.
-4. Keep a backup of the private key and its password, outside the
-   computer: the installed apps accept no other key, for their own updates
-   and for the lamp firmware, and a new key means a manual reinstall for
-   every user.
+4. Keep a backup of the private key and its password, outside the computer.
+   The installed apps accept no other key, for their own updates and for
+   the lamp firmware, and a new key means a manual reinstall for every
+   user.
 
 ## Lamp updates
 
 The app updates the lamp firmware from the newest published `fw-v*`
 release:
 
-- the `firmware` job signs the release build with the same update key,
-  the version included in the signature (`tauri signer sign
-  --app-version`); the app refuses any other file;
+- the `firmware` job signs the release build with the same update key, the
+  version included in the signature (`tauri signer sign --app-version`),
+  and the app refuses any other file;
 - each `app` job builds wchisp (`WCHISP_VERSION` at the top of the
   workflow) and bundles it with `src-tauri/tauri.wchisp.conf.json`, with
   its license and notice (`src-tauri/third-party/wchisp`);
 - `app-publish` attaches the crates.io package of that wchisp, checked
-  against the crates.io index, and the notice: wchisp is GPL-2.0, its
+  against the crates.io index, and the notice. wchisp is GPL-2.0, so its
   source goes with the installers.
 
 A local installer with wchisp needs the binary first, named after the
-target: `cargo install wchisp@0.3.0 --locked`, copied to
-`app/src-tauri/binaries/wchisp-<target triple>` (`.exe` on Windows),
-then `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
+target. Install it with `cargo install wchisp@0.3.0 --locked`, copy it to
+`app/src-tauri/binaries/wchisp-<target triple>` (`.exe` on Windows), then
+run `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
 
 ## Notes
 
-- The installers carry no publisher certificate (the update signatures
-  above only serve the updater): Windows SmartScreen and macOS Gatekeeper
-  warn on first launch ([user guide](user-guide.md#install-the-app)). Code
-  signing is a later choice.
-- The macOS app is still signed ad hoc (`signingIdentity` `-` in
-  `tauri.conf.json`): Apple Silicon calls a downloaded app without any
-  signature "damaged" and offers only to bin it
+- The installers carry no publisher certificate, since the update
+  signatures above only serve the updater. Windows SmartScreen and macOS
+  Gatekeeper warn on first launch ([user guide](user-guide.md#install-the-app)).
+- The macOS app is signed ad hoc (`signingIdentity` `-` in
+  `tauri.conf.json`), because Apple Silicon calls a downloaded app without
+  any signature "damaged" and offers only to bin it
   ([issue #19](https://github.com/Oui-Dev/DISLED/issues/19)). The release
   workflow checks that signature.
-- On a private repository the macOS and Windows runners consume the free
-  Actions minutes 10 and 2 times faster; an app release costs about 150 to
-  200 minutes. Public repositories have no such limit.
-- The repository must allow the workflow to open pull requests: Settings,
-  Actions, General, Workflow permissions: **Allow GitHub Actions to create
-  and approve pull requests**. The default token permissions can stay
-  read-only: the release workflow asks for write access itself, and the
-  other workflows only need to read.
+- The repository must allow the workflow to open pull requests, with
+  **Allow GitHub Actions to create and approve pull requests** in Settings,
+  Actions, General, Workflow permissions. The default token permissions can
+  stay read-only. The release workflow asks for write access itself, and
+  the other workflows only need to read.
 - To force a version, add `"release-as": "X.Y.Z"` to the component in
-  `release-please-config.json`, and remove it once that version is
-  released: as long as it stays, release-please proposes that version
-  again. A `Release-As: X.Y.Z` footer in the body of a commit that touches
-  the component does the same for one release.
+  `release-please-config.json`, and remove it once that version is out. As
+  long as it stays, release-please proposes that version again. A
+  `Release-As: X.Y.Z` footer in the body of a commit that touches the
+  component does the same for one release.
 - Dependabot opens weekly update pull requests (`.github/dependabot.yml`)
-  with Conventional Commit messages: `fix(deps)` for what the app ships
-  (npm production dependencies, Rust crates), which releases the app;
+  with Conventional Commit messages. `fix(deps)` covers what the app ships
+  (npm production dependencies, Rust crates) and releases the app.
   `chore(deps-dev)` (app tooling), `build(deps)` (firmware tools) and
   `ci(deps)` (actions) release nothing. An update of the root `Cargo.lock`
-  alone belongs to no component: it goes out with the next app release.
-- `protocol/`, `crates/` and the root `Cargo.*` files belong to no
-  component: a change there is released with the component that the same
-  commit touches (a protocol change touches the firmware, the app or both).
-  Neither does `tools/`: the production tool is not released, it runs from
-  the repository ([docs/production.md](production.md)). Nor does
-  `hardware/`, released by hand (above).
-- One release pull request for both components: with one per component,
-  both edited `.release-please-manifest.json`, so merging one left the
-  other in conflict, and release-please does not rebuild a pull request
-  whose content did not change. The cost: when both components have
-  pending changes, they are released together.
+  alone belongs to no component and goes out with the next app release.
+- `protocol/`, `crates/`, `tools/`, `hardware/` and the root `Cargo.*`
+  files belong to no component. A change there goes out with the component
+  that the same commit touches, and a protocol change touches the firmware,
+  the app or both. The production tool has no release and runs from the
+  repository ([production.md](production.md)), and the maintainers release
+  the hardware by hand (above).
+- Both components share one release pull request
+  (`separate-pull-requests: false`). With one per component, both edit
+  `.release-please-manifest.json`, so merging one leaves the other in
+  conflict, and release-please does not rebuild a pull request whose
+  content did not change. The cost is that both components are released
+  together when both have pending changes.
