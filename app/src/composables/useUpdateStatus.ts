@@ -14,7 +14,7 @@ export function useUpdateStatus() {
 
   const installing = computed(() => updates.status.progress !== null);
   const checking = computed(() => updates.status.checking || firmware.status.checking);
-  /** The update on offer: the app first, since a new firmware may need a new app. */
+  /** The update to install first: the app, since a new firmware may need a new app. */
   const offer = computed(() =>
     updates.status.available ? 'app' : firmware.updateForLamp ? 'lamp' : null,
   );
@@ -45,22 +45,27 @@ export function useUpdateStatus() {
     return null;
   });
 
-  /** The lamp: a failed check or a newer firmware; null otherwise. */
+  /** The lamp: a failed check or a newer firmware, after the app's; null otherwise. */
   const lampLine = computed(() => {
     const { checking: lampChecking, error } = firmware.status;
+    const version = firmware.updateForLamp;
     // A lamp update on offer keeps its line too.
-    if (lampChecking && !firmware.updateForLamp) {
+    if (lampChecking && !version) {
       return null;
     }
     if (error) {
       return t('updates.lampError', { detail: error });
     }
-    return firmware.updateForLamp
-      ? t('updates.lampAvailable', { version: firmware.updateForLamp })
-      : null;
+    if (!version) {
+      return null;
+    }
+    const app = updates.status.available;
+    return app
+      ? t('updates.lampAfterApp', { version, app })
+      : t('updates.lampAvailable', { version });
   });
 
-  /** The offer in a few words, for the link in the popup footer. */
+  /** The offer in a few words, for the tooltip of the settings button in the popup footer. */
   const offerLine = computed(() => {
     if (offer.value === 'app') {
       return t('updates.toApp', { version: updates.status.available });

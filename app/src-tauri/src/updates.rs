@@ -155,16 +155,19 @@ pub async fn install(app: &AppHandle) -> Result<(), String> {
 }
 
 /// Checks the app and the lamp firmware at start-up, then once a day while
-/// the setting allows it. Debug builds skip them, because `tauri dev` would
-/// offer to install the released app.
-pub fn spawn_automatic_checks(app: AppHandle) {
+/// the setting allows it. The first check waits for the network, unless
+/// `at_once`. Debug builds skip them, because `tauri dev` would offer to
+/// install the released app.
+pub fn spawn_automatic_checks(app: AppHandle, at_once: bool) {
     if cfg!(debug_assertions) {
         return;
     }
     thread::Builder::new()
         .name("disled-updates".into())
         .spawn(move || {
-            thread::sleep(FIRST_CHECK_DELAY);
+            if !at_once {
+                thread::sleep(FIRST_CHECK_DELAY);
+            }
             loop {
                 if app.state::<SettingsState>().get().check_updates {
                     if due(app.state::<UpdateState>().status().checked_at) {
