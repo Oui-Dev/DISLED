@@ -179,6 +179,14 @@ run `npm run tauri build -- --config src-tauri/tauri.wchisp.conf.json`.
   any signature "damaged" and offers only to bin it
   ([issue #19](https://github.com/Oui-Dev/DISLED/issues/19)). The release
   workflow checks that signature.
+- The disk image window has a background,
+  `app/src-tauri/installer/dmg-background.png`, with an arrow toward
+  Applications and the first-launch steps
+  ([issue #36](https://github.com/Oui-Dev/DISLED/issues/36)). It also
+  shows the address of the "Install the app" section of the user guide,
+  so keep that heading. Tauri lays the window out with an AppleScript
+  that it skips on CI, unless `TAURI_BUNDLER_DMG_IGNORE_CI` is set. The
+  release workflow sets it and checks the layout.
 - The repository must allow the workflow to open pull requests, with
   **Allow GitHub Actions to create and approve pull requests** in Settings,
   Actions, General, Workflow permissions. The default token permissions can
