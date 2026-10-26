@@ -52,6 +52,13 @@ void bsp_time_init(void)
 
 void bsp_time_core_clock_changed(void)
 {
+    /* The restart drops a tick not counted yet and the part of the
+     * millisecond under way: both count as whole ones, or the time read by
+     * bsp_time_us() would go back. */
+    if ((SysTick->SR & 1u) != 0u) {
+        s_ms++;
+    }
+    s_ms++;
     start_systick();
 }
 
