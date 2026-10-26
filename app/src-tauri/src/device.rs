@@ -197,11 +197,17 @@ impl Worker {
                     );
                     let _ = self.app.emit(EVENT_PROTOCOL_ERROR, warning);
                 }
+                // Only at the first INFO of a connection: every window that
+                // opens asks for one, and the settings sent again then would
+                // be rejected during a self-test.
+                let first = self.info.lock().map(|i| i.is_none()).unwrap_or(true);
                 self.set_info(Some(info.clone()));
-                let settings = self.app.state::<SettingsState>().get();
-                for command in settings.commands(info.auto_bias) {
-                    if !self.write(device, &command) {
-                        return false;
+                if first {
+                    let settings = self.app.state::<SettingsState>().get();
+                    for command in settings.commands(info.auto_bias) {
+                        if !self.write(device, &command) {
+                            return false;
+                        }
                     }
                 }
             }
