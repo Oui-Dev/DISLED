@@ -65,13 +65,13 @@ static bool same_content(const state_content_t *a, const state_content_t *b)
 static void observe_changes(void)
 {
     const state_content_t now = observe();
+    if (now.link != USB_LINK_CONFIGURED) {
+        s_telemetry_period_ms = 0; /* the host left: stop streaming */
+    }
     if (!lamp_state_equal(&now.lamp, &s_seen.lamp)) {
         s_source = app.source;
     } else if (now.link != s_seen.link) {
         s_source = CHANGE_SOURCE_USB;
-        if (now.link != USB_LINK_CONFIGURED) {
-            s_telemetry_period_ms = 0; /* the host left: stop streaming */
-        }
     } else if (now.applied_percent != s_seen.applied_percent) {
         s_source = CHANGE_SOURCE_AUTO_BRIGHTNESS;
     }
