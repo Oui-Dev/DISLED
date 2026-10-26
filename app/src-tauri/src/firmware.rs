@@ -306,8 +306,10 @@ pub fn install(app: &AppHandle) -> Result<(), String> {
         .ok()
         .and_then(|release| release.clone())
         .ok_or("no firmware to install: check for updates first")?;
+    // A second click goes to the update already running, which the window
+    // follows; an error would show it as failed.
     if state.running.swap(true, Ordering::SeqCst) {
-        return Err("a lamp update is already running".into());
+        return Ok(());
     }
     state.cancel.store(false, Ordering::SeqCst);
     let owner = app.clone();
