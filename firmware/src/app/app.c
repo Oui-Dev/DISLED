@@ -63,7 +63,9 @@ static void als_start(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms);
 static void enter_suspend(uint32_t now_ms)
 {
     if (self_test_running(&app.self_test)) {
-        self_test_abort(&app.self_test); /* nobody to report to */
+        /* Reported at resume, without SELF_TEST_COMPLETED: the host waits for the result. */
+        self_test_abort(&app.self_test);
+        app.self_test_report = true;
     }
     tkey_stop();
     task_output(now_ms); /* app.link is suspended: duties drop to 0 */

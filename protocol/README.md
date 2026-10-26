@@ -92,7 +92,9 @@ glows blue at 20 %. It then restores its state and sends
 `SELF_TEST_RESULT`, with the `seq` of the `SELF_TEST` command. During the
 test the lamp ignores the touch and answers `SET_STATE`, `SET_AUTO_BIAS`
 and a second `SELF_TEST` with `ERROR` (busy). Only a person can check the
-colors: the result covers the light sensor and the touch.
+colors: the result covers the light sensor and the touch. A USB suspend
+cuts the test short: the result follows the resume, with bit 3 of
+`results` clear.
 
 ## Messages (lamp to host)
 

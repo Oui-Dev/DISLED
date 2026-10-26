@@ -76,7 +76,8 @@ answers and that the idle touch reading is plausible, then glows blue and
 waits up to 10 s for a touch on the lid. It then restores its state and
 reports the results. A person checks the colors, and the touch that ends the
 test does not change the lamp. During the test the touch does nothing, and
-the lamp refuses the host's changes ("busy").
+the lamp refuses the host's changes ("busy"). A USB suspend cuts the test
+short, and the lamp reports it when the host wakes up.
 
 ## Out of scope
 
