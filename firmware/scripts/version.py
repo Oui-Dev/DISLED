@@ -4,13 +4,15 @@
 """Inject the firmware version, taken from git, into the build.
 
 The version comes from the latest tag matching ``fw-vMAJOR.MINOR.PATCH``.
-Without such a tag the version is 0.0.0. The full ``git describe`` output
-(commits since the tag, short hash, ``-dirty``) is kept in the version
-string so that every build can be traced back to its sources.
+Without such a tag the version is 0.0.0, which only a debug build accepts.
+The full ``git describe`` output (commits since the tag, short hash,
+``-dirty``) is kept in the version string so that every build can be traced
+back to its sources.
 """
 
 import re
 import subprocess
+import sys
 
 Import("env")  # noqa: F821 - provided by PlatformIO
 
@@ -41,6 +43,14 @@ def parse_version(describe):
 
 described = git_describe(env.subst("$PROJECT_DIR"))  # noqa: F821
 (major, minor, patch), version_string = parse_version(described)
+
+# A firmware that reports 0.0.0 would look older than any release to the app.
+if env["PIOENV"] == "release" and not TAG_PATTERN.match(described):  # noqa: F821
+    sys.stderr.write(
+        "Error: a release build takes its version from a fw-vX.Y.Z tag, and git "
+        "describe gives '%s': fetch the tags (git fetch --tags)\n" % described
+    )
+    env.Exit(1)  # noqa: F821
 
 env.Append(  # noqa: F821
     CPPDEFINES=[
