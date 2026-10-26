@@ -58,8 +58,6 @@ void tkey_init(const tkey_config_t *config)
     };
     ADC_Init(ADC1, &adc);
     ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, config->adc_sample_time);
-    ADC_Cmd(ADC1, ENABLE);
-    TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
 }
 
 /* Runs in the TIM3 interrupt, at the sample point of the PWM period. */
@@ -89,6 +87,8 @@ static void measure(void)
 
 void tkey_start(void)
 {
+    ADC_Cmd(ADC1, ENABLE);
+    TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
     led_pwm_set_sample_callback(measure);
     /* Every millisecond, from the SysTick interrupt. */
     bsp_time_set_tick_hook(led_pwm_arm_sample);
@@ -98,6 +98,9 @@ void tkey_stop(void)
 {
     bsp_time_set_tick_hook(NULL);
     led_pwm_set_sample_callback(NULL);
+    /* Powered down, within the 2.5 mA of a suspended USB device. */
+    TKey1->CTLR1 &= ~(ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN);
+    ADC_Cmd(ADC1, DISABLE);
 }
 
 bool tkey_read(uint16_t *sample, uint32_t *time_ms)

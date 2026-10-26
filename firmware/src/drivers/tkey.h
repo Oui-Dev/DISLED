@@ -22,10 +22,10 @@ typedef struct {
 /* Sets up the ADC in touch mode. Requires led_pwm_init() first. */
 void tkey_init(const tkey_config_t *config);
 
-/* Starts the 1 kHz sampling (installs the SysTick hook). */
+/* Powers the ADC and starts the 1 kHz sampling (installs the SysTick hook). */
 void tkey_start(void);
 
-/* Stops sampling, for instance while the USB is suspended. */
+/* Stops sampling and powers the ADC down, while the USB is suspended. */
 void tkey_stop(void);
 
 /* Pops the oldest sample. Returns false when the queue is empty. */
