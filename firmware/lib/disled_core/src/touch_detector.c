@@ -21,7 +21,6 @@ static void reset_contact(touch_detector_t *td)
 {
     td->pending = false;
     td->long_fired = false;
-    td->consume_next = false;
     td->rearming = false;
     td->inverted = false;
     td->near = false;
@@ -145,9 +144,6 @@ static bool update_contact(touch_detector_t *td, uint32_t now_ms)
 
     if (raw_contact == contact) {
         td->pending = false;
-        if (!contact) {
-            td->consume_next = false; /* the press to swallow did not come */
-        }
         return false;
     }
     if (!td->pending) {
@@ -192,8 +188,7 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
             /* Timed from the first raw contact, not from the end of the debounce. */
             td->state = TOUCH_STATE_PRESSED;
             td->press_start_ms = contact_start_ms;
-            td->long_fired = td->consume_next; /* a consumed touch fires nothing */
-            td->consume_next = false;
+            td->long_fired = false;
             td->near = false;
             td->press_floor = recent_floor(td);
         } else if (!td->pending) {
@@ -272,7 +267,5 @@ void touch_detector_consume(touch_detector_t *td)
 {
     if (td->state == TOUCH_STATE_PRESSED) {
         td->long_fired = true; /* no long press, no event at the release */
-    } else {
-        td->consume_next = true;
     }
 }

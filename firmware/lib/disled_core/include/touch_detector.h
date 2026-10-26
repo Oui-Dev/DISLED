@@ -68,9 +68,8 @@ typedef struct {
     int16_t recent[TOUCH_FLOOR_WINDOWS];
     uint8_t recent_next;
     int16_t press_floor;
-    bool long_fired;   /* also set by touch_detector_consume() */
-    bool consume_next; /* swallow the press being debounced */
-    bool rearming;     /* a release happened less than rearm_ms ago */
+    bool long_fired; /* also set by touch_detector_consume() */
+    bool rearming;   /* a release happened less than rearm_ms ago */
     uint32_t release_ms;
     bool inverted;
     uint32_t inverted_since_ms;
@@ -88,7 +87,7 @@ touch_event_t touch_detector_feed(touch_detector_t *td, uint16_t raw, uint32_t n
 /* Builds a new baseline from the next readings, firing no gesture until then. */
 void touch_detector_recalibrate(touch_detector_t *td);
 
-/* The current touch, even one still being debounced, fires no gesture. */
+/* The current press (TOUCH_STATE_PRESSED) fires no gesture. */
 void touch_detector_consume(touch_detector_t *td);
 
 touch_state_t touch_detector_state(const touch_detector_t *td);

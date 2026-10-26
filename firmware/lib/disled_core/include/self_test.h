@@ -31,7 +31,6 @@ typedef struct {
     uint16_t wait_linear;    /* light of the blue glow while waiting */
     uint16_t touch_idle_min; /* plausible idle TouchKey baseline, counts */
     uint16_t touch_idle_max;
-    uint16_t touch_press_permille; /* drop that counts as a touch */
 } self_test_config_t;
 
 typedef struct {
@@ -40,6 +39,9 @@ typedef struct {
     bool touch_ready; /* the touch detector has a baseline */
     uint16_t touch_baseline;
     int16_t touch_delta_permille;
+    /* The detector sees a press. A drop alone is no touch: a hand above
+     * the lid reaches the press threshold too. */
+    bool touch_pressed;
 } self_test_inputs_t;
 
 typedef enum {

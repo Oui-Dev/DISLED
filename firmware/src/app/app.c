@@ -218,6 +218,7 @@ static rgb16_t run_self_test(uint32_t now_ms)
         .touch_ready = touch_detector_state(&app.touch) != TOUCH_STATE_CALIBRATING,
         .touch_baseline = touch_detector_baseline(&app.touch),
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),
+        .touch_pressed = touch_detector_state(&app.touch) == TOUCH_STATE_PRESSED,
     };
     if (self_test_update(&app.self_test, now_ms, &measurements)) {
         if ((app.self_test.results & SELF_TEST_TOUCH_PRESSED) != 0u) {

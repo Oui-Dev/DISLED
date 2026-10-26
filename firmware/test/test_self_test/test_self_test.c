@@ -15,7 +15,6 @@ static const self_test_config_t config = {
     .wait_linear = 1000,
     .touch_idle_min = 1000,
     .touch_idle_max = 3800,
-    .touch_press_permille = 28,
 };
 
 static self_test_t t;
@@ -30,6 +29,7 @@ void setUp(void)
         .touch_ready = true,
         .touch_baseline = 2620,
         .touch_delta_permille = 0,
+        .touch_pressed = false,
     };
 }
 
@@ -79,6 +79,7 @@ static void test_a_touch_passes_the_test(void)
     TEST_ASSERT_EQUAL_UINT32(0, run(0, 6990));
     TEST_ASSERT_EQUAL_UINT32(0, run(7000, 8000)); /* waiting */
     in.touch_delta_permille = 52;
+    in.touch_pressed = true;
     TEST_ASSERT_EQUAL_UINT32(8010, run(8010, 8100));
     TEST_ASSERT_FALSE(self_test_running(&t));
     TEST_ASSERT_EQUAL_HEX8(SELF_TEST_LIGHT_OK | SELF_TEST_TOUCH_IDLE_OK | SELF_TEST_TOUCH_PRESSED |
@@ -92,12 +93,13 @@ static void test_a_touch_passes_the_test(void)
 static void test_no_touch_ends_after_the_wait(void)
 {
     self_test_start(&t, 0);
-    in.touch_delta_permille = 12; /* a hand near the lid, not a touch */
+    /* A hand above the lid: as large a drop as a light tap, but no press. */
+    in.touch_delta_permille = 70;
     const uint32_t ended = run(0, 20000);
     TEST_ASSERT_EQUAL_UINT32(16000, ended); /* 4 colors x 1.5 s, then 10 s */
     TEST_ASSERT_EQUAL_HEX8(SELF_TEST_LIGHT_OK | SELF_TEST_TOUCH_IDLE_OK | SELF_TEST_COMPLETED,
                            t.results);
-    TEST_ASSERT_EQUAL_INT16(12, t.touch_peak_permille);
+    TEST_ASSERT_EQUAL_INT16(70, t.touch_peak_permille);
 }
 
 static void test_missing_sensor_and_bad_touch_baseline_are_reported(void)
@@ -105,7 +107,7 @@ static void test_missing_sensor_and_bad_touch_baseline_are_reported(void)
     in.light_present = false;
     in.touch_baseline = 4090; /* saturated TouchKey */
     self_test_start(&t, 0);
-    in.touch_delta_permille = 40;
+    in.touch_pressed = true;
     (void)run(0, 8000);
     TEST_ASSERT_EQUAL_HEX8(SELF_TEST_TOUCH_PRESSED | SELF_TEST_COMPLETED, t.results);
 }

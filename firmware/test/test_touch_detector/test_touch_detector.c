@@ -257,13 +257,6 @@ static void test_blip_right_after_a_release_is_ignored(void)
 
 static void test_a_consumed_touch_fires_nothing(void)
 {
-    /* Consumed while the press is still being debounced. */
-    hold(TOUCHED, 20);
-    touch_detector_consume(&td);
-    hold(TOUCHED, 2500);
-    hold(BASELINE, 300);
-    TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
-
     /* Consumed once pressed. */
     hold(TOUCHED, 300);
     touch_detector_consume(&td);
@@ -271,15 +264,6 @@ static void test_a_consumed_touch_fires_nothing(void)
     TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
 
     /* The next touch works again. */
-    hold(TOUCHED, 300);
-    hold(BASELINE, 300);
-    TEST_ASSERT_EQUAL_UINT(1, short_presses);
-}
-
-static void test_consume_expires_without_a_press(void)
-{
-    touch_detector_consume(&td); /* nothing pending: no effect later */
-    hold(BASELINE, 300);
     hold(TOUCHED, 300);
     hold(BASELINE, 300);
     TEST_ASSERT_EQUAL_UINT(1, short_presses);
@@ -304,6 +288,5 @@ int main(void)
     RUN_TEST(test_long_press_with_the_hand_resting_near_the_lid);
     RUN_TEST(test_blip_right_after_a_release_is_ignored);
     RUN_TEST(test_a_consumed_touch_fires_nothing);
-    RUN_TEST(test_consume_expires_without_a_press);
     return UNITY_END();
 }

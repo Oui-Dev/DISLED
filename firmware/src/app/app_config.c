@@ -28,7 +28,7 @@ const touch_config_t app_touch_config = {
     .window_samples = 20,     /* 20 ms at 1 kHz: one 50 Hz mains period */
     .calibration_windows = 8, /* 160 ms */
     .baseline_shift = 8,      /* about 5 s time constant */
-    .press_permille = APP_TOUCH_PRESS_PERMILLE,
+    .press_permille = 60,
     .release_permille = 34,
     .press_rise_permille = 50,
     .proximity_permille = 10, /* rest noise and the LED on/off shift stay below */
@@ -114,5 +114,4 @@ const self_test_config_t app_self_test_config = {
     .wait_linear = 1959,
     .touch_idle_min = 1000,
     .touch_idle_max = 3800,
-    .touch_press_permille = APP_TOUCH_PRESS_PERMILLE,
 };
