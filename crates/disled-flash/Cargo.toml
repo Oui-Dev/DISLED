@@ -13,8 +13,8 @@ publish.workspace = true
 ts = ["dep:ts-rs"]
 
 [dependencies]
-base64 = "0.22"
-minisign-verify = "0.3"
+base64 = "^0.23.1"
+minisign-verify = "^0.3.0"
 semver.workspace = true
 serde = { workspace = true, features = ["derive"] }
 ts-rs = { workspace = true, optional = true }

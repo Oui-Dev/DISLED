@@ -14,7 +14,7 @@ ts = ["dep:ts-rs"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-thiserror = "2"
+thiserror = "^2.0.21"
 ts-rs = { workspace = true, optional = true }
 
 [dev-dependencies]
