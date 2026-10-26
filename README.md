@@ -13,6 +13,11 @@ warm white or a fixed brightness, and updates the lamp
 > and hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
+> [!WARNING]
+> On macOS, the first launch of the app is blocked, because Apple has not
+> notarized it. The [user guide](docs/user-guide.md#install-the-app)
+> explains how to open it.
+
 ## Repository layout
 
 | Path | Content |
