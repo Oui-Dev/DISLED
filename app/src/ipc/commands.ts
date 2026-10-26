@@ -56,7 +56,8 @@ export function updateStatus(): Promise<UpdateStatus> {
   return invoke('update_status');
 }
 
-export function updateCheck(): Promise<UpdateStatus> {
+/** `update-status` events bring the result. */
+export function updateCheck(): Promise<void> {
   return invoke('update_check');
 }
 
@@ -69,7 +70,8 @@ export function firmwareStatus(): Promise<FirmwareStatus> {
   return invoke('firmware_status');
 }
 
-export function firmwareCheck(): Promise<FirmwareStatus> {
+/** `firmware-status` events bring the result. */
+export function firmwareCheck(): Promise<void> {
   return invoke('firmware_check');
 }
 

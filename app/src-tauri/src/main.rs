@@ -138,8 +138,8 @@ fn update_status(updates: State<'_, UpdateState>) -> UpdateStatus {
 }
 
 #[tauri::command]
-async fn update_check(app: AppHandle) -> UpdateStatus {
-    updates::check(&app).await
+async fn update_check(app: AppHandle) {
+    updates::check(&app).await;
 }
 
 /// Returns only on failure, since on success the app restarts.
@@ -154,8 +154,8 @@ fn firmware_status(firmware: State<'_, FirmwareState>) -> FirmwareStatus {
 }
 
 #[tauri::command]
-async fn firmware_check(app: AppHandle) -> FirmwareStatus {
-    firmware::check(&app).await
+async fn firmware_check(app: AppHandle) {
+    firmware::check(&app).await;
 }
 
 /// Starts a lamp update; `firmware-status` events follow it.

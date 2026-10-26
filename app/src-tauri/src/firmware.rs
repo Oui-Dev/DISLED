@@ -229,13 +229,14 @@ async fn get(app: &AppHandle, url: &str) -> Result<Vec<u8>, String> {
     Ok(body.to_vec())
 }
 
-/// Looks for the newest firmware on GitHub.
-pub async fn check(app: &AppHandle) -> FirmwareStatus {
+/// Looks for the newest firmware on GitHub; the `firmware-status` events
+/// bring the result.
+pub async fn check(app: &AppHandle) {
     // One at a time, as for the app updates.
     let mut running = false;
     change(app, |s| running = std::mem::replace(&mut s.checking, true));
     if running {
-        return app.state::<FirmwareState>().status();
+        return;
     }
     let result = match local_release() {
         Some(release) => Ok(Some(release)),
@@ -264,7 +265,6 @@ pub async fn check(app: &AppHandle) -> FirmwareStatus {
             s.error = Some(error);
         }),
     }
-    state.status()
 }
 
 /// Downloads the release build, checks it and writes it to a file for

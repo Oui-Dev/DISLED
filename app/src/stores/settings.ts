@@ -11,7 +11,7 @@ import type { Locale } from '@/bindings/Locale';
 import type { Settings } from '@/bindings/Settings';
 import type { SettingsPatch } from '@/bindings/SettingsPatch';
 import { autostartGet, autostartSet, localeGet, settingsGet, settingsSet } from '@/ipc/commands';
-import { on } from '@/ipc/events';
+import { follow } from '@/ipc/events';
 import { useErrorStore } from './errors';
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -22,10 +22,18 @@ export const useSettingsStore = defineStore('settings', () => {
   /** The language in force: the setting, or the system's when it says so. */
   const locale = ref<Locale>('en');
   const autostart = ref(false);
+  /** Counts the `settings-changed` events, to tell when one comes during an update. */
+  let changes = 0;
 
   async function update(patch: SettingsPatch): Promise<void> {
     try {
-      settings.value = await settingsSet(patch);
+      const before = changes;
+      const next = await settingsSet(patch);
+      // An event heard meanwhile may come from a later update, and the
+      // events keep the settings current anyway.
+      if (changes === before) {
+        settings.value = next;
+      }
       errors.clear();
     } catch (error) {
       errors.reportFailure(error);
@@ -43,16 +51,25 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /** Follows the backend events. Call once per window, before showing it. */
   async function start(): Promise<void> {
-    await on('settings-changed', (next) => {
-      settings.value = next;
-    });
-    await on('locale-changed', (next) => {
-      locale.value = next;
-    });
-    [settings.value, locale.value, autostart.value] = await Promise.all([
-      settingsGet(),
-      localeGet(),
-      autostartGet(),
+    await Promise.all([
+      follow(
+        'settings-changed',
+        (next) => {
+          changes += 1;
+          settings.value = next;
+        },
+        settingsGet,
+      ),
+      follow(
+        'locale-changed',
+        (next) => {
+          locale.value = next;
+        },
+        localeGet,
+      ),
+      autostartGet().then((enabled) => {
+        autostart.value = enabled;
+      }),
     ]);
   }
 

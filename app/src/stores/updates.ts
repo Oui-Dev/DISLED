@@ -8,7 +8,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { UpdateStatus } from '@/bindings/UpdateStatus';
 import { updateCheck, updateInstall, updateStatus } from '@/ipc/commands';
-import { on } from '@/ipc/events';
+import { follow } from '@/ipc/events';
 
 export const useUpdatesStore = defineStore('updates', () => {
   const status = ref<UpdateStatus>({
@@ -19,8 +19,9 @@ export const useUpdatesStore = defineStore('updates', () => {
     checked_at: null,
   });
 
+  /** The status events bring the result, in order with the other changes. */
   async function check(): Promise<void> {
-    status.value = await updateCheck();
+    await updateCheck();
   }
 
   /** Downloads and installs the update; the app restarts once it is done. */
@@ -34,10 +35,13 @@ export const useUpdatesStore = defineStore('updates', () => {
 
   /** Follows the backend events. Call once, in the popup. */
   async function start(): Promise<void> {
-    await on('update-status', (next) => {
-      status.value = next;
-    });
-    status.value = await updateStatus();
+    await follow(
+      'update-status',
+      (next) => {
+        status.value = next;
+      },
+      updateStatus,
+    );
   }
 
   return { status, check, install, start };

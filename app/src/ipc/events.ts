@@ -38,3 +38,26 @@ export function on<E extends keyof Events>(
 ): Promise<UnlistenFn> {
   return getCurrentWebviewWindow().listen<Events[E]>(event, ({ payload }) => handler(payload));
 }
+
+/**
+ * Keeps a value of the backend current in this window, for a window that
+ * starts after the last `event`: `apply` gets the answer of `read`, then
+ * each event. Every change comes with the event, so once one is heard the
+ * events keep the value current, and the answer, which may be older, is
+ * dropped.
+ */
+export async function follow<E extends keyof Events>(
+  event: E,
+  apply: (payload: Events[E]) => void,
+  read: () => Promise<Events[E]>,
+): Promise<void> {
+  let heard = false;
+  await on(event, (payload) => {
+    heard = true;
+    apply(payload);
+  });
+  const current = await read();
+  if (!heard) {
+    apply(current);
+  }
+}
