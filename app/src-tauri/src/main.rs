@@ -271,7 +271,7 @@ fn main() {
             let locale = Locale::of(settings.language);
             handle.state::<LocaleState>().replace(locale);
             tray::create(&handle, locale)?;
-            windows::hide_popup_on_blur(&handle);
+            windows::hide_popup_on_blur_or_close(&handle);
             app.manage(DeviceHandle::spawn(handle.clone()));
             // A new version most often follows an update, whose restart keeps
             // the arguments, `--autostart` included. It checks again at once

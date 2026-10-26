@@ -83,14 +83,18 @@ pub fn hide_popup(app: &AppHandle) {
     }
 }
 
-/// Hides the popup whenever it loses the focus.
-pub fn hide_popup_on_blur(app: &AppHandle) {
+/// Hides the popup whenever it loses the focus, and instead of closing it on
+/// Alt+F4 or Cmd+W, since nothing would create it again.
+pub fn hide_popup_on_blur_or_close(app: &AppHandle) {
     if let Some(window) = popup(app) {
         let owner = app.clone();
-        window.on_window_event(move |event| {
-            if let WindowEvent::Focused(false) = event {
+        window.on_window_event(move |event| match event {
+            WindowEvent::Focused(false) => hide_popup(&owner),
+            WindowEvent::CloseRequested { api, .. } => {
+                api.prevent_close();
                 hide_popup(&owner);
             }
+            _ => {}
         });
     }
 }
