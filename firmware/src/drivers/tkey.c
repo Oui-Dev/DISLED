@@ -29,7 +29,9 @@ typedef struct {
 
 static uint8_t s_charge_time;
 static uint8_t s_discharge_time;
-static sample_t s_queue[QUEUE_SIZE];
+/* Volatile as the indices, so that a slot is read before s_tail frees it
+ * to the interrupt. */
+static volatile sample_t s_queue[QUEUE_SIZE];
 static volatile uint32_t s_head; /* written by the interrupt */
 static volatile uint32_t s_tail; /* written by the main loop */
 static volatile uint32_t s_overruns;
