@@ -28,6 +28,7 @@ declare module 'vue' {
     UBadge: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UChart: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Chart.vue')['default']
+    UChip: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Chip.vue')['default']
     UDropdownMenu: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
     UEmpty: typeof import('./../node_modules/@nuxt/ui/dist/runtime/components/Empty.vue')['default']
     UIcon: typeof import('./../node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']

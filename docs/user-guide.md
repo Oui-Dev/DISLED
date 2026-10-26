@@ -106,7 +106,7 @@ the taskbar. Drag it onto the taskbar to keep it in view.
     automatic brightness, from **Darker** to **Brighter** (−50 to +50 %).
   - With **Auto** off, the slider sets a fixed level, from 1 to 100 %.
 - **Settings** opens the settings page, **Quit** closes the app. When an
-  update is on offer, it shows between them.
+  update is on offer, **Settings** turns green, with a dot.
 
 Without a lamp, the popup still takes your settings, and they apply when you
 plug the lamp in. The popup hides when you click elsewhere or press Escape.
@@ -137,19 +137,20 @@ on/off, so the lamp always starts green.
 ### The app
 
 The app looks for a new version when it starts, then once a day unless you
-turn that off. When there is one, the popup shows **Update to X.Y.Z** at
-the bottom, and the settings page says "DISLED X.Y.Z is available." with
+turn that off. When there is one, **Settings** turns green at the bottom of
+the popup, and the settings page says "DISLED X.Y.Z is available." with
 **Install and restart**. The app then downloads the update, installs it and
-starts again by itself. Updates are signed, so the app installs only
-versions published by the DISLED project.
+starts again by itself, its popup open. Updates are signed, so the app
+installs only versions published by the DISLED project.
 
 ### The lamp
 
-The app also looks for a newer lamp firmware. When there is one, the popup
-shows **Update the lamp**, and the settings page says "Lamp firmware X.Y.Z
-is available." with **Update the lamp…**. If the app has an update too,
-install it first. The popup offers it first, because a new firmware may
-need a new app.
+The app also looks for a newer lamp firmware. When there is one,
+**Settings** turns green too, and the settings page says "Lamp firmware
+X.Y.Z is available." with **Update the lamp…**. If the app has an update
+too, the settings page shows both: install the app first, because a new
+firmware may need a new app. **Update the lamp…** comes once the app is up
+to date.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/user-guide/lamp-update-dark.png">

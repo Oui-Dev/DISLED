@@ -37,6 +37,9 @@ const { fit } = usePopupAutoSize(
 const page = ref<Page>('lamp');
 const pageHeading = useTemplateRef<HTMLElement>('pageHeading');
 
+/** The update on offer, announced by the settings button of the lamp page. */
+const settingsOffer = computed(() => (page.value === 'lamp' ? offerLine.value : null));
+
 /** Moves the focus to the title of the new page, for keyboards and screen readers. */
 async function show(next: Page): Promise<void> {
   page.value = next;
@@ -130,24 +133,24 @@ const status = computed(() => {
     </div>
 
     <footer ref="footer" class="mt-auto flex items-center justify-between gap-2 px-4 pb-3">
+      <!-- An update on offer turns it primary, with a dot, and its tooltip says which. -->
       <UButton
-        color="neutral"
+        :color="settingsOffer ? 'primary' : 'neutral'"
         variant="link"
         size="sm"
         class="px-0"
-        :icon="page === 'lamp' ? 'i-lucide-settings' : 'i-lucide-arrow-left'"
+        :title="settingsOffer ?? undefined"
         @click="show(page === 'lamp' ? 'settings' : 'lamp')"
       >
+        <template #leading="{ ui }">
+          <UChip as="span" :show="settingsOffer !== null" size="sm">
+            <UIcon
+              :name="page === 'lamp' ? 'i-lucide-settings' : 'i-lucide-arrow-left'"
+              :class="ui.leadingIcon()"
+            />
+          </UChip>
+        </template>
         {{ page === 'lamp' ? t('common.settings') : t('common.back') }}
-      </UButton>
-      <UButton
-        v-if="offerLine && page === 'lamp'"
-        variant="link"
-        size="sm"
-        class="px-0 font-semibold"
-        @click="show('settings')"
-      >
-        {{ offerLine }}
       </UButton>
       <UButton
         color="neutral"
