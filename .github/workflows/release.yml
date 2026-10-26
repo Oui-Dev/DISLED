@@ -170,6 +170,9 @@ jobs:
           # Signs the installers for the app updater (docs/releasing.md).
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # On CI, Tauri skips the Finder layout of the disk image, its
+          # background and icon positions, unless told to keep it.
+          TAURI_BUNDLER_DMG_IGNORE_CI: "true"
         run: |
           npm ci
           npm run tauri build -- --bundles ${{ matrix.bundles }} \
@@ -183,6 +186,17 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: target/release/bundle/macos
         run: codesign --verify --deep --strict --verbose=2 DISLED.app
+
+      # The disk image window shows its background, with the first-launch
+      # steps, only if Finder saved its layout into the image.
+      - name: Check the disk image layout
+        if: runner.os == 'macOS'
+        working-directory: target/release/bundle/dmg
+        run: |
+          mount=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount" DISLED_*.dmg
+          trap 'hdiutil detach "$mount"' EXIT
+          grep -q backgroundImageAlias "$mount/.DS_Store"
 
       - name: Attach to the draft release
         working-directory: target/release/bundle
