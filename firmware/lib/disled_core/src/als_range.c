@@ -7,30 +7,29 @@
 
 #include <stdbool.h>
 
-/* A new step must give more than this many counts (the decision level of
- * the application note)... */
+/* A new step must give more than this, the decision level of the application note... */
 #define COUNT_PICK 100u
-/* ...and keeps them down to half as many, so that it does not leave at the
- * next reading. */
+/* ...and stays down to half of it, so that it does not leave at the next reading. */
 #define COUNT_STAY (COUNT_PICK / 2u)
 /* Above this, a less sensitive step (application note). */
 #define COUNT_HIGH 10000u
-/* A longer integration ends once half the time would give more than twice
- * COUNT_PICK counts: a step picked in the dark has room to stay. */
+/* A longer integration ends where half the time would give 2 x COUNT_PICK
+ * counts, so that a step picked in the dark has room to stay. */
 #define COUNT_LONG (4u * COUNT_PICK)
-/* Gains 1 and 2 are linear up to 100 lx (application note), here in units
- * of `resolution`. */
+/* 100 lx, the linear limit of gains 1 and 2 (application note), in 0.1 mlx. */
 #define HIGH_GAIN_MAX_LIGHT 1000000u
 
 typedef struct {
     uint8_t gain_eighths;
     uint16_t integration_ms;
-    /* Light of one count, in units of 0.1 mlx: 0.0042 lx at gain 2 and
-     * 800 ms (datasheet rev. 1.8; the application note gives an older
-     * 0.0036), times 16 / gain_eighths, times 800 / integration_ms. */
+    /* 0.1 mlx a count: 0.0042 lx at gain 2 and 800 ms (datasheet rev. 1.8, not
+     * the older 0.0036 of the note), x 16 / gain_eighths x 800 / integration_ms. */
     uint16_t resolution;
 } step_t;
 
+/* An 800 ms step would only add counts below the floor of the brightness curve
+ * and slow the reaction to a light switched on in the dark. The first step reaches
+ * 35 klx, past full brightness: no shorter time and no correction above 1000 lx. */
 static const step_t steps[ALS_RANGE_STEPS] = {
     { 1, 100, 5376 }, { 2, 100, 2688 }, { 8, 100, 672 },
     { 16, 100, 336 }, { 16, 200, 168 }, { 16, 400, 84 },

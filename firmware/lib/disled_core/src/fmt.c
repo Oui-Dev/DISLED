@@ -38,7 +38,7 @@ static void emit_padded(sink_t *sink, const char *text, size_t text_length, size
     }
 }
 
-/* Writes `value` in `base` at the end of `buffer`; returns its start. */
+/* Writes `value` in `base`, ending at `buffer_end`. Returns its start. */
 static char *format_unsigned(char *buffer_end, unsigned long value, unsigned base, bool upper)
 {
     const char *digits = upper ? "0123456789ABCDEF" : "0123456789abcdef";

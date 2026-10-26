@@ -3,11 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * TouchKey sampling (ADC1 in touch mode, channel 9 on PB1).
- *
- * Every millisecond the SysTick hook arms the PWM sample point; the
- * measurement then runs in the TIM3 interrupt at a fixed phase of the LED
- * PWM. Samples go through a small queue to the main loop.
+ * TouchKey sampling, ADC1 in touch mode on PB1. Every millisecond the SysTick
+ * hook arms the PWM sample point, the measurement runs in the TIM3 interrupt,
+ * and a small queue takes the samples to the main loop.
  */
 #ifndef DISLED_TKEY_H
 #define DISLED_TKEY_H

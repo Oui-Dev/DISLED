@@ -3,15 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * USBD (FSDEV) interrupts, forwarded to TinyUSB on root port 0.
- *
- * The three vector entries are aliases of one handler. Three identical
- * handlers would let the compiler fold them into calls to each other,
- * which only works by accident with interrupt functions.
- *
- * During USB suspend the core runs on the slow clock without the PLL, and
- * USB cannot work without it: the wake-up (EXTI line 18, or the USB
- * interrupt itself) restores the clock before TinyUSB sees anything.
+ * USBD interrupts, for TinyUSB. The three vectors alias one handler: GCC folds
+ * identical handlers into calls to each other, wrong for interrupt functions.
+ * In suspend, the wake-up restores the PLL clock before TinyUSB sees anything.
  */
 #include "bsp/bsp_power.h"
 #include "bsp/ch32.h"

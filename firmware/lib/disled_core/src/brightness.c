@@ -9,13 +9,11 @@
 
 #include "time_utils.h"
 
-/* Readings further apart (the sensor changed its range, or measures slowly
- * in the dark) catch up at most this many ticks. */
+/* Readings far apart, after a range change or in the dark, catch up this many ticks at most. */
 #define MAX_TICKS 16u
 
-/* log2(x) in Q8 (x >= 1), Mitchell's approximation: exact at powers of two,
- * linear in between. The error stays below 0.09 (6 % in lux), which is
- * invisible on a brightness curve. */
+/* log2(x) in Q8 for x >= 1, Mitchell's approximation: at most 6 % off in lux,
+ * which the brightness curve does not show. */
 static int32_t log2_q8(uint32_t x)
 {
     if (x == 0u) {
@@ -111,8 +109,7 @@ static void follow(brightness_t *b, int32_t light_q8, uint32_t now_ms)
     if (size < (int32_t)cfg->large_q8) {
         b->large_sign = 0;
     } else if (!b->fast) {
-        /* Hold still until the change has lasted: a hand or a shadow in
-         * front of the sensor does not move the lamp. */
+        /* Wait until the change lasts: a hand or a shadow on the sensor must not move the lamp. */
         if (b->large_sign != sign) {
             b->large_sign = sign;
             b->large_since_ms = now_ms;
@@ -138,8 +135,8 @@ static void follow(brightness_t *b, int32_t light_q8, uint32_t now_ms)
     }
     const int32_t divisor = b->fast ? cfg->fast_divisor : cfg->slow_divisor;
     for (uint32_t i = 0; i < ticks; i++) {
-        /* Division instead of a shift keeps the rounding well defined for
-         * negative differences; the last steps are one unit each. */
+        /* Divided, not shifted: shifting a negative value is implementation-defined.
+         * The last steps are one unit each. */
         const int32_t error = light_q8 - b->light_q8;
         int32_t step = error / divisor;
         if (step == 0) {

@@ -3,9 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Blocking I2C master on I2C1. Every wait has a timeout, so a stuck bus
- * costs a few milliseconds instead of hanging the firmware, and
- * i2c_bus_recover() frees a slave that holds SDA low.
+ * Blocking I2C master on I2C1. Every wait has a timeout, so a stuck bus costs a
+ * few milliseconds, and i2c_bus_recover() frees a slave that holds SDA low.
  */
 #ifndef DISLED_I2C_BUS_H
 #define DISLED_I2C_BUS_H
@@ -20,9 +19,8 @@ void i2c_bus_init(uint32_t speed_hz);
  * on a NACK, a bus error or a timeout. */
 bool i2c_bus_write(uint8_t address, const uint8_t *data, size_t length);
 
-/* Writes one register index, then reads two bytes after a repeated start
- * (the transaction shape of SMBus "read word" devices such as the
- * VEML7700). */
+/* Writes one register index, then reads two bytes after a repeated start: an
+ * SMBus "read word", as the VEML7700 expects. */
 bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2]);
 
 /* Failed transfers since boot (diagnostics). */

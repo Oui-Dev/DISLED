@@ -3,24 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Capacitive touch detection on raw TouchKey readings:
- *  1. Samples are averaged over 20 ms windows, one 50 Hz mains period, which
- *     cancels the hum the finger picks up.
- *  2. A baseline follows slow drifts while nothing touches the electrode. It
- *     freezes during a touch and while a hand is near the lid, which would
- *     otherwise pull it down and blunt the next touches.
- *  3. The signal is the drop below the baseline, in per mille of it, so the
- *     thresholds do not depend on the board.
- *  4. Hysteresis and debounce turn it into short presses (released before
- *     the long-press time) and long presses (fired while the finger is still
- *     down). A press must also rise above the floor, the lowest signal of the
- *     last TOUCH_FLOOR_WINDOWS windows, and ends halfway back: a hand resting
- *     near the lid reads like a light touch, and fixed thresholds alone would
- *     merge the taps on top of it into one long press.
- *  5. A contact longer than the object time is an object on the lid: the
- *     baseline absorbs it and nothing more fires.
- *  6. A reading that stays above the baseline (finger at power-up, object
- *     removed) recalibrates it.
+ * Touch gestures from raw TouchKey readings: short and long presses, and an
+ * object left on the lid, which the baseline absorbs. Drops below the
+ * baseline are in per mille of it, so that the thresholds suit every board.
  */
 #ifndef DISLED_TOUCH_DETECTOR_H
 #define DISLED_TOUCH_DETECTOR_H
@@ -28,8 +13,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Windows that define the floor, 16 of 20 ms. A tap rises in 40 to 100 ms,
- * a hand settling near the lid more slowly. */
+/* A press must also rise above the floor, the lowest drop of the last 16 windows,
+ * or the taps on a hand resting near the lid would merge into one long press. A
+ * tap rises in 40 to 100 ms, a hand settling near the lid more slowly. */
 #define TOUCH_FLOOR_WINDOWS 16u
 
 typedef enum {
@@ -95,16 +81,14 @@ typedef struct {
 
 void touch_detector_init(touch_detector_t *td, const touch_config_t *config);
 
-/* Feeds one raw sample. Returns the gesture completed by this sample, if
- * any. `now_ms` is the time of the sample. */
+/* Feeds one raw sample taken at `now_ms`. Returns the gesture it completes: a
+ * short press at its release, a long press while the finger is still down. */
 touch_event_t touch_detector_feed(touch_detector_t *td, uint16_t raw, uint32_t now_ms);
 
-/* Restarts the calibration, for instance after the electrode was touched at
- * power-up or when resuming from USB suspend. */
+/* Builds a new baseline from the next readings, firing no gesture until then. */
 void touch_detector_recalibrate(touch_detector_t *td);
 
-/* The current touch was used elsewhere (the self-test): it fires no short
- * or long press, including a press still being debounced. */
+/* The current touch, even one still being debounced, fires no gesture. */
 void touch_detector_consume(touch_detector_t *td);
 
 touch_state_t touch_detector_state(const touch_detector_t *td);
@@ -113,8 +97,7 @@ uint16_t touch_detector_value(const touch_detector_t *td);
 uint16_t touch_detector_baseline(const touch_detector_t *td);
 int16_t touch_detector_delta_permille(const touch_detector_t *td);
 
-/* Automatic re-baselines since init: finger at power-up, object on or near
- * the lid (diagnostics). */
+/* Automatic re-baselines since init: finger at power-up, object on or near the lid. */
 uint16_t touch_detector_recalibrations(const touch_detector_t *td);
 
 #endif /* DISLED_TOUCH_DETECTOR_H */

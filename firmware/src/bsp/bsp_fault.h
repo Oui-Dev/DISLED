@@ -3,14 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Fault capture. A CPU exception or a failed assertion saves its cause and
- * address in the backup registers (they survive a system reset, not a
- * power cycle) and resets the chip; the LED turns off during the reset
- * thanks to the gate pull-downs. The next boot reports the fault to the
- * host, which makes field failures diagnosable without a debugger.
- *
- * The backup registers also count boots, watchdog resets and faults since
- * power-up, for the DIAGNOSTICS message.
+ * Fault capture: an exception or a failed assertion saves its cause in the
+ * backup registers, which survive a reset but not a power cycle, for the next
+ * boot to report. They also count boots, watchdog resets and faults.
  */
 #ifndef DISLED_BSP_FAULT_H
 #define DISLED_BSP_FAULT_H

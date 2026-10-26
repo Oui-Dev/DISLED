@@ -3,12 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Color composition in linear light.
- *
- * LED light output is proportional to the PWM duty, so every value here is
- * linear light (0 to 65535). Brightness levels are perceived brightness
- * (CIE 1976 L*), converted to linear light so that equal level steps look
- * like equal brightness steps, down to very dim evening settings.
+ * Colors in linear light, 0 to 65535, proportional to the PWM duty. Levels
+ * are perceived brightness (CIE 1976 L*), so that equal steps look equal.
  */
 #ifndef DISLED_COLOR_H
 #define DISLED_COLOR_H

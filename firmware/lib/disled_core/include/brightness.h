@@ -3,14 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Brightness level of the lamp, in per mille of perceived brightness.
- *
- * Automatic mode follows the ambient light on a logarithmic scale, the way
- * the eye adapts, and maps it to a level through a curve interpolated on
- * that scale. The filter follows a lasting large change (a light switched
- * on) fast, ignores a brief one (a hand in front of the sensor) and follows
- * small ones slowly; a hold band keeps the lamp from hunting. Manual mode
- * uses the level chosen by the host.
+ * Brightness level of the lamp, in per mille of perceived brightness. The
+ * automatic mode follows the ambient light on a log scale, as the eye
+ * adapts, and the manual mode takes the level of the host.
  */
 #ifndef DISLED_BRIGHTNESS_H
 #define DISLED_BRIGHTNESS_H
@@ -41,8 +36,7 @@ typedef struct {
     uint16_t fallback_permille; /* automatic level without a lux reading */
 } brightness_config_t;
 
-/* Limits of the automatic brightness bias, in percent, as SET_AUTO_BIAS
- * defines them. */
+/* Limits of the automatic brightness bias in percent, those of SET_AUTO_BIAS. */
 #define BRIGHTNESS_BIAS_MIN (-50)
 #define BRIGHTNESS_BIAS_MAX 50
 
@@ -50,7 +44,7 @@ typedef struct {
     const brightness_config_t *config;
     brightness_mode_t mode;
     uint8_t manual_percent;
-    int8_t bias_percent; /* automatic mode: level x (100 + bias) / 100 */
+    int8_t bias_percent;
     bool have_lux;
     bool fast;               /* following a large change */
     int8_t large_sign;       /* sign of a large difference being confirmed, else 0 */
@@ -62,27 +56,25 @@ typedef struct {
 
 void brightness_init(brightness_t *b, const brightness_config_t *config);
 
-/* Applies the lamp settings. `manual_percent` is 1 to 100. Back in automatic
- * mode the level is the automatic one at once (the LED output fades). */
+/* `manual_percent` is 1 to 100. Back in automatic mode, the automatic level
+ * applies at once, and the LED output fades to it. */
 void brightness_set_mode(brightness_t *b, brightness_mode_t mode, uint8_t manual_percent);
 
-/* Shifts the automatic curve, "brighter" or "darker" in the app: the
- * automatic level is multiplied by (100 + bias) / 100 and kept within 1 to
- * 1000. The bias is clamped to the BRIGHTNESS_BIAS_ limits. Manual mode
- * ignores it. */
+/* The automatic level times (100 + bias) / 100, within 1 to 1000. The bias is
+ * clamped to the BRIGHTNESS_BIAS_ limits, and manual mode ignores it. */
 void brightness_set_auto_bias(brightness_t *b, int8_t bias_percent);
 int8_t brightness_auto_bias(const brightness_t *b);
 
 /* New ambient light reading, in lux x 1000, taken at `now_ms`. */
 void brightness_update_lux(brightness_t *b, uint32_t lux_milli, uint32_t now_ms);
 
-/* The sensor stopped answering: automatic mode falls back to a fixed level. */
+/* The sensor stopped answering: automatic mode falls back to `fallback_permille`. */
 void brightness_lux_lost(brightness_t *b);
 
 /* Level to apply now, 0 to 1000. */
 uint16_t brightness_level_permille(const brightness_t *b);
 
-/* Same level in percent (rounded), as reported to the host. */
+/* The same in percent, rounded. */
 uint8_t brightness_level_percent(const brightness_t *b);
 
 /* Curve lookup without filtering. Exposed for tests. */

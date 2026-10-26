@@ -35,8 +35,7 @@ static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in
     return color_compose(out->config->color, in->color, in->level_permille);
 }
 
-/* Linear light to sub-ticks. period * 16 fits 16 bits as long as period <=
- * PWM_DITHER_PERIOD_MAX. */
+/* period * 16 fits 16 bits, since init checks period <= PWM_DITHER_PERIOD_MAX. */
 static uint16_t to_duty(uint16_t linear, uint16_t period, uint16_t pulse_loss)
 {
     if (linear == 0u) {

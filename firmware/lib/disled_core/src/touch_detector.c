@@ -9,8 +9,6 @@
 
 #include "time_utils.h"
 
-/* Takes the current reading as the new baseline: an object on or near the
- * lid, or a finger present at power-up that has gone. */
 static void rebaseline(touch_detector_t *td)
 {
     td->baseline_q8 = (uint32_t)td->value << 8;
@@ -70,14 +68,13 @@ static int16_t compute_delta_permille(const touch_detector_t *td)
     return (int16_t)permille;
 }
 
-/* Follows slow drifts and recalibrates when the reading stays above the
- * baseline. Only called while the electrode is not touched. */
+/* Called only while nothing touches the electrode. */
 static void track_baseline(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
 
-    /* Hand near the lid: hold the baseline, unless the drop lasts as long
-     * as an object would (something left close to the lid). */
+    /* A hand near the lid would pull the baseline down and blunt the next
+     * touches: hold it, unless the hand stays as long as an object would. */
     if (td->delta_permille >= (int32_t)cfg->proximity_permille) {
         td->inverted = false;
         if (!td->near) {
@@ -103,8 +100,7 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
     }
     td->inverted = false;
 
-    /* First-order low-pass: baseline += error / 2^shift. Division instead
-     * of a shift keeps the rounding well defined for negative errors. */
+    /* Divided, not shifted: shifting a negative value is implementation-defined. */
     const int32_t target_q8 = (int32_t)((uint32_t)td->value << 8);
     const int32_t error = target_q8 - (int32_t)td->baseline_q8;
     const int32_t divisor = (int32_t)1 << cfg->baseline_shift;
@@ -128,8 +124,7 @@ static int32_t max_i32(int32_t a, int32_t b)
     return a > b ? a : b;
 }
 
-/* Hysteresis and debounce. Returns true when the debounced contact flips:
- * a press while idle, a release while pressed. */
+/* Hysteresis and debounce. Returns true when the debounced contact flips. */
 static bool update_contact(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
@@ -194,8 +189,7 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
 
     if (td->state == TOUCH_STATE_IDLE) {
         if (flipped) {
-            /* Time the press from the first raw contact, not from the end
-             * of the debounce. */
+            /* Timed from the first raw contact, not from the end of the debounce. */
             td->state = TOUCH_STATE_PRESSED;
             td->press_start_ms = contact_start_ms;
             td->long_fired = td->consume_next; /* a consumed touch fires nothing */

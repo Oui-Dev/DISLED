@@ -24,12 +24,9 @@ typedef struct {
     usb_link_t link;
 } state_content_t;
 
-/*
- * s_seen is the state observed on the last pass, s_sent the state carried by
- * the last STATE message. The sequence number grows by one with each STATE
- * message that carries new content, so the host sees a gap only when it
- * really lost a message, even when level changes are coalesced.
- */
+/* s_seen: the state of the last pass, s_sent: that of the last STATE message. The
+ * sequence number grows only with new content, so a gap tells the host that it
+ * lost a message, even when level changes are coalesced. */
 static state_content_t s_seen;
 static state_content_t s_sent;
 static uint16_t s_state_seq;

@@ -3,12 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Logging to the CDC console. Debug builds only: in release builds the
- * macros compile to nothing (their arguments are still type-checked).
- *
- *   LOG_INFO("touch: short press, color %u", color);
- * prints
- *   [  12.345] I touch: short press, color 1
+ * Logging to the CDC console, debug builds only: in release builds the macros
+ * compile to nothing, their arguments still type-checked. LOG_INFO("touch: color
+ * %u", 1) prints "[  12.345] I touch: color 1".
  */
 #ifndef DISLED_LOG_H
 #define DISLED_LOG_H

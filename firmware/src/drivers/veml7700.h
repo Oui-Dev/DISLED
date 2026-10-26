@@ -3,11 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Vishay VEML7700 ambient light sensor (I2C address 0x10).
- *
- * The sensor integrates continuously; reading it once per integration time
- * gives a fresh count each time. The application picks the gain and the
- * integration time (lib/disled_core/als_range.h) and converts the counts.
+ * Vishay VEML7700 ambient light sensor at I2C address 0x10. It integrates
+ * continuously, so one read per integration time gives a fresh count. The
+ * application picks the range (lib/disled_core/als_range.h).
  */
 #ifndef DISLED_VEML7700_H
 #define DISLED_VEML7700_H
