@@ -114,6 +114,11 @@ bool usb_hid_send(const uint8_t payload[PROTO_REPORT_SIZE])
     return true;
 }
 
+bool usb_hid_idle(void)
+{
+    return s_link == USB_LINK_CONFIGURED && s_tx_count == 0u && tud_hid_ready();
+}
+
 bool usb_hid_receive(uint8_t payload[PROTO_REPORT_SIZE])
 {
     if (s_rx_count == 0u) {

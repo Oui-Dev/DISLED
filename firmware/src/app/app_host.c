@@ -257,7 +257,9 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
 
 static void send_telemetry(uint32_t now_ms)
 {
-    if (s_telemetry_period_ms == 0u || !time_reached(now_ms, s_telemetry_next_ms)) {
+    /* A sample due waits for the previous messages to leave. */
+    if (s_telemetry_period_ms == 0u || !time_reached(now_ms, s_telemetry_next_ms) ||
+        !usb_hid_idle()) {
         return;
     }
     s_telemetry_next_ms = now_ms + s_telemetry_period_ms;
@@ -301,7 +303,8 @@ void app_host_task(uint32_t now_ms)
     }
 
     observe_changes();
-    if (notification_pending() && app.link == USB_LINK_CONFIGURED) {
+    /* Until the way is clear, the changes add up in s_seen and go out as one STATE. */
+    if (notification_pending() && usb_hid_idle()) {
         const bool level_only = only_level_pending();
         const bool throttled = level_only && time_elapsed_ms(now_ms, s_last_level_notify_ms) <
                                                  APP_AUTO_LEVEL_NOTIFY_MS;

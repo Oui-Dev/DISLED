@@ -139,6 +139,8 @@ cuts the test short: the result follows the resume, with bit 3 of
 
 Unsolicited `STATE` messages caused only by automatic brightness are sent
 at most every 500 ms; changes in between are merged into the next message.
+So are the changes made while earlier messages wait to leave, as when the
+host does not read the lamp.
 A host that sees `state_seq` jump by more than one has missed a message
 and should send `GET_STATE`.
 
