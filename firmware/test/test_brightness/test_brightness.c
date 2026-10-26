@@ -106,6 +106,27 @@ static void test_a_brief_shadow_does_not_move_the_lamp(void)
     TEST_ASSERT_EQUAL_UINT16(300, brightness_level_permille(&b));
 }
 
+static void test_a_shadow_while_following_a_change_does_not_move_the_lamp(void)
+{
+    read_lux(LUX(10), 1, 100);   /* 80 per mille */
+    read_lux(LUX(1000), 5, 100); /* light on: confirmed, the fast filter takes its first step */
+    const uint16_t level = brightness_level_permille(&b);
+    TEST_ASSERT_TRUE(level > 80);
+    read_lux(LUX(10), 3, 100); /* a hand over the sensor for 0.3 s */
+    TEST_ASSERT_EQUAL_UINT16(level, brightness_level_permille(&b));
+    read_lux(LUX(1000), 30, 100);
+    TEST_ASSERT_UINT16_WITHIN(10, 800, brightness_level_permille(&b));
+}
+
+static void test_a_second_change_the_same_way_is_followed_at_once(void)
+{
+    read_lux(LUX(10), 1, 100);    /* 80 per mille */
+    read_lux(LUX(1000), 10, 100); /* light on: followed, not settled yet */
+    const uint16_t level = brightness_level_permille(&b);
+    read_lux(LUX(3000), 1, 100); /* a second light while the first one is followed */
+    TEST_ASSERT_TRUE(brightness_level_permille(&b) > level);
+}
+
 static void test_small_changes_are_followed_gently(void)
 {
     read_lux(LUX(100), 1, 100); /* 300 per mille */
@@ -220,6 +241,8 @@ int main(void)
     RUN_TEST(test_fallback_until_the_first_reading);
     RUN_TEST(test_a_lasting_large_change_is_followed_within_1_5_s);
     RUN_TEST(test_a_brief_shadow_does_not_move_the_lamp);
+    RUN_TEST(test_a_shadow_while_following_a_change_does_not_move_the_lamp);
+    RUN_TEST(test_a_second_change_the_same_way_is_followed_at_once);
     RUN_TEST(test_small_changes_are_followed_gently);
     RUN_TEST(test_noise_within_the_hold_band_does_not_move_the_lamp);
     RUN_TEST(test_slow_readings_catch_up_with_the_time_elapsed);
