@@ -343,6 +343,14 @@ pub fn cancel(app: &AppHandle) {
         .store(true, Ordering::SeqCst);
 }
 
+/// Takes back the cancel of a closed update window, when a new one opens
+/// and follows the update still running.
+pub fn uncancel(app: &AppHandle) {
+    app.state::<FirmwareState>()
+        .cancel
+        .store(false, Ordering::SeqCst);
+}
+
 /// Forgets the result of the last update, when the update window opens
 /// again.
 pub fn clear_result(app: &AppHandle) {

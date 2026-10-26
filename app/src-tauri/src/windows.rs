@@ -15,6 +15,7 @@ use tauri::{
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::device::DeviceHandle;
+use crate::firmware;
 use crate::i18n::{Locale, LocaleState};
 
 const POPUP: &str = "popup";
@@ -215,6 +216,15 @@ pub fn open_lamp_update(app: &AppHandle) {
         .resizable(false)
         .build();
     if let Ok(window) = built {
+        firmware::uncancel(app);
+        // Otherwise the update would keep waiting for a bootloader, and flash
+        // the next one with no window to show it.
+        let owner = app.clone();
+        window.on_window_event(move |event| {
+            if let WindowEvent::Destroyed = event {
+                firmware::cancel(&owner);
+            }
+        });
         let _ = window.set_focus();
     }
 }
