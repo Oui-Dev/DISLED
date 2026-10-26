@@ -80,19 +80,19 @@ fn settings_set(
     if patch.language.is_some() {
         apply_language(&app, settings.language);
     }
-    if device.connection().connected {
-        if patch.brightness_mode.is_some() || patch.manual_level.is_some() {
-            device.send(Command::SetState(SetState {
-                brightness_mode: Some(settings.brightness_mode),
-                manual_level: Some(settings.manual_level),
-                ..SetState::default()
-            }))?;
-        }
-        if patch.auto_bias.is_some() && device.auto_bias_supported() {
-            device.send(Command::SetAutoBias {
-                bias: settings.auto_bias,
-            })?;
-        }
+    // Without a lamp, or with one that just left, the settings are saved
+    // all the same and reach the lamp at its next connection.
+    if patch.brightness_mode.is_some() || patch.manual_level.is_some() {
+        let _ = device.send(Command::SetState(SetState {
+            brightness_mode: Some(settings.brightness_mode),
+            manual_level: Some(settings.manual_level),
+            ..SetState::default()
+        }));
+    }
+    if patch.auto_bias.is_some() && device.auto_bias_supported() {
+        let _ = device.send(Command::SetAutoBias {
+            bias: settings.auto_bias,
+        });
     }
     Ok(settings)
 }
