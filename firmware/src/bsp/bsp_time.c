@@ -91,15 +91,16 @@ uint32_t bsp_time_us(void)
 
 void bsp_time_delay_us(uint32_t us)
 {
-    /* The counter reloads every millisecond, so measure elapsed ticks
-     * modulo one period. */
+    /* The counter reloads every millisecond: add up the ticks between two
+     * reads, so that a wait of a period or more ends too. */
     const uint32_t period = (uint32_t)SysTick->CMP + 1u;
     const uint32_t ticks = us * (SystemCoreClock / 1000000u);
-    const uint32_t start = systick_count();
+    uint32_t last = systick_count();
     uint32_t elapsed = 0;
 
     while (elapsed < ticks) {
         const uint32_t now = systick_count();
-        elapsed = (now >= start) ? (now - start) : (period - start + now);
+        elapsed += (now >= last) ? (now - last) : (period - last + now);
+        last = now;
     }
 }

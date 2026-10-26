@@ -23,7 +23,8 @@ uint32_t bsp_time_us(void);
  * SystemCoreClock. The time never goes back, but may jump a millisecond ahead. */
 void bsp_time_core_clock_changed(void);
 
-/* Busy-waits at least the given number of microseconds (up to 1000). */
+/* Busy-waits at least the given number of microseconds (short waits: the
+ * watchdog runs). */
 void bsp_time_delay_us(uint32_t us);
 
 /* Function called from the SysTick interrupt every millisecond, after the
