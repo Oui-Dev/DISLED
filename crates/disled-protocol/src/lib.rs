@@ -319,9 +319,8 @@ pub enum DecodeError {
     TooShort(usize),
     #[error("body length {0} does not fit the report")]
     BadLength(usize),
-    /// The compatibility rules of the specification make hosts ignore an
-    /// unsolicited message of an unknown type, so callers usually skip this
-    /// error.
+    /// Hosts ignore an unsolicited message of an unknown type, as the
+    /// specification asks, so callers usually skip this error.
     #[error("unknown message type 0x{0:02x}")]
     UnknownType(u8),
     #[error("message 0x{0:02x}: body of {1} bytes, expected at least {2}")]

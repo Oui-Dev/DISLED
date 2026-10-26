@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The firmware files of the releases. Each firmware release carries its
-//! release build, `disled-fw-X.Y.Z.hex`, signed with the update key of the
-//! app, because a replaced firmware could present the lamp to the computer
-//! as a keyboard. The release workflow puts the file name and the version
-//! in the signed comment.
+//! The firmware files of the releases: the release build `disled-fw-X.Y.Z.hex`,
+//! signed with the update key, its name and version in the signed comment, since
+//! a replaced firmware could present the lamp to the computer as a keyboard.
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
