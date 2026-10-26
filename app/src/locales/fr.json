@@ -63,6 +63,7 @@
     "upToDate": "À jour (vérifié le {date}).",
     "lampError": "Erreur de recherche du firmware de la lampe : {detail}",
     "lampAvailable": "Le firmware {version} de la lampe est disponible.",
+    "lampAfterApp": "Le firmware {version} de la lampe est disponible. Installez d’abord DISLED {app}.",
     "reinstall": "Réinstaller le firmware de la lampe…",
     "toApp": "Mettre à jour en {version}",
     "toLamp": "Mettre à jour la lampe"
