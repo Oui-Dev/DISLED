@@ -87,7 +87,13 @@ fn change(app: &AppHandle, edit: impl FnOnce(&mut UpdateStatus)) {
 
 /// Asks GitHub for a newer version.
 pub async fn check(app: &AppHandle) -> UpdateStatus {
-    change(app, |s| s.checking = true);
+    // One at a time: a click during the automatic check gets its result,
+    // through the events.
+    let mut running = false;
+    change(app, |s| running = std::mem::replace(&mut s.checking, true));
+    if running {
+        return app.state::<UpdateState>().status();
+    }
     // The update found keeps these timeouts for its download.
     let updater = app
         .updater_builder()
