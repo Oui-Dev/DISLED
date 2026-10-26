@@ -26,13 +26,25 @@ function formatUptime(ms: number): string {
   return `${hours}:${pad(minutes)}:${pad(seconds)}.${pad(ms % 1000, 3)}`;
 }
 
+/** The uptime of each sample, formatted once for every chart and refresh. */
+const uptimes = new WeakMap<Telemetry, string>();
+
+function uptimeOf(sample: Telemetry): string {
+  let uptime = uptimes.get(sample);
+  if (uptime === undefined) {
+    uptime = formatUptime(sample.uptime_ms);
+    uptimes.set(sample, uptime);
+  }
+  return uptime;
+}
+
 /** One row per sample: its uptime, then the value of each series. */
 export function chartRows(
   samples: readonly Telemetry[],
   series: readonly ChartSeries[],
 ): ChartRow[] {
   return samples.map((sample) => {
-    const row: ChartRow = { uptime: formatUptime(sample.uptime_ms) };
+    const row: ChartRow = { uptime: uptimeOf(sample) };
     for (const { key, value } of series) {
       row[key] = value(sample);
     }
