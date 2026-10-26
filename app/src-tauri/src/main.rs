@@ -265,6 +265,14 @@ fn main() {
             // No Dock icon, since the app lives in the menu bar.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            // The shortcut of the developer tools, in debug builds only,
+            // which a capability file would grant to every build.
+            #[cfg(debug_assertions)]
+            app.add_capability(
+                tauri::ipc::CapabilityBuilder::new("devtools")
+                    .window("*")
+                    .permission("core:webview:allow-internal-toggle-devtools"),
+            )?;
 
             let handle = app.handle().clone();
             let settings = init_settings(&handle);
