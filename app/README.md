@@ -70,7 +70,7 @@ restart `npm run tauri dev` after using one for the first time.
 `src/assets/css/main.css` brings Tailwind, Nuxt UI, the self-hosted
 Montserrat font and the token overrides. `src/assets/css/palettes.css`
 holds the two palettes. `ink`, the neutral one, goes from the brand white
-`#fefcf7`, the light background, to the brand black `#050a06`, the dark
+`#fefcf7`, the light background, to the brand black `#060907`, the dark
 one. `brand`, the primary one, is built on the logo green `#2ecc71`.
 Nothing checks the contrasts, so a change there must keep neutral text at
 4.5:1 and the primary at about 3.8:1.

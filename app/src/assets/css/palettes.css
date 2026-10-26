@@ -19,13 +19,13 @@
   --color-ink-50: #fefcf7; /* oklch(99.1% 0.007 89), brand white */
   --color-ink-100: #f5f5f1; /* oklch(96.9% 0.005 106) */
   --color-ink-200: #e5e6e3; /* oklch(92.3% 0.004 122) */
-  --color-ink-300: #d2d6d2; /* oklch(87.2% 0.007 146) */
-  --color-ink-400: #9fa3a0; /* oklch(71.1% 0.006 154) */
-  --color-ink-500: #6b6e6c; /* oklch(53.5% 0.005 157) */
-  --color-ink-600: #505351; /* oklch(43.9% 0.005 157) */
-  --color-ink-700: #3c3f3d; /* oklch(36.4% 0.005 157) */
-  --color-ink-800: #202421; /* oklch(25.5% 0.008 153) */
-  --color-ink-900: #050a06; /* oklch(13.6% 0.014 151), brand black */
+  --color-ink-300: #d3d5d3; /* oklch(87.1% 0.003 146) */
+  --color-ink-400: #a0a2a1; /* oklch(71.0% 0.003 165) */
+  --color-ink-500: #6c6e6c; /* oklch(53.6% 0.004 146) */
+  --color-ink-600: #515351; /* oklch(44.0% 0.004 146) */
+  --color-ink-700: #3d3f3d; /* oklch(36.5% 0.004 145) */
+  --color-ink-800: #212422; /* oklch(25.6% 0.006 157) */
+  --color-ink-900: #060907; /* oklch(13.5% 0.008 157), brand black */
   --color-ink-950: #010201; /* oklch(7.9% 0.010 145) */
 
   --color-brand-50: #f1fdf3; /* oklch(98.2% 0.018 151) */
