@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! DISLED production tool, described in docs/production.md. For each board,
-//! it waits for the ROM bootloader, flashes the release build with wchisp,
-//! checks what the lamp then reports, runs its self-test with the operator,
-//! and appends a row to a CSV log.
+//! DISLED production tool (docs/production.md). For each board, it flashes the
+//! release build with wchisp, checks what the lamp reports, runs its self-test
+//! with the operator and appends a row to a CSV log.
 
 mod board;
 mod lamp;
