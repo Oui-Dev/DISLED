@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/Oui-Dev/DISLED/compare/app-v1.0.1...app-v1.1.0) (2026-10-26)
+
+
+### 🚀 Enhancements
+
+* **app:** check for updates at once after an app update ([7cb2763](https://github.com/Oui-Dev/DISLED/commit/7cb27632c2bdfce08fb7c09bc96a3b0fd3f3065b))
+* **app:** mark the settings button when an update is on offer ([92b761b](https://github.com/Oui-Dev/DISLED/commit/92b761bc9ff2a38464ccf9d6a77a4a24a8148f93))
+* **app:** show the lamp update along with the app update ([5d8b4a8](https://github.com/Oui-Dev/DISLED/commit/5d8b4a8649fb295a81bbf42fbc13a9983958de14))
+
+
+### 🩹 Fixes
+
+* **app:** show the first-launch steps in the macOS disk image window ([6d6cb22](https://github.com/Oui-Dev/DISLED/commit/6d6cb224ab30a485f3f92990f4b3fda35ecf9e3f)), closes [#36](https://github.com/Oui-Dev/DISLED/issues/36)
+
 ## [1.0.1](https://github.com/Oui-Dev/DISLED/compare/app-v1.0.0...app-v1.0.1) (2026-10-26)
 
 
