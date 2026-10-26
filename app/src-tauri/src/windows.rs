@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The windows: the popup under the tray icon (daily use), and two opened
-//! on demand, Diagnostics (telemetry, recordings, self-test) and the lamp
-//! update (firmware).
+//! The windows: the popup under the tray icon for daily use, and two that
+//! open on demand, Diagnostics and the lamp update.
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use disled_protocol::Command;
 use tauri::{
-    AppHandle, LogicalSize, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-    WindowEvent,
+    AppHandle, LogicalSize, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
+    Wry,
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::device::DeviceHandle;
 use crate::i18n::{Locale, LocaleState};
 
-pub const POPUP: &str = "popup";
-pub const DIAGNOSTICS: &str = "diagnostics";
-pub const LAMP_UPDATE: &str = "lamp-update";
+const POPUP: &str = "popup";
+const DIAGNOSTICS: &str = "diagnostics";
+const LAMP_UPDATE: &str = "lamp-update";
 
 /// The windows opened on demand, with the message key of their title.
 const TITLED: [(&str, &str); 2] = [
@@ -35,8 +34,8 @@ const REOPEN_GUARD: Duration = Duration::from_millis(300);
 /// The width of the popup, as in tauri.conf.json; its height follows its
 /// content.
 const POPUP_WIDTH: f64 = 320.0;
-/// The popup is never shorter, as in tauri.conf.json: the lamp page gets
-/// some room, the footer staying at the bottom.
+/// The popup is never shorter, as in tauri.conf.json, so that the lamp page
+/// gets some room and the footer stays at the bottom.
 const POPUP_MIN_HEIGHT: f64 = 360.0;
 /// Room kept on the screen around a popup taller than the screen, whose
 /// content then scrolls.
@@ -47,14 +46,14 @@ pub struct PopupState {
     hidden_at: Mutex<Option<Instant>>,
 }
 
-fn popup<R: Runtime>(app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
+fn popup(app: &AppHandle) -> Option<WebviewWindow> {
     app.get_webview_window(POPUP)
 }
 
-/// Places the popup next to the tray icon (above it on Windows, below it on
-/// macOS), or in a screen corner while the icon position is unknown (no
-/// click yet, or Linux).
-fn place<R: Runtime>(window: &WebviewWindow<R>) {
+/// Places the popup next to the tray icon, above it on Windows and below it
+/// on macOS, or in a screen corner while the icon position is unknown,
+/// before the first click or on Linux.
+fn place(window: &WebviewWindow) {
     let (tray, fallback) = if cfg!(target_os = "macos") {
         (Position::TrayBottomCenter, Position::TopRight)
     } else if cfg!(target_os = "windows") {
@@ -67,7 +66,7 @@ fn place<R: Runtime>(window: &WebviewWindow<R>) {
     }
 }
 
-pub fn show_popup<R: Runtime>(app: &AppHandle<R>) {
+pub fn show_popup(app: &AppHandle) {
     if let Some(window) = popup(app) {
         place(&window);
         let _ = window.show();
@@ -75,7 +74,7 @@ pub fn show_popup<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
+pub fn hide_popup(app: &AppHandle) {
     if let Some(window) = popup(app) {
         let _ = window.hide();
         if let Ok(mut hidden_at) = app.state::<PopupState>().hidden_at.lock() {
@@ -84,10 +83,22 @@ pub fn hide_popup<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// Fits the popup to the height of its content (logical pixels), from its
-/// minimum up to the screen, and keeps it against the tray icon. Returns
-/// the height it took: when shorter than the content, the content scrolls.
-pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) -> f64 {
+/// Hides the popup whenever it loses the focus.
+pub fn hide_popup_on_blur(app: &AppHandle) {
+    if let Some(window) = popup(app) {
+        let owner = app.clone();
+        window.on_window_event(move |event| {
+            if let WindowEvent::Focused(false) = event {
+                hide_popup(&owner);
+            }
+        });
+    }
+}
+
+/// Fits the popup to the height of its content, in logical pixels, from its
+/// minimum up to the screen, and keeps it against the tray icon. Returns the
+/// height it took; when it is shorter than the content, the content scrolls.
+pub fn resize_popup(app: &AppHandle, height: f64) -> f64 {
     let Some(window) = popup(app) else {
         return height;
     };
@@ -109,7 +120,7 @@ pub fn resize_popup<R: Runtime>(app: &AppHandle<R>, height: f64) -> f64 {
     height
 }
 
-pub fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {
+pub fn toggle_popup(app: &AppHandle) {
     let Some(window) = popup(app) else { return };
     if window.is_visible().unwrap_or(false) {
         hide_popup(app);
@@ -127,7 +138,7 @@ pub fn toggle_popup<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// Brings a window that is already open to the front.
-fn raise<R: Runtime>(app: &AppHandle<R>, label: &str) -> bool {
+fn raise(app: &AppHandle, label: &str) -> bool {
     let Some(window) = app.get_webview_window(label) else {
         return false;
     };
@@ -146,18 +157,15 @@ fn title(label: &str, locale: Locale) -> String {
 }
 
 /// A window opened on demand, in the language in force. Its frame takes the
-/// color mode set on the app and follows it: a theme of its own would
-/// outlast a change of mode on Windows.
-fn builder<'a, R: Runtime>(
-    app: &'a AppHandle<R>,
-    label: &str,
-) -> WebviewWindowBuilder<'a, R, AppHandle<R>> {
+/// color mode set on the app and follows it, because a theme of its own
+/// would outlast a change of mode on Windows.
+fn builder<'a>(app: &'a AppHandle, label: &str) -> WebviewWindowBuilder<'a, Wry, AppHandle> {
     WebviewWindowBuilder::new(app, label, WebviewUrl::App("index.html".into()))
         .title(title(label, app.state::<LocaleState>().get()))
 }
 
 /// Titles the open windows in another language.
-pub fn retitle<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+pub fn retitle(app: &AppHandle, locale: Locale) {
     for (label, key) in TITLED {
         if let Some(window) = app.get_webview_window(label) {
             let _ = window.set_title(&locale.t(key));
@@ -165,7 +173,7 @@ pub fn retitle<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
     }
 }
 
-pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
+pub fn open_diagnostics(app: &AppHandle) {
     hide_popup(app);
     if raise(app, DIAGNOSTICS) {
         return;
@@ -175,7 +183,7 @@ pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
         .min_inner_size(760.0, 560.0)
         .build();
     if let Ok(window) = built {
-        // The window starts the telemetry: a lamp streams until told to
+        // The window starts the telemetry, and a lamp streams until told to
         // stop, so the stream ends with the window.
         let owner = app.clone();
         window.on_window_event(move |event| {
@@ -190,9 +198,9 @@ pub fn open_diagnostics<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// The lamp update guide: a window rather than the popup, which hides as
-/// soon as the user turns to the lamp or to Zadig.
-pub fn open_lamp_update<R: Runtime>(app: &AppHandle<R>) {
+/// Opens the lamp update guide, a window rather than the popup, which hides
+/// as soon as the user turns to the lamp or to Zadig.
+pub fn open_lamp_update(app: &AppHandle) {
     hide_popup(app);
     if raise(app, LAMP_UPDATE) {
         return;

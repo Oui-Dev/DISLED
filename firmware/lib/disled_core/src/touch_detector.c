@@ -9,8 +9,6 @@
 
 #include "time_utils.h"
 
-/* Takes the current reading as the new baseline: an object on or near the
- * lid, or a finger present at power-up that has gone. */
 static void rebaseline(touch_detector_t *td)
 {
     td->baseline_q8 = (uint32_t)td->value << 8;
@@ -21,7 +19,6 @@ static void rebaseline(touch_detector_t *td)
 
 static void reset_contact(touch_detector_t *td)
 {
-    td->contact = false;
     td->pending = false;
     td->long_fired = false;
     td->consume_next = false;
@@ -38,18 +35,7 @@ static void reset_contact(touch_detector_t *td)
 
 void touch_detector_init(touch_detector_t *td, const touch_config_t *config)
 {
-    td->config = config;
-    td->window_sum = 0;
-    td->window_count = 0;
-    td->last_raw = 0;
-    td->value = 0;
-    td->baseline_q8 = 0;
-    td->press_start_ms = 0;
-    td->pending_since_ms = 0;
-    td->release_ms = 0;
-    td->inverted_since_ms = 0;
-    td->near_since_ms = 0;
-    td->recalibrations = 0;
+    *td = (touch_detector_t){ .config = config };
     touch_detector_recalibrate(td);
 }
 
@@ -72,10 +58,7 @@ static int16_t compute_delta_permille(const touch_detector_t *td)
     if (baseline == 0) {
         return 0;
     }
-    int32_t drop = baseline - (int32_t)td->value;
-    if (td->config->rising_touch) {
-        drop = -drop;
-    }
+    const int32_t drop = baseline - (int32_t)td->value;
     int32_t permille = (drop * 1000) / baseline;
     if (permille > INT16_MAX) {
         permille = INT16_MAX;
@@ -85,14 +68,13 @@ static int16_t compute_delta_permille(const touch_detector_t *td)
     return (int16_t)permille;
 }
 
-/* Follows slow drifts and recalibrates when the reading stays above the
- * baseline. Only called while the electrode is not touched. */
+/* Called only while nothing touches the electrode. */
 static void track_baseline(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
 
-    /* Hand near the lid: hold the baseline, unless the drop lasts as long
-     * as an object would (something left close to the lid). */
+    /* A hand near the lid would pull the baseline down and blunt the next
+     * touches: hold it, unless the hand stays as long as an object would. */
     if (td->delta_permille >= (int32_t)cfg->proximity_permille) {
         td->inverted = false;
         if (!td->near) {
@@ -118,8 +100,7 @@ static void track_baseline(touch_detector_t *td, uint32_t now_ms)
     }
     td->inverted = false;
 
-    /* First-order low-pass: baseline += error / 2^shift. Division instead
-     * of a shift keeps the rounding well defined for negative errors. */
+    /* Divided, not shifted: shifting a negative value is implementation-defined. */
     const int32_t target_q8 = (int32_t)((uint32_t)td->value << 8);
     const int32_t error = target_q8 - (int32_t)td->baseline_q8;
     const int32_t divisor = (int32_t)1 << cfg->baseline_shift;
@@ -147,11 +128,12 @@ static int32_t max_i32(int32_t a, int32_t b)
 static bool update_contact(touch_detector_t *td, uint32_t now_ms)
 {
     const touch_config_t *cfg = td->config;
+    const bool contact = td->state == TOUCH_STATE_PRESSED;
     const int32_t rise = (int32_t)cfg->press_rise_permille;
     const int32_t press = max_i32((int32_t)cfg->press_permille, (int32_t)recent_floor(td) + rise);
     const int32_t release =
         max_i32((int32_t)cfg->release_permille, (int32_t)td->press_floor + rise / 2);
-    bool raw_contact = td->contact ? (td->delta_permille > release) : (td->delta_permille >= press);
+    bool raw_contact = contact ? (td->delta_permille > release) : (td->delta_permille >= press);
 
     if (td->rearming) {
         if (time_elapsed_ms(now_ms, td->release_ms) < cfg->rearm_ms) {
@@ -161,9 +143,9 @@ static bool update_contact(touch_detector_t *td, uint32_t now_ms)
         }
     }
 
-    if (raw_contact == td->contact) {
+    if (raw_contact == contact) {
         td->pending = false;
-        if (!td->contact) {
+        if (!contact) {
             td->consume_next = false; /* the press to swallow did not come */
         }
         return false;
@@ -176,7 +158,6 @@ static bool update_contact(touch_detector_t *td, uint32_t now_ms)
     if (time_elapsed_ms(now_ms, td->pending_since_ms) < cfg->debounce_ms) {
         return false;
     }
-    td->contact = raw_contact;
     td->pending = false;
     if (!raw_contact) {
         td->rearming = true;
@@ -207,23 +188,22 @@ static touch_event_t process_window(touch_detector_t *td, uint32_t now_ms)
     const bool flipped = update_contact(td, now_ms);
 
     if (td->state == TOUCH_STATE_IDLE) {
-        if (flipped && td->contact) {
-            /* Time the press from the first raw contact, not from the end
-             * of the debounce. */
+        if (flipped) {
+            /* Timed from the first raw contact, not from the end of the debounce. */
             td->state = TOUCH_STATE_PRESSED;
             td->press_start_ms = contact_start_ms;
             td->long_fired = td->consume_next; /* a consumed touch fires nothing */
             td->consume_next = false;
             td->near = false;
             td->press_floor = recent_floor(td);
-        } else if (!td->contact && !td->pending) {
+        } else if (!td->pending) {
             track_baseline(td, now_ms);
         }
         return TOUCH_EVENT_NONE;
     }
 
     /* TOUCH_STATE_PRESSED: the baseline is frozen. */
-    if (flipped && !td->contact) {
+    if (flipped) {
         td->state = TOUCH_STATE_IDLE;
         return td->long_fired ? TOUCH_EVENT_NONE : TOUCH_EVENT_SHORT_PRESS;
     }

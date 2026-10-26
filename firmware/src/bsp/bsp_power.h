@@ -3,10 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Power saving for USB suspend: a slow clock (internal 8 MHz oscillator
- * divided by 8, crystal and PLL off). The core never sleeps (WFI): in the
- * main loop it never woke up again on this board (ADR 0011). The loop keeps
- * running, slowly, and keeps feeding the watchdog.
+ * Power saving for USB suspend: the internal 8 MHz oscillator divided by 8,
+ * crystal and PLL off. The core never sleeps, since it never wakes up from a
+ * WFI in the main loop, which keeps feeding the watchdog, slowly.
  */
 #ifndef DISLED_BSP_POWER_H
 #define DISLED_BSP_POWER_H
@@ -23,7 +22,5 @@ void bsp_power_slow_clock(void);
  * to be off. */
 bool bsp_power_full_clock(void);
 bool bsp_power_full_clock_from_isr(void);
-
-bool bsp_power_clock_is_slow(void);
 
 #endif /* DISLED_BSP_POWER_H */

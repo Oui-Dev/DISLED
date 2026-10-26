@@ -2,12 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Brightness: automatic, with a "darker / brighter" correction of the
-  curve, or a fixed level, chosen with an Auto switch. The slider sets the
-  correction in automatic mode and the level otherwise: it only moves
-  under the user's hand, while the level in use shows next to the switch.
-  These are settings: saved on this computer and applied to the lamp at
-  every connection.
+  Brightness, automatic with a "darker / brighter" correction, or a fixed level, with
+  an Auto switch. The slider moves only under the user's hand, and the level in use
+  shows next to the switch. Settings, saved here and applied at every connection.
 -->
 <script setup lang="ts">
 import { useThrottleFn } from '@vueuse/core';
@@ -29,10 +26,10 @@ const settingsStore = useSettingsStore();
 
 const settings = computed(() => settingsStore.settings);
 const auto = computed(() => settings.value?.brightness_mode !== 'manual');
-/** Unknown until INFO arrives: assume support rather than flash a warning. */
+/** Unknown until INFO arrives, so assume support rather than flash a warning. */
 const biasSupported = computed(() => lamp.info?.auto_bias ?? true);
 
-/** The value under the user's hand, kept until saved: the thumb never jumps back. */
+/** The value under the user's hand, kept until saved so that the thumb never jumps back. */
 const held = ref<number | null>(null);
 let moving = false;
 
@@ -43,7 +40,10 @@ const value = computed(
     ?? (auto.value ? (settings.value?.auto_bias ?? 0) : (settings.value?.manual_level ?? 50)),
 );
 
-/** The level in use, percent: in automatic mode, the one the lamp chose; unknown without it. */
+/**
+ * The level in use, in percent. In automatic mode it is the one the lamp
+ * chose, null until the lamp reports it.
+ */
 const level = computed(() => (auto.value ? (lamp.state?.applied_level ?? null) : value.value));
 const levelText = computed(() =>
   level.value === null ? undefined : n(level.value / 100, 'percent'),
@@ -72,7 +72,7 @@ function move(next: number | number[] | undefined): void {
 }
 
 async function release(): Promise<void> {
-  // A key commits before it moves the slider: wait for the move.
+  // A key commits before it moves the slider, so wait for the move.
   await nextTick();
   moving = false;
   if (held.value === null) {
@@ -90,7 +90,7 @@ function setAuto(on: boolean): void {
   if (on) {
     void settingsStore.update({ brightness_mode: 'auto' });
   } else {
-    // Keep the brightness the eye sees: the fixed level starts at the level in use.
+    // Keep the brightness the eye sees, by starting the fixed level at the level in use.
     const start = Math.max(1, lamp.state?.applied_level ?? settings.value?.manual_level ?? 50);
     void settingsStore.update({ brightness_mode: 'manual', manual_level: start });
   }
@@ -104,9 +104,7 @@ const hint = computed(() => {
     return t('lamp.brightness.needsFirmware');
   }
   const correction =
-    value.value === 0
-      ? t('lamp.brightness.noCorrection')
-      : t('lamp.brightness.correction', { value: biasText.value });
+    value.value === 0 ? biasText.value : t('lamp.brightness.correction', { value: biasText.value });
   return `${t('lamp.brightness.follows')} · ${correction}`;
 });
 </script>
@@ -137,7 +135,7 @@ const hint = computed(() => {
       </div>
     </div>
 
-    <!-- One row for both modes, as tall as the larger sun: the slider and the hint stay put when the mode changes. -->
+    <!-- One row for both modes, as tall as the larger sun, so the slider and the hint stay put when the mode changes. -->
     <div class="flex h-5 items-center gap-2.5">
       <template v-if="auto">
         <span class="shrink-0 text-xs text-muted">{{ t('lamp.brightness.darker') }}</span>

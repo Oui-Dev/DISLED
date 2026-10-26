@@ -10,6 +10,6 @@ import { useSettingsStore } from './stores/settings';
 import './assets/css/main.css';
 
 const app = createApp(App).use(createPinia()).use(i18n).use(ui);
-// Settings first: the window opens in its language and color mode.
+// Settings first, so that the window opens in its language and color mode.
 await useSettingsStore().start();
 app.mount('#app');

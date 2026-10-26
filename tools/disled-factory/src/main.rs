@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! DISLED production tool (docs/production.md). Board after board: waits
-//! for the ROM bootloader, flashes the release build with wchisp, checks
-//! what the lamp then reports, runs its self-test with the operator, and
-//! appends a row to a CSV log.
+//! DISLED production tool (docs/production.md). For each board, it flashes the
+//! release build with wchisp, checks what the lamp reports, runs its self-test
+//! with the operator and appends a row to a CSV log.
 
 mod board;
 mod lamp;
@@ -45,11 +44,11 @@ struct Args {
 }
 
 /// The firmware of the session.
-pub struct Firmware {
-    pub path: PathBuf,
+struct Firmware {
+    path: PathBuf,
     /// The version the lamps must report; None for an unsigned firmware,
     /// which is not checked.
-    pub version: Option<Version>,
+    version: Option<Version>,
 }
 
 /// Reads the firmware and, unless `unsigned`, checks its signature.
@@ -68,7 +67,7 @@ fn load_firmware(path: &Path, unsigned: bool) -> Result<Firmware, String> {
     let version = firmware::version_of(name).ok_or_else(|| {
         format!("{name} is not a release build: give a disled-fw-X.Y.Z.hex from a release")
     })?;
-    let signature_path = path.with_file_name(format!("{name}.sig"));
+    let signature_path = path.with_file_name(firmware::signature_name(&version));
     let signature = std::fs::read_to_string(&signature_path).map_err(|e| {
         format!(
             "cannot read the signature {} ({e}): download it from the release, next to the firmware",
@@ -104,8 +103,8 @@ fn find_wchisp(given: Option<PathBuf>) -> Result<(Wchisp, String), String> {
         })
 }
 
-/// A program next to this one, else on the PATH: the full path, to show
-/// which one runs.
+/// Finds a program next to this one, else on the PATH, and returns its full
+/// path to show which one runs.
 fn on_path(name: &str) -> Option<PathBuf> {
     let beside = std::env::current_exe()
         .ok()

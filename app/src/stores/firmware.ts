@@ -1,17 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Lamp firmware updates (ADR 0016): the backend looks for a new firmware
-// with the app updates and runs the update; the popup offers it, the lamp
-// update window guides it.
+// Lamp firmware updates. The backend looks for a new firmware along with the
+// app updates and runs the update; the popup offers it, and the lamp update
+// window guides it.
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import type { FirmwareStatus } from '@/bindings/FirmwareStatus';
 import { firmwareCancel, firmwareCheck, firmwareInstall, firmwareStatus } from '@/ipc/commands';
 import { on } from '@/ipc/events';
-import { isNewer } from '@/utils/version';
 import { useLampStore } from './lamp';
+
+/** Whether `latest`, an "X.Y.Z" string, is newer than the version a lamp reports. */
+function isNewer(latest: string, current: readonly number[]): boolean {
+  const next = latest.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (next[i] !== current[i]) {
+      return next[i] > current[i];
+    }
+  }
+  return false;
+}
 
 export const useFirmwareStore = defineStore('firmware', () => {
   const lamp = useLampStore();
@@ -43,11 +53,6 @@ export const useFirmwareStore = defineStore('firmware', () => {
     }
   }
 
-  /** Stops an update that waits for the bootloader. */
-  function cancel(): Promise<void> {
-    return firmwareCancel();
-  }
-
   /** Follows the backend events. Call once, in the popup or the update window. */
   async function start(): Promise<void> {
     await on('firmware-status', (next) => {
@@ -56,5 +61,5 @@ export const useFirmwareStore = defineStore('firmware', () => {
     status.value = await firmwareStatus();
   }
 
-  return { status, updateForLamp, check, install, cancel, start };
+  return { status, updateForLamp, check, install, cancel: firmwareCancel, start };
 });

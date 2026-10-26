@@ -7,7 +7,7 @@
 
 #include "power_limiter.h"
 
-/* Worst-case full-scale currents from the design review (N2). */
+/* Worst-case full-scale currents (constraint N2 in hardware/README.md). */
 static const power_config_t config = {
     .full_scale_ma = { 86, 63, 125 },
     .unconfigured_cap_ma = 70,

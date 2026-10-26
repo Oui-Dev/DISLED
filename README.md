@@ -1,15 +1,16 @@
 # DISLED
 
-A USB status light that sits on top of a monitor. The 4 cm white cube glows
-green, orange or red to tell colleagues whether you are available. A touch
-on the lid cycles the colors, the brightness follows the room light, and a
-desktop app gives full control ([user guide](docs/user-guide.md)).
+DISLED is a USB status light. The 4 cm white cube glows green, orange or red
+to tell colleagues whether you are available. A touch on the lid cycles the
+colors and the brightness follows the room light. The desktop app also sets
+warm white or a fixed brightness, and updates the lamp
+([user guide](docs/user-guide.md)).
 
-> **Status:** the product works on the final board (PCB 1.0.0, enclosure
-> 1.0.0): the tray app, lamp updates from the app and the production tool
-> are released. Still to come: the lamp's own USB IDs, requested from
-> pid.codes, then the Mac, current and thermal tests. Binaries and
-> hardware files are on the
+> **Status.** Released: the board (PCB 1.0.0), the enclosure (1.0.0), the
+> tray app with lamp updates, and the production tool. Still to come: the
+> lamp's own USB IDs, requested from pid.codes, and the tests on a Mac, of
+> the LED current, of the current in USB suspend and of the heat. Binaries
+> and hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
 ## Repository layout
@@ -22,7 +23,7 @@ desktop app gives full control ([user guide](docs/user-guide.md)).
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
 | [`hardware/`](hardware/) | PCB (EasyEDA Pro, STEP) and enclosure (3MF) design files |
-| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up and [decision records](docs/decisions/) |
+| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up, production and releases |
 
 ## Hardware at a glance
 
@@ -40,7 +41,7 @@ desktop app gives full control ([user guide](docs/user-guide.md)).
 | Contribute a change | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
 | Run the desktop app from source | [app/README.md](app/README.md) |
-| Understand the design | [docs/architecture.md](docs/architecture.md), [decision records](docs/decisions/) |
+| Understand the design | [docs/architecture.md](docs/architecture.md) |
 | Know what the lamp does | [docs/behavior.md](docs/behavior.md) |
 | Talk to the lamp over USB | [protocol/README.md](protocol/README.md) |
 | Bring up a new board | [docs/bringup.md](docs/bringup.md) |

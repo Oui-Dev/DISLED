@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "diagnostics",
+  "description": "Diagnostics window: the save dialog for recordings",
+  "windows": [
+    "diagnostics"
+  ],
+  "permissions": [
+    "dialog:allow-save"
+  ]
+}

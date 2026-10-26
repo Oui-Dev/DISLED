@@ -33,7 +33,6 @@ uint32_t bsp_apb1_timer_clock_hz(void);
 void bsp_stack_paint(void);
 uint16_t bsp_stack_free_min(void);
 
-/* Resets the chip. */
 __attribute__((noreturn)) void bsp_system_reset(void);
 
 #endif /* DISLED_BSP_H */

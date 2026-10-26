@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Lamp diagnostics (protocol 1.1 GET_DIAGNOSTICS), asked every 2 s while
-// the Diagnostics window is open, and the production self-test (SELF_TEST).
+// Lamp diagnostics (GET_DIAGNOSTICS), asked every REFRESH_MS while the
+// Diagnostics window is open, and the production self-test (SELF_TEST).
 
 import { useIntervalFn } from '@vueuse/core';
 import { defineStore } from 'pinia';
@@ -26,7 +26,7 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
 
   /** The connected lamp reports diagnostics. */
   const supported = computed(() => lamp.connection.connected && (lamp.info?.diagnostics ?? false));
-  /** Set by start(): only the Diagnostics window asks the lamp. */
+  /** Set by start(), so that only the Diagnostics window asks the lamp. */
   const following = ref(false);
 
   function request(): Promise<void> {
@@ -39,14 +39,16 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
     return lamp.send({ kind: 'self_test' });
   }
 
-  // At once, then every REFRESH_MS: the Health tab and its badge stay
-  // current, whatever the tab on show.
-  const polling = useIntervalFn(() => void request(), REFRESH_MS, { immediate: false });
+  // At once, then every REFRESH_MS, so that the Health tab and its badge stay
+  // current whatever the tab on show.
+  const polling = useIntervalFn(() => void request(), REFRESH_MS, {
+    immediate: false,
+    immediateCallback: true,
+  });
   watch(
     () => following.value && supported.value,
     (active) => {
       if (active) {
-        void request();
         polling.resume();
       } else {
         polling.pause();
@@ -65,17 +67,13 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
     });
     await on('device-message', ({ message }) => {
       switch (message.kind) {
-        case 'diagnostics': {
-          const { kind: _kind, ...rest } = message;
-          diagnostics.value = rest;
+        case 'diagnostics':
+          diagnostics.value = message;
           break;
-        }
-        case 'self_test_result': {
-          const { kind: _kind, ...rest } = message;
+        case 'self_test_result':
           selfTestRunning.value = false;
-          selfTestResult.value = rest;
+          selfTestResult.value = message;
           break;
-        }
         case 'error':
           if (message.command === COMMAND_SELF_TEST) {
             selfTestRunning.value = false;
@@ -87,5 +85,5 @@ export const useDiagnosticsStore = defineStore('diagnostics', () => {
     following.value = true;
   }
 
-  return { diagnostics, selfTestRunning, selfTestResult, supported, startSelfTest, start };
+  return { diagnostics, selfTestRunning, selfTestResult, startSelfTest, start };
 });

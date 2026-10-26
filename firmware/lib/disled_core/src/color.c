@@ -5,11 +5,8 @@
  */
 #include "color.h"
 
-/*
- * CIE 1976 lightness to relative luminance, one entry every 2.5 L*
- * (25 per mille): Y = ((L* + 16) / 116)^3 above L* = 8, L* / 903.3 below,
- * scaled to 0..65535.
- */
+/* L* to relative luminance every 2.5 L*, scaled to 65535: Y = ((L* + 16) / 116)^3
+ * above L* = 8, L* / 903.3 below. */
 #define LUT_STEP_PERMILLE 25u
 static const uint16_t perceived_lut[] = {
     0,     181,   363,   544,   738,   972,   1251,  1578,  1959,  2396,  2894,
@@ -43,17 +40,16 @@ rgb16_t color_compose(const color_config_t *config, lamp_color_t color, uint16_t
     const rgb16_t base = config->palette[color];
     const uint16_t intensity = color_perceived_to_linear(level_permille);
     const rgb16_t result = {
-        .r = color_scale(color_scale(base.r, config->balance[LED_CHANNEL_RED]), intensity),
-        .g = color_scale(color_scale(base.g, config->balance[LED_CHANNEL_GREEN]), intensity),
-        .b = color_scale(color_scale(base.b, config->balance[LED_CHANNEL_BLUE]), intensity),
+        .r = color_scale(base.r, intensity),
+        .g = color_scale(base.g, intensity),
+        .b = color_scale(base.b, intensity),
     };
     return result;
 }
 
 static uint16_t mix_channel(uint16_t from, uint16_t to, uint16_t t)
 {
-    /* t on 15 bits keeps span * t within 32 bits (65535 * 32767 < 2^31),
-     * avoiding a 64-bit division from libgcc. */
+    /* t on 15 bits keeps span * t in 32 bits, with no 64-bit division from libgcc. */
     const int32_t span = (int32_t)to - (int32_t)from;
     const int32_t t15 = (int32_t)(t >> 1);
     const int32_t offset = (span * t15 + (span >= 0 ? 16383 : -16383)) / 32767;

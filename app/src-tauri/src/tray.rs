@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The menu bar (macOS) or notification area (Windows) icon: a square in
-//! the color of the lamp, a short menu, and the click that opens the popup.
+//! The tray icon, in the menu bar on macOS and the notification area on
+//! Windows: a square in the color of the lamp, a short menu, and the click
+//! that opens the popup.
 
 use std::sync::Mutex;
 
@@ -10,7 +11,7 @@ use disled_protocol::LampColor;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Wry};
 
 use crate::i18n::{Locale, LocaleState};
 use crate::windows;
@@ -19,8 +20,8 @@ const TRAY_ID: &str = "disled";
 const SIZE: u32 = 32;
 /// Half the side of the square, in pixels.
 const HALF: f32 = 14.0;
-/// Corner radius, over a quarter of the side: smaller corners vanish once
-/// the system shows this icon at 16 px.
+/// Corner radius, over a quarter of the side, because smaller corners
+/// vanish once the system shows this icon at 16 px.
 const CORNER: f32 = 8.0;
 
 /// What the icon shows.
@@ -33,7 +34,7 @@ pub enum Look {
 }
 
 impl Look {
-    pub fn tooltip(self, locale: Locale) -> String {
+    fn tooltip(self, locale: Locale) -> String {
         let key = match self {
             Look::NoLamp => "noLamp",
             Look::Off => "off",
@@ -59,7 +60,7 @@ fn color_rgb(color: LampColor) -> [u8; 3] {
     }
 }
 
-/// Signed distance (pixels, negative inside) from a point to the edge of a
+/// Signed distance in pixels, negative inside, from a point to the edge of a
 /// square centred on the origin, of half side `half` and corner radius `r`.
 fn square_distance(dx: f32, dy: f32, half: f32, r: f32) -> f32 {
     let qx = dx.abs() - (half - r);
@@ -67,17 +68,17 @@ fn square_distance(dx: f32, dy: f32, half: f32, r: f32) -> f32 {
     qx.max(0.0).hypot(qy.max(0.0)) + qx.max(qy).min(0.0) - r
 }
 
-/// Coverage (0..1) of a pixel by the square shrunk by `inset`, antialiased
-/// over one pixel.
+/// Coverage of a pixel, from 0 to 1, by the square shrunk by `inset`,
+/// antialiased over one pixel.
 fn square(dx: f32, dy: f32, inset: f32) -> f32 {
     let distance = square_distance(dx, dy, HALF - inset, (CORNER - inset).max(0.0));
     (0.5 - distance).clamp(0.0, 1.0)
 }
 
-/// Renders the icon: a square in the lamp color with a darker rim (so warm
-/// white shows on a light menu bar), a grey outline when the lamp is off, a
-/// faint outline when no lamp is connected.
-pub fn render(look: Look) -> Image<'static> {
+/// Renders the icon: a square in the lamp color with a darker rim, which
+/// keeps warm white visible on a light menu bar, a grey outline when the lamp
+/// is off, and a faint outline when no lamp is connected.
+fn render(look: Look) -> Image<'static> {
     let mut rgba = vec![0u8; (SIZE * SIZE * 4) as usize];
     let center = (SIZE as f32 - 1.0) / 2.0;
     for y in 0..SIZE {
@@ -114,7 +115,7 @@ pub fn render(look: Look) -> Image<'static> {
     Image::new_owned(rgba, SIZE, SIZE)
 }
 
-fn menu<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<Menu<R>> {
+fn menu(app: &AppHandle, locale: Locale) -> tauri::Result<Menu<Wry>> {
     let item =
         |id: &str| MenuItem::with_id(app, id, locale.t(&format!("tray.{id}")), true, None::<&str>);
     Menu::with_items(
@@ -128,9 +129,9 @@ fn menu<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<Menu<R>
     )
 }
 
-/// Creates the icon and its menu. On Linux the click events do not exist:
-/// the menu gives access to the popup.
-pub fn create<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<()> {
+/// Creates the icon and its menu. Linux has no click events, so the menu
+/// gives access to the popup.
+pub fn create(app: &AppHandle, locale: Locale) -> tauri::Result<()> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(render(Look::NoLamp))
         .tooltip(Look::NoLamp.tooltip(locale))
@@ -157,9 +158,14 @@ pub fn create<R: Runtime>(app: &AppHandle<R>, locale: Locale) -> tauri::Result<(
     Ok(())
 }
 
-/// Shows the lamp state in the icon and its tooltip.
-pub fn show<R: Runtime>(app: &AppHandle<R>, look: Look) {
+/// Shows the lamp state in the icon and its tooltip. An unchanged look is
+/// skipped, since in automatic brightness the lamp reports its level up to
+/// twice a second.
+pub fn show(app: &AppHandle, look: Look) {
     if let Ok(mut shown) = app.state::<TrayState>().0.lock() {
+        if *shown == look {
+            return;
+        }
         *shown = look;
     }
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
@@ -169,7 +175,7 @@ pub fn show<R: Runtime>(app: &AppHandle<R>, look: Look) {
 }
 
 /// Words the menu and the tooltip in another language.
-pub fn relabel<R: Runtime>(app: &AppHandle<R>, locale: Locale) {
+pub fn relabel(app: &AppHandle, locale: Locale) {
     let look = app
         .state::<TrayState>()
         .0

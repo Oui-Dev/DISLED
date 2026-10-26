@@ -1,14 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Popup, Diagnostics and lamp update windows: events, window control, save dialog for recordings",
+  "description": "Every window: the events of the backend, and the developer tools of debug builds",
   "windows": [
     "popup",
     "diagnostics",
     "lamp-update"
   ],
   "permissions": [
-    "core:default",
-    "dialog:allow-save"
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:webview:allow-internal-toggle-devtools"
   ]
 }

@@ -13,7 +13,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "app_config.h"
 #include "brightness.h"
 #include "bsp/bsp_fault.h"
 #include "disled_types.h"
@@ -39,18 +38,12 @@ typedef struct {
     lamp_state_t lamp;
     change_source_t source; /* cause of the latest lamp change */
     brightness_t brightness;
-    /* RAM copy of the automatic brightness settings, the curve tunable from
-     * the console. */
-    brightness_config_t brightness_config;
-    brightness_point_t brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
     touch_detector_t touch;
-    color_config_t colors; /* RAM copy of the palette, tunable from the console */
-    led_output_config_t output_config;
     led_output_t output;
     uint16_t duty[LED_CHANNEL_COUNT];
     usb_link_t link;
     app_als_t als;
-    uint16_t cap_override_ma; /* debug: thermal test (V2), 0 = off */
+    uint16_t cap_override_ma; /* debug: lifts the cap for the heat test, 0 = off */
     reset_cause_t reset_cause;
     fault_record_t fault;
     bool crystal_ok;
@@ -70,6 +63,9 @@ bool app_apply_request(const lamp_request_t *request);
 /* Starts the self-test; its result is reported to the host with `seq`.
  * Returns false if one is already running. */
 bool app_start_self_test(uint8_t seq);
+
+/* Name of a USB link state, for the logs and the console. */
+const char *app_link_name(usb_link_t link);
 
 /* Snapshot of the DIAGNOSTICS message. */
 void app_diagnostics(proto_diagnostics_t *diagnostics);

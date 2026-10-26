@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Settings saved on this computer by the backend, which applies the
-// brightness settings to the lamp at every connection, and the color mode
-// and language to the app; start at login. Every window keeps a copy,
-// refreshed by `settings-changed`.
+// Settings saved on this computer by the backend, which applies them to the lamp at
+// every connection and to the app. Every window keeps a copy, refreshed by
+// `settings-changed`.
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';

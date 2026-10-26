@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
 // Translations of the windows. The messages live in src/locales, shared
-// with the backend (src-tauri/src/i18n.rs); the backend also picks the
-// language (`locale-changed`).
+// with the backend (src-tauri/src/i18n.rs), which also picks the language
+// and sends it as `locale-changed`.
 
 import { en as nuxtUiEn, fr as nuxtUiFr } from '@nuxt/ui/locale';
 import { createI18n } from 'vue-i18n';
@@ -11,8 +11,8 @@ import type { Locale } from '@/bindings/Locale';
 import en from '@/locales/en.json';
 import fr from '@/locales/fr.json';
 
-/** English is the reference: a message French lacks fails the typecheck. */
-export type MessageSchema = typeof en;
+/** English is the reference, so a message French lacks fails the typecheck. */
+type MessageSchema = typeof en;
 
 declare module 'vue-i18n' {
   // Typed keys for t() in every component.
@@ -36,7 +36,7 @@ const datetimeFormats = {
   short: { dateStyle: 'short', timeStyle: 'short' },
 } as const;
 
-/** French counts 0 as singular ("0 ligne"); messages are "one | other". */
+/** French counts 0 as singular, as in "0 ligne"; messages are "one | other". */
 function frenchPlural(choice: number, choicesLength: number): number {
   const singular = Math.abs(choice) < 2;
   if (choicesLength === 3) {
@@ -55,7 +55,7 @@ export const i18n = createI18n<[MessageSchema], Locale, false>({
   pluralRules: { fr: frenchPlural },
 });
 
-/** The words of the Nuxt UI components (close buttons, empty lists…). */
+/** The words of the Nuxt UI components, such as the close buttons and the empty lists. */
 export const nuxtUiLocales = { en: nuxtUiEn, fr: nuxtUiFr } satisfies Record<Locale, unknown>;
 
 /** Switches the messages, the formats and the language of the document. */

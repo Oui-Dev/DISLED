@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! App updates (ADR 0014): each app release publishes a signed
-//! `latest.json` on GitHub. The app checks it at start-up and then once a
-//! day, along with the lamp firmware; the popup offers the update,
-//! installed only when the user asks.
+//! App updates: the signed `latest.json` of the latest release, checked at start-up
+//! and then daily with the lamp firmware. The popup offers the update, installed only
+//! when the user asks.
 
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
 use crate::firmware::{self, FirmwareState};
@@ -22,8 +21,8 @@ const EVENT_STATUS: &str = "update-status";
 /// The first automatic check waits for the network, which may still be
 /// coming up after a login.
 const FIRST_CHECK_DELAY: Duration = Duration::from_secs(30);
-/// The automatic checks look at the wall clock every hour: a plain 24 h
-/// sleep would not count the hours the computer spends asleep.
+/// The automatic checks look at the wall clock every hour, because a plain
+/// 24 h sleep would not count the hours the computer spends asleep.
 const TICK: Duration = Duration::from_secs(3600);
 const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 3600);
 
@@ -64,13 +63,13 @@ pub fn now() -> u64 {
         .unwrap_or(0)
 }
 
-/// No successful check yet, or the last one is a day old.
+/// Tells whether no check has succeeded yet or the last one is a day old.
 fn due(checked_at: Option<u64>) -> bool {
     checked_at.is_none_or(|at| now().saturating_sub(at) >= CHECK_INTERVAL.as_secs())
 }
 
 /// Changes the status and tells every window.
-fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut UpdateStatus)) {
+fn change(app: &AppHandle, edit: impl FnOnce(&mut UpdateStatus)) {
     let status = match app.state::<UpdateState>().status.lock() {
         Ok(mut status) => {
             edit(&mut status);
@@ -82,7 +81,7 @@ fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut UpdateStatus)) 
 }
 
 /// Asks GitHub for a newer version.
-pub async fn check<R: Runtime>(app: &AppHandle<R>) -> UpdateStatus {
+pub async fn check(app: &AppHandle) -> UpdateStatus {
     change(app, |s| s.checking = true);
     let result = match app.updater() {
         Ok(updater) => updater.check().await,
@@ -113,7 +112,7 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> UpdateStatus {
 /// Downloads and installs the update found by the last check, then
 /// restarts the app. On Windows the installer closes the app and starts it
 /// again itself.
-pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+pub async fn install(app: &AppHandle) -> Result<(), String> {
     let update = app
         .state::<UpdateState>()
         .pending
@@ -156,9 +155,9 @@ pub async fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 }
 
 /// Checks the app and the lamp firmware at start-up, then once a day while
-/// the setting allows it. Not in debug builds: `tauri dev` would offer to
-/// install the released app.
-pub fn spawn_automatic_checks<R: Runtime>(app: AppHandle<R>) {
+/// the setting allows it. Debug builds skip them, because `tauri dev` would
+/// offer to install the released app.
+pub fn spawn_automatic_checks(app: AppHandle) {
     if cfg!(debug_assertions) {
         return;
     }

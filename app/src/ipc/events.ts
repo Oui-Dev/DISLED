@@ -20,16 +20,14 @@ interface Events {
   'device-protocol-error': string;
   /** Any window changed the settings. */
   'settings-changed': Settings;
-  /** The language of the app changed (a setting, or the system's). */
+  /** The language of the app changed, through a setting or the system's. */
   'locale-changed': Locale;
   'update-status': UpdateStatus;
   'firmware-status': FirmwareStatus;
 }
 
-export type EventName = keyof Events;
-
 /** Calls `handler` with the payload of each `event`. */
-export function on<E extends EventName>(
+export function on<E extends keyof Events>(
   event: E,
   handler: (payload: Events[E]) => void,
 ): Promise<UnlistenFn> {

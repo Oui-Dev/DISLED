@@ -1,9 +1,8 @@
 # DISLED user guide
 
-DISLED is a 4 cm cube that sits on top of a monitor and glows to tell the
-people around you whether you can be disturbed. This guide covers everyday
-use: the lamp, its desktop app, the updates, and what to do when something
-goes wrong.
+DISLED is a 4 cm cube that glows to tell the people around you whether you
+can be disturbed. This guide covers everyday use: the lamp, its desktop app,
+the updates, and what to do when something goes wrong.
 
 - [The lamp](#the-lamp)
 - [Install the app](#install-the-app)
@@ -16,40 +15,40 @@ goes wrong.
 
 ## The lamp
 
-Plug the lamp into your computer with a USB-C cable that carries data (a
-charge-only cable lights the lamp, but the app cannot see it). It starts
-green, with its brightness following the room light.
+Plug the lamp into your computer with a USB-C cable that carries data. A
+charge-only cable lights the lamp, but the app cannot see it. The lamp
+starts green, with its brightness following the room light.
 
-**Colors.** Green, orange and red from the touch, warm white from the app.
-What they mean is up to you and your team; the usual reading is green
-available, orange busy, red do not disturb. Warm white makes the cube a
-small light.
+**Colors.** Green, orange and red come from the touch, warm white from the
+app. What they mean is up to you and your team. The usual reading is green
+for available, orange for busy and red for do not disturb. Warm white makes
+the cube a small light.
 
 **Touch.** The top of the cube is the touch surface:
 
 | Gesture | Lamp on | Lamp off |
 |---|---|---|
-| Short touch | Next color: green → orange → red → green (warm white → green) | Nothing |
+| Short touch | Next color, in the order green, orange, red, then green again (warm white goes to green) | Nothing |
 | Hold for 2 s | Turns off, while your finger is still down | Turns on, in its last color |
 
-An object laid on the top acts as one long touch (the lamp turns off or
-on after 2 s), then the lamp ignores it. Take it away and the touch works
+An object laid on the top acts as one long touch, so the lamp turns off or
+on after 2 s, then ignores the object. Take it away and the touch works
 again.
 
 **Brightness.** The lamp reads the room light through a small window on
 the left side of its base, and dims or brightens within a second or two
-when the room changes. In the dark it keeps a faint glow. Leave the
-window uncovered.
+when the room changes. In the dark it keeps a faint glow. Leave the window
+uncovered.
 
-**Without the app**, the lamp works the same: touch and automatic
-brightness. On a phone charger, or on a hub with no computer, it limits
-its power and is a little less bright at the top of its range.
+**Without the app.** The lamp works the same, with the touch and the
+automatic brightness. On a phone charger, or on a hub with no computer, it
+limits its power and is a little less bright at the top of its range.
 
-**Sleep.** When the computer sleeps, the lamp turns off; it comes back
-when the computer wakes up.
+**Sleep.** When the computer sleeps, the lamp turns off. It comes back when
+the computer wakes up.
 
 At every power-up the lamp starts green, in automatic brightness. The app
-then applies your brightness settings again (below).
+then applies your brightness settings again ([Settings](#settings)).
 
 ## Install the app
 
@@ -65,31 +64,32 @@ Download the installer of your system from the
 The installers carry no publisher certificate, so Windows and macOS warn
 once:
 
-- **Windows**: SmartScreen shows "Windows protected your PC": click
-  **More info**, then **Run anyway**.
-- **macOS**: drag DISLED into Applications and open it: macOS refuses the
-  first time. Open System Settings, Privacy & Security, and click **Open
-  Anyway** next to the message about DISLED; confirm with your password.
-- **Linux**: the package also installs a rule that lets you open the lamp
-  without root rights. It applies at once; no need to unplug the lamp.
+- **Windows.** SmartScreen shows "Windows protected your PC". Click **More
+  info**, then **Run anyway**.
+- **macOS.** Drag DISLED into Applications and open it. macOS refuses the
+  first time: open System Settings, Privacy & Security, click **Open
+  Anyway** next to the message about DISLED, and confirm with your
+  password.
+- **Linux.** The package also installs a rule that lets you open the lamp
+  without root rights. It applies at once, without unplugging the lamp.
 
-The app starts with your session from then on (a setting turns it off),
-and it lives in the notification area (Windows), the menu bar (macOS) or
-the tray (Linux). Only one copy runs: starting it again opens the popup.
-It updates itself (see [Updates](#updates)).
+From then on the app starts with your session, unless you turn that setting
+off. It lives in the notification area on Windows, the menu bar on macOS
+and the tray on Linux. Only one copy runs, and starting it again opens the
+popup. The app updates itself ([Updates](#updates)).
 
 ## The tray icon
 
 The icon is a rounded square in the color of the lamp, an outline when the
 lamp is off, and a faint outline when no lamp is connected.
 
-- **Left click**: opens or closes the popup.
-- **Right click**: a menu with **Open DISLED**, **Diagnostics…** and
-  **Quit DISLED**. On Linux the menu is the only way in: the tray gives no
-  clicks to the app.
+- **Left click** opens or closes the popup.
+- **Right click** opens a menu with **Open DISLED**, **Diagnostics…** and
+  **Quit DISLED**. On Linux the menu is the only way in, because the tray
+  gives no clicks to the app.
 
-On Windows the icon may land in the hidden icons, behind the **^** arrow
-of the taskbar: drag it onto the taskbar to keep it in view.
+On Windows the icon may land in the hidden icons, behind the **^** arrow of
+the taskbar. Drag it onto the taskbar to keep it in view.
 
 ## The popup
 
@@ -98,19 +98,18 @@ of the taskbar: drag it onto the taskbar to keep it in view.
   <img alt="The popup: the lamp is connected and green, the brightness is automatic at 34 % with no correction" src="images/user-guide/popup-lamp-light.png" width="320">
 </picture>
 
-- **Status**: "Lamp connected", "Connecting…" or "No lamp connected".
-- **Colors**: **Off** and the four colors; the one in use is outlined.
-- **Brightness**:
-  - **Auto** on: the lamp follows the room light, and the percentage next
-    to the switch is the level it uses now. The slider shifts the
+- **Status.** "Lamp connected", "Connecting…" or "No lamp connected".
+- **Colors.** **Off** and the four colors. The one in use has an outline.
+- **Brightness.**
+  - With **Auto** on, the lamp follows the room light, and the percentage
+    next to the switch is the level it uses now. The slider shifts the
     automatic brightness, from **Darker** to **Brighter** (−50 to +50 %).
-  - **Auto** off: the slider sets a fixed level, from 1 to 100 %.
+  - With **Auto** off, the slider sets a fixed level, from 1 to 100 %.
 - **Settings** opens the settings page, **Quit** closes the app. When an
   update is on offer, it shows between them.
 
-Without a lamp, the popup still takes your settings: they apply when the
-lamp is plugged in. The popup hides when you click elsewhere or press
-Escape.
+Without a lamp, the popup still takes your settings, and they apply when you
+plug the lamp in. The popup hides when you click elsewhere or press Escape.
 
 ### Settings
 
@@ -120,69 +119,68 @@ Escape.
 </picture>
 
 - **Start DISLED when I log in**, **Check for updates every day**.
-- **Appearance**: System, Light or Dark.
-- **Language**: System, English or Français.
-- The versions of the app and of the lamp firmware: give them when you
+- **Appearance.** System, Light or Dark.
+- **Language.** System, English or Français.
+- The versions of the app and of the lamp firmware, to give when you
   report a problem.
 - The **⋯** button (More actions): **Check for updates**, **Open
   diagnostics…**, **Reinstall the lamp firmware…**, and when the app last
   checked for updates.
 
-The app keeps your settings on this computer: brightness mode, fixed
-level, correction, and the settings above. It sends the brightness ones to
-the lamp every time the lamp connects. The color and on/off are not
-saved: the lamp always starts green.
+The app keeps your settings on this computer: brightness mode, fixed level,
+correction, and the settings above. It sends the brightness ones to the
+lamp every time the lamp connects. The app does not save the color and
+on/off, so the lamp always starts green.
 
 ## Updates
 
 ### The app
 
-The app looks for a new version when it starts, then once a day (unless
-you turn that off). When there is one, the popup shows **Update to X.Y.Z**
-at the bottom, and the settings page says "DISLED X.Y.Z is available."
-with **Install and restart**: the app downloads the update, installs it
-and starts again by itself. Updates are signed: the app installs only
-versions published by the DISLED project. (App 0.1.0 has no updater:
-install a newer version by hand, once.)
+The app looks for a new version when it starts, then once a day unless you
+turn that off. When there is one, the popup shows **Update to X.Y.Z** at
+the bottom, and the settings page says "DISLED X.Y.Z is available." with
+**Install and restart**. The app then downloads the update, installs it and
+starts again by itself. Updates are signed, so the app installs only
+versions published by the DISLED project.
 
 ### The lamp
 
 The app also looks for a newer lamp firmware. When there is one, the popup
 shows **Update the lamp**, and the settings page says "Lamp firmware X.Y.Z
 is available." with **Update the lamp…**. If the app has an update too,
-install it first: the popup offers it first, as a new firmware may need a
-new app.
+install it first. The popup offers it first, because a new firmware may
+need a new app.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/user-guide/lamp-update-dark.png">
   <img alt="The lamp update window at its second step: open the lamp, hold BOOT, press and release RESET, then release BOOT" src="images/user-guide/lamp-update-light.png" width="480">
 </picture>
 
-A window guides the update. It takes about a minute, and you will open
-the lamp: its update mode starts with two buttons on its board, **BOOT**
-and **RESET**. Keep the lamp plugged in all along.
+A window guides the update. It takes about a minute, and you will open the
+lamp, because its update mode starts with two buttons on its board,
+**BOOT** and **RESET**. Keep the lamp plugged in all along.
 
-1. **Download the firmware**: the app downloads it and checks its
+1. **Download the firmware.** The app downloads it and checks its
    signature.
-2. **Put the lamp in update mode**: open the lamp by pinching the cube at
-   its grip stripes, over the clips, and lifting it off its base. The
-   touch ring inside the cube stays wired to the board: lift gently. Hold
+2. **Put the lamp in update mode.** Open the lamp: pinch the cube at its
+   grip stripes, over the clips, and lift it off its base. The touch ring
+   inside the cube stays wired to the board, so lift gently. Hold
    **BOOT**, press and release **RESET**, then release **BOOT**.
 
    The first time on Windows, the window then asks for a driver for the
-   update mode, once per computer: download [Zadig](https://zadig.akeo.ie/)
-   and run it; in **Options**, choose **List All Devices**; select the
-   device whose USB ID is `4348 55E0` (or `1A86 55E0`); choose **WinUSB**,
-   then **Install Driver** (or **Replace Driver**). The update goes on by
-   itself once the driver is installed.
-3. **Install the firmware**: do not unplug the lamp.
-4. **Restart the lamp**: the app checks the version the lamp reports. Put
+   update mode, once per computer. Download [Zadig](https://zadig.akeo.ie/)
+   and run it. In **Options**, choose **List All Devices**, select the
+   device whose USB ID is `4348 55E0` or `1A86 55E0`, choose **WinUSB**,
+   then **Install Driver** or **Replace Driver**. The update goes on by
+   itself once the driver is in place.
+3. **Install the firmware.** Do not unplug the lamp.
+4. **Restart the lamp.** The app checks the version the lamp reports. Put
    the cube back on its base.
 
-If the update stops, **Try again**: the lamp is not damaged, its update
-mode always works, whatever happened before. A lamp that no longer starts
-gets its firmware the same way: **⋯**, **Reinstall the lamp firmware…**,
-with or without a lamp connected.
+If the update stops, click **Try again**. The lamp is not damaged: its
+update mode always works, whatever happened before. A lamp that no longer
+starts gets its firmware the same way, from **⋯**, **Reinstall the lamp
+firmware…**, with or without a lamp connected.
 
 ## Diagnostics
 
@@ -192,43 +190,42 @@ with or without a lamp connected.
 </picture>
 
 The Diagnostics window opens from the tray menu or from **⋯**, **Open
-diagnostics…**. You will not need it every day; it helps to understand
-what the lamp sees and to report a problem.
+diagnostics…**. You will not need it every day. It shows what the lamp
+sees, and helps to report a problem.
 
-- **Top**: the connection, the firmware version, the serial number and
-  why the lamp last restarted; **Restart** restarts the lamp, which comes
-  back green in a few seconds.
-- **Lamp**: the controls of the popup.
-- **Health**: the lamp's counters (restarts, crashes, light sensor, touch,
-  USB sleeps). A badge on the tab shows when something needs a look.
-- **Self-test**: the lamp shows red, green, blue and warm white (check
-  them), then glows blue: touch the top within 10 s.
-- **Telemetry**: touch, light, LED current and level, live. **Record**,
-  then **Export CSV…** saves the measurements to a file. The recording
-  stays in the window's memory until you export it: closing the window,
-  turning off the computer or a power cut loses it.
+- **Top.** The connection, the firmware version, the serial number and why
+  the lamp last restarted. **Restart** restarts the lamp, which comes back
+  green in a few seconds.
+- **Lamp.** The controls of the popup.
+- **Health.** The lamp's counters: restarts, crashes, light sensor, touch,
+  USB sleeps. A badge on the tab shows when something needs a look.
+- **Self-test.** The lamp shows red, green, blue and warm white, which you
+  check, then glows blue. Touch the top within 10 s.
+- **Telemetry.** Touch, light, LED current and level, live. **Record**,
+  then **Export CSV…**, saves the measurements to a file. The recording
+  stays in the memory of the window until you export it, so closing the
+  window, turning off the computer or a power cut loses it.
 
 ## Troubleshooting
 
 | Symptom | What to do |
 |---|---|
-| "No lamp connected" | Use a cable that carries data, and plug the lamp into the computer or a powered hub. Right after the app starts, finding the lamp can take up to a minute on a computer with a USB device that answers slowly (seen with a gaming mouse). |
+| "No lamp connected" | Use a cable that carries data, and plug the lamp into the computer or a powered hub. Right after the app starts, finding the lamp can take up to a minute on a computer with a USB device that answers slowly, such as some gaming mice. |
 | The tray icon is missing (Windows) | Look behind the **^** arrow of the taskbar, then drag the icon onto the taskbar. |
-| The lamp changes color or turns off by itself | Firmware older than 0.3.1 took a hand near the top for a touch: update the lamp. An object laid on the top turns it off after 2 s. |
+| The lamp turns off by itself | An object laid on the top turns it off after 2 s. |
 | Too bright or too dim in automatic mode | Move the slider toward **Brighter** or **Darker**, or turn **Auto** off for a fixed level. |
-| The lamp turns off when the computer sleeps | Expected: it comes back when the computer wakes up. |
-| The lamp is dimmer on a phone charger | Expected: without a computer, it limits its power. |
+| The lamp turns off when the computer sleeps | This is expected. It comes back when the computer wakes up. |
+| The lamp is dimmer on a phone charger | This is expected. Without a computer, it limits its power. |
 | Lamp update: "Waiting for the lamp in update mode…" never ends | Check the button order (hold **BOOT**, press and release **RESET**, release **BOOT**), the driver on Windows, a cable that carries data, and that no other device is in update mode. |
-| Lamp update: "The update stopped" | **Try again**. For flashing by hand, see the [flashing guide](flashing.md). |
+| Lamp update: "The update stopped" | Click **Try again**. To flash by hand, see the [flashing guide](flashing.md). |
 | The lamp stays dark after an update | Press **RESET**, or unplug the lamp and plug it back in. |
-| macOS says DISLED "is damaged and can't be opened" | That is app 0.4.0 or older: install the latest version, or run `xattr -cr /Applications/DISLED.app` once in Terminal. |
 
 ## Get help
 
 Open an [issue](https://github.com/Oui-Dev/DISLED/issues) with:
 
-- the app and lamp firmware versions (settings page of the popup);
-- your system (Windows, macOS or Linux, and its version);
+- the app and lamp firmware versions, from the settings page of the popup;
+- your system (Windows, macOS or Linux) and its version;
 - what you did, what happened, and what you expected;
-- for a touch or light problem, a recording: Diagnostics, **Record**,
+- for a touch or light problem, a recording: in Diagnostics, **Record**,
   reproduce the problem, then **Export CSV…** and attach the file.

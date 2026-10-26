@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2026 The DISLED contributors
 name: app
 
-# Checks of the pull requests into main that are ready for review (not
-# drafts). The installers are built by the release workflow.
+# Checks of the pull requests into main that are ready for review, drafts
+# aside. The release workflow builds the installers.
 on:
   pull_request:
     branches: [main]
@@ -15,6 +15,7 @@ on:
       - "protocol/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "rust-toolchain.toml"
       - ".cargo/**"
       - ".github/workflows/app.yml"
 
@@ -44,14 +45,12 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version-file: app/package.json
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
-        with:
-          toolchain: stable
-          components: clippy, rustfmt
+      # The version of rust-toolchain.toml, with clippy and rustfmt.
+      - run: rustup toolchain install
 
       # Rust workspace at the repository root.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -63,9 +62,9 @@ jobs:
           npx biome ci .
           npm run build
 
-      # The tests write the TypeScript types of the front end again (ts-rs),
-      # into an emptied folder: a type renamed or removed in Rust leaves no
-      # file behind.
+      # The tests write the TypeScript types of the front end again with
+      # ts-rs, into an emptied folder, so that a type renamed or removed in
+      # Rust leaves no file behind.
       - name: Rust workspace (app, shared crates, tools)
         working-directory: .
         run: |

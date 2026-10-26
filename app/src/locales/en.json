@@ -183,7 +183,6 @@
       "restart": "Restart the lamp"
     },
     "downloading": "Downloading firmware {version} and checking its signature…",
-    "restartingInUpdateMode": "The lamp restarts in update mode…",
     "buttons": "Open the lamp. Hold {boot}, press and release {reset}, then release {boot}.",
     "waitingForBootloader": "Waiting for the lamp in update mode…",
     "driver": {

@@ -68,9 +68,6 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
         return PROTO_ERR_BAD_LENGTH;
     }
 
-    /* Bodies may be longer than this version knows: the extra bytes are
-     * ignored, so that newer hosts can extend a command (compatibility
-     * rules of the specification). */
     switch (command->type) {
         case PROTO_CMD_GET_INFO:
         case PROTO_CMD_GET_STATE:
@@ -113,8 +110,7 @@ proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
             if (length < PROTO_SET_AUTO_BIAS_SIZE) {
                 return PROTO_ERR_BAD_LENGTH;
             }
-            /* Two's complement byte to int8_t without implementation-defined
-             * conversion. */
+            /* Two's complement to int8_t without an implementation-defined conversion. */
             const int32_t bias = (body[0] < 0x80u) ? (int32_t)body[0] : (int32_t)body[0] - 256;
             if (bias < PROTO_AUTO_BIAS_MIN || bias > PROTO_AUTO_BIAS_MAX) {
                 return PROTO_ERR_BAD_VALUE;

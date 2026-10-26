@@ -23,9 +23,9 @@ use crate::tray::{self, Look};
 const SCAN_INTERVAL: Duration = Duration::from_millis(1000);
 const READ_TIMEOUT_MS: i32 = 20;
 
-pub const EVENT_CONNECTION: &str = "device-connection";
-pub const EVENT_MESSAGE: &str = "device-message";
-pub const EVENT_PROTOCOL_ERROR: &str = "device-protocol-error";
+const EVENT_CONNECTION: &str = "device-connection";
+const EVENT_MESSAGE: &str = "device-message";
+const EVENT_PROTOCOL_ERROR: &str = "device-protocol-error";
 
 #[derive(Debug, Clone, Default, Serialize)]
 #[cfg_attr(test, derive(ts_rs::TS), ts(export))]
@@ -67,12 +67,12 @@ impl DeviceHandle {
         }
     }
 
-    /// What the connected lamp said about itself (INFO), once it answered.
+    /// The INFO message of the connected lamp, once it answered.
     pub fn info(&self) -> Option<Info> {
         self.info.lock().ok().and_then(|info| info.clone())
     }
 
-    /// The connected lamp understands SET_AUTO_BIAS (protocol 1.1).
+    /// Tells whether the connected lamp announces SET_AUTO_BIAS.
     pub fn auto_bias_supported(&self) -> bool {
         self.info().is_some_and(|info| info.auto_bias)
     }
@@ -142,9 +142,9 @@ impl Worker {
     }
 
     fn open(&mut self, api: &mut HidApi) -> Option<HidDevice> {
-        // Only the lamp's vendor: hidapi skips the other devices before
-        // reading their strings, so a slow one (a sleeping wireless receiver
-        // took 15 s per request) cannot keep the lamp out of sight.
+        // Only the lamp's vendor. hidapi then skips the other devices before
+        // reading their strings, so a slow one cannot keep the lamp out of
+        // sight.
         api.reset_devices().ok()?;
         api.add_devices(USB_VENDOR_ID, 0).ok()?;
         let info = api
@@ -173,7 +173,7 @@ impl Worker {
     }
 
     fn next_seq(&mut self) -> u8 {
-        // 0 marks unsolicited messages: never use it for a request.
+        // 0 marks unsolicited messages, so a request never uses it.
         self.seq = if self.seq == u8::MAX { 1 } else { self.seq + 1 };
         self.seq
     }
@@ -185,25 +185,18 @@ impl Worker {
         device.write(&report).is_ok()
     }
 
-    /// Warns when the firmware speaks another major protocol version.
-    fn check_protocol_version(&self, message: &Message) {
-        if let Message::Info(info) = message
-            && info.protocol[0] != PROTOCOL_MAJOR
-        {
-            let warning = format!(
-                "the lamp speaks protocol {}.{}, this app expects {}.x: update one of them",
-                info.protocol[0], info.protocol[1], PROTOCOL_MAJOR
-            );
-            let _ = self.app.emit(EVENT_PROTOCOL_ERROR, warning);
-        }
-    }
-
-    /// Reacts to the lamp's messages: settings re-applied once its
-    /// capabilities are known, state shown in the tray icon. Returns false
-    /// if the lamp is gone.
+    /// Warns of another major protocol version, applies the settings once the
+    /// capabilities are known, and shows the state in the tray. False if the lamp is gone.
     fn follow(&mut self, device: &HidDevice, message: &Message) -> bool {
         match message {
             Message::Info(info) => {
+                let [major, minor] = info.protocol;
+                if major != PROTOCOL_MAJOR {
+                    let warning = format!(
+                        "the lamp speaks protocol {major}.{minor}, this app expects {PROTOCOL_MAJOR}.x: update one of them"
+                    );
+                    let _ = self.app.emit(EVENT_PROTOCOL_ERROR, warning);
+                }
                 self.set_info(Some(info.clone()));
                 let settings = self.app.state::<SettingsState>().get();
                 for command in settings.commands(info.auto_bias) {
@@ -248,21 +241,20 @@ impl Worker {
                 Ok(length) if buffer[0] == REPORT_ID_MESSAGE => {
                     match protocol::decode_message(&buffer[1..length]) {
                         Ok(frame) => {
-                            self.check_protocol_version(&frame.message);
                             if !self.follow(device, &frame.message) {
                                 return Exit::Disconnected;
                             }
                             let _ = self.app.emit(EVENT_MESSAGE, frame);
                         }
                         // A newer lamp may send message types this app does
-                        // not know: the protocol says to ignore them.
+                        // not know, which the protocol says to ignore.
                         Err(DecodeError::UnknownType(_)) => {}
                         Err(error) => {
                             let _ = self.app.emit(EVENT_PROTOCOL_ERROR, error.to_string());
                         }
                     }
                 }
-                Ok(_) => {} // another report ID: not ours
+                Ok(_) => {} // another report ID, not ours
                 Err(_) => return Exit::Disconnected,
             }
         }

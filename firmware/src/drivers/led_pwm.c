@@ -13,7 +13,6 @@
 #include "pwm_dither.h"
 
 static uint16_t s_period;
-static uint16_t s_sample_phase;
 static volatile led_pwm_sample_callback_t s_sample_callback;
 
 /* Duties in sub-ticks, written by the main loop and read by the update
@@ -35,6 +34,14 @@ static void init_channel(void (*oc_init)(TIM_TypeDef *, TIM_OCInitTypeDef *),
     preload(BOARD_LED_TIMER, TIM_OCPreload_Enable);
 }
 
+/* The three LED channels, in PWM mode. */
+static void init_led_channels(void)
+{
+    init_channel(TIM_OC1Init, TIM_OC1PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_channel(TIM_OC2Init, TIM_OC2PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_channel(TIM_OC3Init, TIM_OC3PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+}
+
 void led_pwm_init(uint32_t frequency_hz)
 {
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
@@ -54,21 +61,21 @@ void led_pwm_init(uint32_t frequency_hz)
     };
     TIM_TimeBaseInit(BOARD_LED_TIMER, &base);
 
-    init_channel(TIM_OC1Init, TIM_OC1PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC2Init, TIM_OC2PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC3Init, TIM_OC3PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_led_channels();
     /* Channel 4: internal compare event only, output disabled (PB1 is the
      * touch input). */
     init_channel(TIM_OC4Init, TIM_OC4PreloadConfig, TIM_OCMode_Timing, TIM_OutputState_Disable);
-    led_pwm_set_sample_phase((uint16_t)(s_period / 2u));
+    TIM_SetCompare4(BOARD_LED_TIMER, (uint16_t)(s_period / 2u));
 
     TIM_ARRPreloadConfig(BOARD_LED_TIMER, ENABLE);
     TIM_Cmd(BOARD_LED_TIMER, ENABLE);
 
     /* Hand the pins to the timer only now, with every duty at 0 %. */
     GPIO_InitTypeDef pins = { .GPIO_Speed = GPIO_Speed_2MHz, .GPIO_Mode = GPIO_Mode_AF_PP };
-    pins.GPIO_Pin = BOARD_LED_RED_PIN | BOARD_LED_GREEN_PIN;
+    pins.GPIO_Pin = BOARD_LED_RED_PIN;
     GPIO_Init(BOARD_LED_RED_PORT, &pins);
+    pins.GPIO_Pin = BOARD_LED_GREEN_PIN;
+    GPIO_Init(BOARD_LED_GREEN_PORT, &pins);
     pins.GPIO_Pin = BOARD_LED_BLUE_PIN;
     GPIO_Init(BOARD_LED_BLUE_PORT, &pins);
 
@@ -93,9 +100,7 @@ void led_pwm_stop(void)
 
 void led_pwm_start(void)
 {
-    init_channel(TIM_OC1Init, TIM_OC1PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC2Init, TIM_OC2PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC3Init, TIM_OC3PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    init_led_channels();
     TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
     TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
     TIM_Cmd(BOARD_LED_TIMER, ENABLE);
@@ -128,17 +133,6 @@ static void dither_period(void)
 void led_pwm_set_sample_callback(led_pwm_sample_callback_t callback)
 {
     s_sample_callback = callback;
-}
-
-void led_pwm_set_sample_phase(uint16_t phase_ticks)
-{
-    s_sample_phase = (phase_ticks < s_period) ? phase_ticks : (uint16_t)(s_period - 1u);
-    TIM_SetCompare4(BOARD_LED_TIMER, s_sample_phase);
-}
-
-uint16_t led_pwm_sample_phase(void)
-{
-    return s_sample_phase;
 }
 
 void led_pwm_arm_sample(void)

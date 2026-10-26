@@ -2,9 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Live telemetry for the tuning campaigns (touch, light sensor, thermal):
-  the stream period, the last figures, three charts, and CSV recordings at
-  the bottom. The stream starts with the window.
+  Live telemetry for tuning the touch, the light sensor and the heat: the
+  stream period, the last figures, three charts, and CSV recordings at the
+  bottom. The stream starts with the window.
 -->
 <script setup lang="ts">
 import { computed } from 'vue';
@@ -47,7 +47,7 @@ const placeholder = computed(() => {
 });
 
 // The samples are whole numbers, but the axis of a small range has ticks
-// every 0.5: one decimal at most keeps them apart.
+// every 0.5, which one decimal at most keeps apart.
 const permille = (value: number) => t('telemetry.permille', { value: n(value, 'tick') });
 const lux = (value: number) => t('telemetry.lux', { value: n(value, 'decimal') });
 const count = (value: number) => n(value, 'tick');
@@ -109,7 +109,7 @@ const charts = computed<
       {
         key: 'lux',
         label: t('telemetry.lightSeries'),
-        color: 'var(--color-yellow-500, #efb100)',
+        color: 'var(--color-yellow-500)',
         value: (s) => s.lux_centi / 100,
       },
     ],

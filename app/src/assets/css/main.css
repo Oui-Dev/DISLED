@@ -15,11 +15,11 @@
 }
 
 /*
- * Nuxt UI tokens. The brand white replaces pure white: the light background,
- * the text on solid colors, the strongest text of dark mode. The light
- * background takes ink-50, the shade of the muted surface, which moves to
- * ink-100 and meets the elevated one, as in dark mode. The light block
- * leaves dark mode alone: <html> matches :root in both modes.
+ * Nuxt UI tokens. The brand white replaces pure white for the light
+ * background, the text on solid colors and the strongest text of dark mode.
+ * The light background takes ink-50, the shade of the muted surface, so the
+ * muted surface moves to ink-100, as in dark mode. `:root:not(.dark)` keeps
+ * the light block out of dark mode, since <html> matches :root in both.
  */
 @layer theme {
   :root:not(.dark),

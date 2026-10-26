@@ -3,9 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * USB device: link state, HID report transport and, in debug builds, the
- * CDC console stream. Everything runs from the main loop through
- * usb_device_task(); nothing here blocks.
+ * USB device: link state, HID report transport and, in debug builds, the CDC
+ * console. Everything runs from usb_device_task() in the main loop, and nothing blocks.
  */
 #ifndef DISLED_USB_DEVICE_H
 #define DISLED_USB_DEVICE_H

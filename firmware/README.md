@@ -1,8 +1,9 @@
 # DISLED firmware
 
-Firmware of the CH32V203G6U6 on the DISLED board: lamp state machine,
-capacitive touch, ambient light, LED output with a current cap, and a USB
-HID protocol. C11 on the WCH NoneOS SDK and TinyUSB, built with PlatformIO.
+This is the firmware of the CH32V203G6U6 on the DISLED board: lamp state
+machine, capacitive touch, ambient light, LED output with a current cap,
+and a USB HID protocol. It is written in C11 on the WCH NoneOS SDK and
+TinyUSB, and built with PlatformIO.
 
 ## Quick start
 
@@ -15,17 +16,16 @@ pio test -e native                   # unit tests on the build machine
 pio check -e debug                   # static analysis (cppcheck)
 ```
 
-The unit tests need a host C compiler (`gcc`). CI runs them on every pull
-request into `main`; on Windows, a MinGW-w64 build such as WinLibs works.
+The unit tests need a host C compiler (`gcc`). On Windows, a MinGW-w64 build
+such as WinLibs works. CI runs them on every pull request into `main`.
 
-The CI takes PlatformIO and clang-format from `pyproject.toml` with
+The CI installs PlatformIO and clang-format from `pyproject.toml` with
 [uv](https://docs.astral.sh/uv/). To use the same versions on the command
-line, run `uv sync` once, then prefix the commands with `uv run`
-(`uv run pio run -e debug`). The PlatformIO extension of VS Code works
-too.
+line, run `uv sync` once, then prefix the commands with `uv run`, as in
+`uv run pio run -e debug`. The PlatformIO extension of VS Code works too.
 
-See [docs/flashing.md](../docs/flashing.md) for the bootloader, the
-Windows driver and troubleshooting.
+[docs/flashing.md](../docs/flashing.md) covers the bootloader, the Windows
+driver, the debug console and troubleshooting.
 
 ## Environments
 
@@ -50,18 +50,17 @@ Windows driver and troubleshooting.
 | `test/` | Unity tests, one folder per core module |
 | `scripts/` | version from git, memory budget, Intel HEX, protocol vectors to C |
 | `pyproject.toml`, `uv.lock` | build and check tools (PlatformIO, clang-format) for uv, kept up to date by Dependabot |
+| `tools/touch_replay/` | replays touch recordings through the detector on the build machine |
 
-The design is explained in [docs/architecture.md](../docs/architecture.md);
-the lamp behavior in [docs/behavior.md](../docs/behavior.md).
+[docs/architecture.md](../docs/architecture.md) explains the design, and
+[docs/behavior.md](../docs/behavior.md) the lamp behavior.
 
 ## Conventions
 
-- C11 (GNU dialect for the SDK headers), formatted with clang-format 23
-  (`.clang-format`), warnings are errors on our sources.
-- Every source file starts with its SPDX header (GPL-3.0-or-later with the
-  WCH SDK permission, see [LICENSING.md](../LICENSING.md)).
-- No dynamic allocation, no floating point, no 64-bit division; fixed
-  point with static assertions on ranges.
+- C11, in the GNU dialect for the SDK headers, formatted with clang-format
+  23 (`.clang-format`). Warnings are errors on our sources.
+- No dynamic allocation, no floating point, no 64-bit division
+  ([why](../docs/architecture.md#safety-rules)).
 - Interrupt handlers use `BSP_ISR` and only capture data.
 - Includes are relative to `src/`, so each one names the layer it uses.
 - The firmware version comes from the latest `fw-vX.Y.Z` tag.

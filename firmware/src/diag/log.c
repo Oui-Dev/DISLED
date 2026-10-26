@@ -22,14 +22,9 @@ void log_set_level(log_level_t level)
     s_level = level;
 }
 
-log_level_t log_level(void)
-{
-    return s_level;
-}
-
 void log_write(log_level_t level, const char *format, ...)
 {
-    static const char tags[] = { 'E', 'W', 'I', 'D' };
+    static const char tags[] = { 'E', 'W', 'I' };
     if (level > s_level) {
         return;
     }

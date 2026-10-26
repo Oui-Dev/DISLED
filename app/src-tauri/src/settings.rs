@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Settings kept on this computer. The brightness settings are applied to
-//! the lamp at every connection: the lamp starts in automatic brightness
-//! after each power-up and forgets its bias, so the app re-applies them.
-//! Power and color are not settings: the lamp always starts green
-//! (available). The color mode and the language are the app's own.
+//! Settings kept on this computer. The lamp starts in automatic brightness and forgets
+//! its bias at each power-up, so the app applies the brightness ones at every
+//! connection. Power and color are not settings, since the lamp always starts green.
 
 use std::sync::Mutex;
 
 use disled_protocol::{AUTO_BIAS_MAX, AUTO_BIAS_MIN, BrightnessMode, Command, SetState};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Runtime, Theme};
+use tauri::{AppHandle, Manager, Theme};
 use tauri_plugin_store::StoreExt;
 
 const STORE_FILE: &str = "settings.json";
@@ -117,8 +115,8 @@ impl Settings {
         }
     }
 
-    /// Commands that bring a lamp in line with these settings. The bias
-    /// needs protocol 1.1 (`auto_bias` capability).
+    /// Commands that bring a lamp in line with these settings. The bias goes
+    /// only to a lamp that announces the `auto_bias` capability.
     pub fn commands(&self, auto_bias_supported: bool) -> Vec<Command> {
         let mut commands = vec![Command::SetState(SetState {
             brightness_mode: Some(self.brightness_mode),
@@ -136,7 +134,7 @@ impl Settings {
 
 /// The settings in memory, shared by the commands and the USB worker.
 #[derive(Default)]
-pub struct SettingsState(pub Mutex<Settings>);
+pub struct SettingsState(Mutex<Settings>);
 
 impl SettingsState {
     pub fn get(&self) -> Settings {
@@ -144,9 +142,9 @@ impl SettingsState {
     }
 }
 
-/// Reads the saved settings (defaults when there are none or they cannot
-/// be read).
-pub fn load<R: Runtime>(app: &AppHandle<R>) -> Settings {
+/// Reads the saved settings, or the defaults when there are none or they
+/// cannot be read.
+pub fn load(app: &AppHandle) -> Settings {
     app.store(STORE_FILE)
         .ok()
         .and_then(|store| store.get(KEY))
@@ -155,7 +153,7 @@ pub fn load<R: Runtime>(app: &AppHandle<R>) -> Settings {
 }
 
 /// Saves the settings and updates the shared copy.
-pub fn save<R: Runtime>(app: &AppHandle<R>, settings: Settings) -> Result<(), String> {
+pub fn save(app: &AppHandle, settings: Settings) -> Result<(), String> {
     if let Ok(mut shared) = app.state::<SettingsState>().0.lock() {
         *shared = settings;
     }

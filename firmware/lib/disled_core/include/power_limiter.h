@@ -3,13 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * LED current budget (review N2).
- *
- * Each channel draws a fixed current while its MOSFET conducts, so the
- * average current is duty x full-scale current. The model uses worst-case
- * full-scale currents (5.25 V bus, lowest forward voltage). When a color
- * would exceed the cap of the current USB state, all three channels are
- * scaled by the same factor, which keeps the hue.
+ * LED current budget (constraint N2 in hardware/README.md). The average
+ * current is duty x full-scale current, and a color over the cap is scaled
+ * down on all channels alike, which keeps its hue.
  */
 #ifndef DISLED_POWER_LIMITER_H
 #define DISLED_POWER_LIMITER_H

@@ -2,9 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Self-test tab of the Diagnostics window (protocol 1.1 SELF_TEST): the
-  lamp shows its colors, checks its light sensor and its touch, and
-  reports. The checks are listed before the run, then marked.
+  Self-test tab of the Diagnostics window (SELF_TEST): the lamp shows its
+  colors, checks its light sensor and its touch, and reports. The checks are
+  listed before the run, then marked.
 -->
 <script setup lang="ts">
 import { computed } from 'vue';

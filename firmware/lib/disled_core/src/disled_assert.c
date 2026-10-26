@@ -5,8 +5,7 @@
  */
 #include "disled_assert.h"
 
-/* Native builds (unit tests): crash loudly. The firmware overrides it in
- * bsp_fault.c. */
+/* Unit tests: crash. The firmware overrides it in bsp_fault.c. */
 __attribute__((weak)) void disled_assert_failed(uint32_t line)
 {
     (void)line;

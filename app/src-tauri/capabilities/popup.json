@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "popup",
+  "description": "Popup: the app version on its settings page",
+  "windows": [
+    "popup"
+  ],
+  "permissions": [
+    "core:app:allow-version"
+  ]
+}

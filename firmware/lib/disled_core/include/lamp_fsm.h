@@ -3,11 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Lamp state machine: power, color and brightness settings, driven by the
- * touch gestures and by host requests. Rules: docs/behavior.md.
- *
- * The USB link state is not part of it: the application ignores gestures
- * while the host is asleep and the output stage turns the LED off.
+ * Lamp state machine: power, color and brightness settings, from the touch
+ * gestures and the host requests (docs/behavior.md). USB suspend stays out of
+ * it: the application drops the gestures and the LED output goes dark.
  */
 #ifndef DISLED_LAMP_FSM_H
 #define DISLED_LAMP_FSM_H
@@ -47,17 +45,18 @@ typedef struct {
 /* Power-up state: on, green, automatic brightness. */
 void lamp_fsm_init(lamp_state_t *state);
 
-/* Short press. On: next color (green, orange, red, then green again; warm
- * white goes back to green). Off: ignored. Returns true if the state
- * changed. */
+/* The next color while on (docs/behavior.md), nothing while off. Returns true if
+ * the state changed. */
 bool lamp_fsm_short_press(lamp_state_t *state);
 
-/* Long press: toggles the power, keeping the color. Returns true. */
+/* Toggles the power, keeping the color. Returns true. */
 bool lamp_fsm_long_press(lamp_state_t *state);
 
 /* True if every selected field holds a valid value and no unknown field
  * bit is set. */
 bool lamp_request_is_valid(const lamp_request_t *request);
+
+bool lamp_state_equal(const lamp_state_t *a, const lamp_state_t *b);
 
 /* Applies a valid request atomically and returns true if the state changed.
  * An invalid request changes nothing and returns false. */

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The firmware files of the releases. Each firmware release carries its
-//! release build, `disled-fw-X.Y.Z.hex`, signed with the update key of the
-//! app (ADR 0016): the release workflow puts the file name and the version
-//! in the signed comment.
+//! The firmware files of the releases: the release build `disled-fw-X.Y.Z.hex`,
+//! signed with the update key, its name and version in the signed comment, since
+//! a replaced firmware could present the lamp to the computer as a keyboard.
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -14,11 +13,16 @@ use semver::Version;
 /// Public half of the update key. The app updater reads the same key from
 /// `plugins.updater.pubkey` in `app/src-tauri/tauri.conf.json`; a test
 /// keeps both equal.
-pub const UPDATE_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM1QThCQjQ2ODRCODJGREYKUldUZkw3aUVScnVvTlFvSng1R29rOUYxWFlXTnM5bEZUVU5GNG53d3lNekFQRmozK1RwOGxtYi8K";
+const UPDATE_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM1QThCQjQ2ODRCODJGREYKUldUZkw3aUVScnVvTlFvSng1R29rOUYxWFlXTnM5bEZUVU5GNG53d3lNekFQRmozK1RwOGxtYi8K";
 
 /// Name of the release build of a version, as the releases attach it.
 pub fn file_name(version: &Version) -> String {
     format!("disled-fw-{version}.hex")
+}
+
+/// Name of its signature, attached next to it.
+pub fn signature_name(version: &Version) -> String {
+    format!("{}.sig", file_name(version))
 }
 
 /// The version in the name of a release build.
@@ -28,7 +32,7 @@ pub fn version_of(file_name: &str) -> Option<Version> {
 }
 
 /// Checks that `data` is the release build of `version`, signed with the
-/// update key: an older signed file cannot pass for a newer one.
+/// update key, so that an older signed file cannot pass for a newer one.
 /// `signature` is the content of the `.sig` file.
 pub fn verify(data: &[u8], signature: &str, version: &Version) -> Result<(), String> {
     verify_with(UPDATE_KEY, data, signature, version)
@@ -115,6 +119,7 @@ mod tests {
     fn file_names_carry_the_version() {
         let version = Version::new(0, 3, 0);
         assert_eq!(file_name(&version), "disled-fw-0.3.0.hex");
+        assert_eq!(signature_name(&version), "disled-fw-0.3.0.hex.sig");
         assert_eq!(version_of("disled-fw-0.3.0.hex"), Some(version));
         assert_eq!(version_of("firmware.hex"), None);
         assert_eq!(version_of("disled-fw-0.3.0.bin"), None);

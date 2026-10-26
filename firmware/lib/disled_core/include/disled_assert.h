@@ -3,9 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Invariant checks. A failed check calls disled_assert_failed(), which the
- * firmware provides (it records a fault, reported at the next boot, and
- * resets the chip); the native test build aborts.
+ * Invariant checks. A failed check calls disled_assert_failed(), which in the
+ * firmware records a fault for the next boot and resets the chip, and in the
+ * native tests aborts.
  */
 #ifndef DISLED_ASSERT_H
 #define DISLED_ASSERT_H

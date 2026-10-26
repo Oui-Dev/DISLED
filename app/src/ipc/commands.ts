@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// The Tauri commands of the backend (src-tauri/src/lib.rs), typed. Failed
+// The Tauri commands of the backend (src-tauri/src/main.rs), typed. Failed
 // commands reject with the backend's error message.
 
 import { invoke } from '@tauri-apps/api/core';

@@ -10,13 +10,13 @@ desktop.ini
 *~
 __pycache__/
 
-# Hardware: large generated 3D exports (regenerate them from EasyEDA),
-# except the model of the board, a file of its releases (ADR 0019)
+# Hardware: the large 3D exports, which EasyEDA regenerates, except the
+# model of the board, a file of its releases
 *.step
 *.stp
 !/hardware/pcb/*.step
 
-# Firmware (PlatformIO, tools installed by uv)
+# Firmware: PlatformIO builds and the tools uv installs
 firmware/.pio/
 firmware/.venv/
 firmware/.vscode/*
@@ -24,15 +24,15 @@ firmware/.vscode/*
 firmware/tools/*/touch_replay
 firmware/tools/*/touch_replay.exe
 
-# Desktop app (Tauri + Vue)
+# Desktop app
 app/node_modules/
 app/dist/
-# Rust workspace build output (and the old per-crate location)
+# Rust build output: the workspace target, and the capability schemas
+# that tauri-build writes
 /target/
-app/src-tauri/target/
 app/src-tauri/gen/schemas/
-# The wchisp sidecar, built by the release workflow (or by hand)
+# The wchisp sidecar, which the release workflow builds, or a hand-built one
 app/src-tauri/binaries/
 
-# Production logs of disled-factory (board UIDs)
+# Production logs of disled-factory, which hold board UIDs
 disled-production*.csv

@@ -14,22 +14,20 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } f
 import { useI18n } from 'vue-i18n';
 import { useErrorText } from '@/composables/useErrorText';
 import { usePopupAutoSize } from '@/composables/usePopupAutoSize';
+import { useUpdateStatus } from '@/composables/useUpdateStatus';
 import { popupHide, quit } from '@/ipc/commands';
 import { useErrorStore } from '@/stores/errors';
-import { useFirmwareStore } from '@/stores/firmware';
 import { useLampStore } from '@/stores/lamp';
-import { useUpdatesStore } from '@/stores/updates';
 
 type Page = 'lamp' | 'settings';
 
 const { t } = useI18n();
 const lamp = useLampStore();
-const updates = useUpdatesStore();
-const firmware = useFirmwareStore();
 const errors = useErrorStore();
 const errorText = useErrorText();
+const { offerLine } = useUpdateStatus();
 
-// The page, then the footer: the window fits both, and the footer stays at
+// The page, then the footer. The window fits both, and the footer stays at
 // the bottom of a window taller than the content.
 const { fit } = usePopupAutoSize(
   useTemplateRef<HTMLElement>('body'),
@@ -57,7 +55,7 @@ async function reset(): Promise<void> {
 }
 
 onKeyStroke('Escape', async () => {
-  // An open menu closes first (it is still there while this runs); the
+  // An open menu, still in the page while this runs, closes first and the
   // popup stays.
   if (document.querySelector('[role="menu"]')) {
     return;
@@ -83,15 +81,6 @@ const status = computed(() => {
   }
   return lamp.state ? t('status.connected') : t('status.connecting');
 });
-
-/** The app first: a new firmware may need a new app. */
-const footerUpdate = computed(() => {
-  const available = updates.status.available;
-  if (available) {
-    return t('updates.toApp', { version: available });
-  }
-  return firmware.updateForLamp ? t('updates.toLamp') : null;
-});
 </script>
 
 <template>
@@ -107,7 +96,7 @@ const footerUpdate = computed(() => {
         <p v-if="!lamp.connection.connected" class="text-xs text-muted">
           {{ t('lamp.unplugged') }}
         </p>
-        <LampColorPicker labels />
+        <LampColorPicker />
         <LampBrightness />
       </section>
 
@@ -126,7 +115,7 @@ const footerUpdate = computed(() => {
         <PopupSettings />
       </section>
 
-      <!-- UAlert has no role of its own: screen readers announce this one. -->
+      <!-- UAlert has no role of its own, so this one gets alert for screen readers. -->
       <UAlert
         v-if="errors.last"
         role="alert"
@@ -152,13 +141,13 @@ const footerUpdate = computed(() => {
         {{ page === 'lamp' ? t('common.settings') : t('common.back') }}
       </UButton>
       <UButton
-        v-if="footerUpdate && page === 'lamp'"
+        v-if="offerLine && page === 'lamp'"
         variant="link"
         size="sm"
         class="px-0 font-semibold"
         @click="show('settings')"
       >
-        {{ footerUpdate }}
+        {{ offerLine }}
       </UButton>
       <UButton
         color="neutral"

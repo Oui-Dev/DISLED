@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The wchisp flasher. It is GPL-2.0, which this code cannot link: it runs
-//! as a separate program, and its log lines are the only interface it has.
-//! The messages below are those of wchisp 0.3.0, which the app ships, and
-//! of the 0.2.3 nightly that PlatformIO installs.
+//! The wchisp flasher, GPL-2.0, which this code cannot link: it runs as a separate
+//! program, read through its log lines. Those below are of wchisp 0.3.0, which the
+//! app ships, and of the 0.2.3 nightly that PlatformIO installs.
 
 use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -13,7 +12,7 @@ use std::thread;
 
 use serde::Serialize;
 
-/// The lamp's chip, as wchisp names it (`CH32V203G6U6[0x3619]`).
+/// Start of the name wchisp gives the lamp's chip, `CH32V203G6U6[0x3619]`.
 pub const CHIP: &str = "CH32V203";
 
 /// File name of the program.
@@ -24,17 +23,18 @@ pub const PROGRAM: &str = if cfg!(windows) {
 };
 
 /// What `wchisp probe` found on USB.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Probe {
     /// No WCH bootloader.
     Nothing,
-    /// One bootloader, opened: its chip.
+    /// One bootloader, opened, with the name of its chip.
     Ready(String),
-    /// Several bootloaders: which one is the lamp is unknown.
+    /// Several bootloaders, so which one is the lamp is unknown.
     Several,
-    /// Windows: the bootloader has no WinUSB driver.
+    /// On Windows, the bootloader has no WinUSB driver.
     DriverMissing,
-    /// Linux: the user may not open the bootloader (no udev rule).
+    /// On Linux, the user may not open the bootloader, for lack of the udev
+    /// rule.
     NoPermission,
 }
 
@@ -50,7 +50,7 @@ pub enum Stage {
 }
 
 /// A wchisp program.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Wchisp {
     program: PathBuf,
 }
@@ -86,7 +86,8 @@ impl Wchisp {
         command
     }
 
-    /// `wchisp 0.3.0`; fails when the program cannot run.
+    /// The first line of `wchisp --version`, such as `wchisp 0.3.0`. Fails
+    /// when the program cannot run.
     pub fn version(&self) -> Result<String, String> {
         let output = self
             .command()
@@ -117,8 +118,8 @@ impl Wchisp {
             .arg(file)
             .spawn()
             .map_err(cannot_run)?;
-        // Errors go to stderr: read it on the side, so that a full pipe
-        // never blocks wchisp.
+        // Errors go to stderr. A thread reads it, so that a full pipe never
+        // blocks wchisp.
         let mut stderr = child.stderr.take().ok_or("no wchisp error output")?;
         let errors = thread::spawn(move || {
             let mut text = String::new();
@@ -156,8 +157,8 @@ fn parse_probe(text: &str) -> Result<Probe, String> {
     if text.contains("Failed to open USB device on Linux") {
         return Ok(Probe::NoPermission);
     }
-    // "Found 1 USB device" (0.3.0) or "Found 1 devices" (0.2.3), then
-    // "Device #0: CH32V203G6U6[0x3619]".
+    // wchisp 0.3.0 prints "Found 1 USB device" and 0.2.3 "Found 1 devices",
+    // then "Device #0: CH32V203G6U6[0x3619]".
     let found = text
         .lines()
         .filter(|line| line.contains(" device"))
@@ -193,7 +194,7 @@ fn parse_stage(line: &str) -> Option<Stage> {
     .map(|(_, stage)| stage)
 }
 
-/// The error wchisp ended with (`Error: …`), or its last line.
+/// The `Error: …` line wchisp ended with, or its last line.
 fn failure(text: &str) -> String {
     let reason = text
         .lines()

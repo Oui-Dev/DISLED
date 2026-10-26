@@ -4,7 +4,7 @@
 import type { Diagnostics } from '@/bindings/Diagnostics';
 
 /** What needs a look in the lamp diagnostics, one flag per row of the Health tab. */
-export interface HealthIssues {
+interface HealthIssues {
   watchdogResets: boolean;
   faults: boolean;
   lightSensor: boolean;

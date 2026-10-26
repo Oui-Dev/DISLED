@@ -2,6 +2,6 @@
 import type { Message } from "./Message";
 
 /**
- * A decoded message and the sequence number it answers (0: unsolicited).
+ * A decoded message and the sequence number it answers, 0 when unsolicited.
  */
 export type Frame = { seq: number, message: Message, };

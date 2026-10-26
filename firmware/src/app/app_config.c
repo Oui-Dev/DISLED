@@ -10,30 +10,14 @@
 #define LUX(x)  ((uint32_t)(x) * 1000u)
 #define MLUX(x) ((uint32_t)(x))
 
-/* TouchKey timing, measured on the first board (bring-up): the ADC sample
- * time sets the range, the charge time the position in it. With 1.5 cycles
- * and charge 3 the reading sits mid-scale (about 2600 of 4095, noise about
- * +-6 per mille). The WCH example values (charge 16, 7.5 cycles) saturate.
+/* TouchKey timing. Charge 3 and an ADC sample of 1.5 cycles keep the idle
+ * reading near mid-scale, about 2100 of 4095. The WCH example values
+ * (charge 16, 7.5 cycles) saturate it.
  *
- * Thresholds, measured on the final board (second board, ring 28.5/17.5 mm,
- * closed enclosure, desktop PC USB, 2026-10-24). Idle reading about 2100,
- * noise about 4.5 per mille (single windows up to 25); the LED, off to
- * 125 mA, shifts nothing. A light touch lowers the reading by 77-188 per
- * mille at its peak (least on the center, over the hole of the ring), a
- * firm one by 120-200, a held one by about 170. A hand
- * held 1 cm above the lid lowers it by 60-80 (peaks to 100), at 2 cm by
- * 40-55, at 5 cm by about 3; a hand passing 1 cm above peaks at 33-58.
- *
- * The first board's thresholds (press 28, rise 18) took a hand at 1-2 cm
- * and every pass for a touch, and a hand held 2 s over the lid for a long
- * press. A hand nears the lid more slowly than a finger lands on it, so the
- * floor follows the hand and its rise stays small: the rise above the floor
- * now does most of the sorting. Replayed on two labelled recordings (20 ms
- * windows: the calibration, then a check after flashing; 21 taps, 3 long
- * presses, hands held at 1 and 2 cm, 6 passes), these settings found every
- * tap and long press, and no hand held or passing; idle and the LED steps
- * gave nothing. Press 55-70 and rise 45-55 gave the same result; a 60 ms
- * debounce missed light taps on the center, where the ring has its hole. */
+ * Thresholds, in per mille below the baseline, through the closed lid. A tap
+ * reads 77 to 188, a hand held 1 cm above 60 to 80, idle noise under 25. A
+ * finger lands faster than a hand nears, so the rise above the floor (50)
+ * tells them apart. A 60 ms debounce misses light taps over the ring's hole. */
 const tkey_config_t app_tkey_config = {
     .charge_time = 3,
     .discharge_time = 8,
@@ -41,31 +25,27 @@ const tkey_config_t app_tkey_config = {
 };
 
 const touch_config_t app_touch_config = {
-    .window_samples = 20,                       /* 20 ms at 1 kHz: one 50 Hz mains period */
-    .calibration_windows = 8,                   /* 160 ms */
-    .baseline_shift = 8,                        /* about 5 s time constant */
-    .press_permille = APP_TOUCH_PRESS_PERMILLE, /* see the TouchKey note; recheck on the Mac (V4) */
+    .window_samples = 20,     /* 20 ms at 1 kHz: one 50 Hz mains period */
+    .calibration_windows = 8, /* 160 ms */
+    .baseline_shift = 8,      /* about 5 s time constant */
+    .press_permille = APP_TOUCH_PRESS_PERMILLE,
     .release_permille = 34,
-    .press_rise_permille = 50, /* a hand nearing the lid rises less: see the note */
-    .proximity_permille = 10,  /* rest noise and the LED on/off shift stay below */
-    .debounce_ms = 40,         /* 60 missed light taps on the center; noise stays far below */
-    .rearm_ms = 100,           /* fast taps came 260 ms apart */
+    .press_rise_permille = 50,
+    .proximity_permille = 10, /* rest noise and the LED on/off shift stay below */
+    .debounce_ms = 40,        /* the noise stays far below */
+    .rearm_ms = 100,          /* fast taps come 260 ms apart */
     .long_press_ms = 2000,
     .object_ms = 10000,
     .inverted_permille = 30,
     .inverted_ms = 1000,
-    .rising_touch = false, /* a finger lowers the TouchKey reading */
 };
 
-/* Ambient light to brightness. The lux are those the sensor reads behind
- * its notch in the side wall, a small fraction of the light of the room (a
- * dim room reads under 0.01 lx there). First curve, tuned live on the first
- * board with the console command `curve`, judged by eye with a phone
- * flashlight at several distances (2026-10-21). The floor of 1.5 % is the
- * level the user chose at night with the previous curve. Refine with daily
- * use. */
+/* Ambient light to brightness, tuned by eye. The lux are those the sensor
+ * reads behind its window in the side wall, a small fraction of the light of
+ * the room: a dim room reads under 0.01 lx there. The floor of 1.5 % is the
+ * level chosen for the night. */
 /* clang-format off */
-const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS] = {
+static const brightness_point_t app_brightness_curve[] = {
     { MLUX(100),   15 },
     { MLUX(500),   95 },
     {    LUX(2),  285 },
@@ -75,11 +55,11 @@ const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS] = {
 };
 /* clang-format on */
 
-/* Speed chosen by the user: a light switched on or off is followed in about
- * 1.5 s (0.4 s to confirm it, then a time constant of 0.25 s). */
+/* The lamp follows a light switched on or off in about 1.5 s: 0.4 s to
+ * confirm the change, then a time constant of 0.25 s. */
 const brightness_config_t app_brightness_config = {
     .curve = app_brightness_curve,
-    .curve_points = APP_BRIGHTNESS_CURVE_POINTS,
+    .curve_points = sizeof app_brightness_curve / sizeof app_brightness_curve[0],
     .tick_ms = 100,    /* the shortest integration of the sensor */
     .slow_divisor = 8, /* small changes: time constant about 0.75 s */
     .fast_divisor = 3, /* large ones: about 0.25 s */
@@ -90,42 +70,42 @@ const brightness_config_t app_brightness_config = {
     .fallback_permille = 500,
 };
 
-/* Colors at full brightness, linear light. The orange and the warm white
- * were tuned by eye through the PLA at bring-up (the first orange, green at
- * 16384, was hard to tell from the red). */
+/* Colors at full brightness, in linear light. The orange and the warm white
+ * are tuned by eye through the PLA; with less green, the orange is hard to
+ * tell from the red. */
 /* clang-format off: keep the table readable */
 const color_config_t app_color_config = {
     .palette = {
         [LAMP_COLOR_GREEN]      = {     0, 65535,    0 },
-        [LAMP_COLOR_ORANGE]     = { 65535, 29000,    0 }, /* tuned by eye through the PLA */
+        [LAMP_COLOR_ORANGE]     = { 65535, 29000,    0 },
         [LAMP_COLOR_RED]        = { 65535,     0,    0 },
-        [LAMP_COLOR_WARM_WHITE] = { 63000, 58000, 1600 }, /* tuned by eye through the PLA */
+        [LAMP_COLOR_WARM_WHITE] = { 63000, 58000, 1600 },
     },
-    .balance = { 65535, 65535, 65535 },
 };
 /* clang-format on */
 
-/* Pulse loss, tuned by eye on warm white at bring-up (72 MHz ticks of
- * 14 ns): at 10 % its blue was a 1-tick pulse and the color turned yellow.
- * Whole ticks gave 2/3/5 for 3 % and 2/3/4 for 10 %; with dithering, a
- * blue of 4 3/16 ticks suits both. */
+/* Light lost per pulse by the driver edges, in ns, tuned by eye on warm
+ * white. A tick lasts 14 ns at 72 MHz. Without it, the 1-tick blue of warm
+ * white at 10 % gives no light and the color turns yellow. With the
+ * dithering, a blue of 4 3/16 ticks suits both 3 and 10 %. */
 const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT] = { 28, 42, 58 };
 
-/* Worst-case LED currents at 100 % duty (review N2: 5.25 V, lowest
- * forward voltage). Caps: 70 mA + about 25 mA for the MCU stays within the
- * 100 mA of an unconfigured USB device; 125 mA lets any single color reach
- * 100 % and holds warm white near half power (tune after V2). */
+/* Worst-case LED currents at 100 % duty, at 5.25 V and the lowest forward
+ * voltage (constraint N2 in hardware/README.md). 70 mA plus about 25 mA for
+ * the MCU stays within the 100 mA of an unconfigured USB device. 125 mA lets
+ * any single color reach 100 % and holds warm white near half power; the
+ * heat test of docs/bringup.md tells whether it may rise. */
 const power_config_t app_power_config = {
     .full_scale_ma = { 86, 63, 125 },
     .unconfigured_cap_ma = 70,
     .configured_cap_ma = 125,
 };
 
-/* Self-test: colors at 50 % and the blue glow at 20 % perceived, in linear
- * light (the CIE table of color.c). The white step is the palette's warm
- * white at 50 % (63000/58000/1600 x 12071/65535): equal channels looked
- * pink. Idle TouchKey reading: about 2600 counts on the first board, 2100
- * on the final one, 4095 when saturated. */
+/* Self-test: colors at 50 % and the blue glow at 20 % of perceived
+ * brightness, in linear light (the CIE table of color.c). The white step is
+ * the warm white of the palette at 50 % (63000/58000/1600 times
+ * 12071/65535), since equal channels look pink. The idle TouchKey reading is
+ * about 2100 counts, and 4095 when saturated. */
 const self_test_config_t app_self_test_config = {
     .color_ms = 1500,
     .touch_wait_ms = 10000,

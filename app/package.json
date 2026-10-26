@@ -5,12 +5,14 @@
   "description": "Desktop app for the DISLED USB status light",
   "license": "GPL-3.0-or-later",
   "type": "module",
+  "engines": {
+    "node": "^24.22.1 || ^26.12.1"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "build": "vue-tsc && vite build",
     "tauri": "tauri",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "vue-tsc",
     "check": "biome check .",
     "fix": "biome check --write .",
     "bindings": "cargo test --workspace export_bindings"

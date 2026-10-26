@@ -18,17 +18,7 @@ static bool same_color(rgb16_t a, rgb16_t b)
 void led_output_init(led_output_t *out, const led_output_config_t *config)
 {
     DISLED_ASSERT(config->pwm_period <= PWM_DITHER_PERIOD_MAX);
-    out->config = config;
-    out->from = black;
-    out->target = black;
-    out->shown = black;
-    out->fade_start_ms = 0;
-    out->fading = false;
-    out->cap_ma = 0;
-    out->estimate_ma_x10 = 0;
-    for (unsigned i = 0; i < LED_CHANNEL_COUNT; i++) {
-        out->duty[i] = 0;
-    }
+    *out = (led_output_t){ .config = config };
 }
 
 static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in)
@@ -45,16 +35,14 @@ static rgb16_t target_for(const led_output_t *out, const led_output_inputs_t *in
     return color_compose(out->config->color, in->color, in->level_permille);
 }
 
-/* Linear light to sub-ticks. linear * period * 16 stays within 32 bits as
- * long as period <= PWM_DITHER_PERIOD_MAX. */
+/* period * 16 fits 16 bits, since init checks period <= PWM_DITHER_PERIOD_MAX. */
 static uint16_t to_duty(uint16_t linear, uint16_t period, uint16_t pulse_loss)
 {
     if (linear == 0u) {
         return 0;
     }
-    const uint32_t full = (uint32_t)period * LED_DUTY_SUBTICKS;
-    const uint32_t duty =
-        (((uint32_t)linear * full + COLOR_LINEAR_MAX / 2u) / COLOR_LINEAR_MAX) + pulse_loss;
+    const uint16_t full = (uint16_t)(period * LED_DUTY_SUBTICKS);
+    const uint32_t duty = (uint32_t)color_scale(linear, full) + pulse_loss;
     return (uint16_t)((duty > full) ? full : duty);
 }
 
@@ -68,14 +56,13 @@ void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_
         out->from = out->shown;
         out->target = target;
         out->fade_start_ms = now_ms;
-        out->fading = true;
     }
 
-    if (out->fading) {
+    /* A fade ends once the target shows: color_mix never overshoots it. */
+    if (!same_color(out->shown, out->target)) {
         const uint32_t elapsed = time_elapsed_ms(now_ms, out->fade_start_ms);
         if (cfg->fade_ms == 0u || elapsed >= cfg->fade_ms) {
             out->shown = out->target;
-            out->fading = false;
         } else {
             const uint16_t t = (uint16_t)((elapsed * COLOR_LINEAR_MAX) / cfg->fade_ms);
             out->shown = color_mix(out->from, out->target, t);
@@ -90,15 +77,10 @@ void led_output_update(led_output_t *out, const led_output_inputs_t *in, uint32_
     const rgb16_t limited = power_limit(cfg->power, out->shown, out->cap_ma);
     out->estimate_ma_x10 = power_estimate_ma_x10(cfg->power, limited);
 
-    out->duty[LED_CHANNEL_RED] =
-        to_duty(limited.r, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_RED]);
-    out->duty[LED_CHANNEL_GREEN] =
+    duty[LED_CHANNEL_RED] = to_duty(limited.r, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_RED]);
+    duty[LED_CHANNEL_GREEN] =
         to_duty(limited.g, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_GREEN]);
-    out->duty[LED_CHANNEL_BLUE] =
-        to_duty(limited.b, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_BLUE]);
-    for (unsigned i = 0; i < LED_CHANNEL_COUNT; i++) {
-        duty[i] = out->duty[i];
-    }
+    duty[LED_CHANNEL_BLUE] = to_duty(limited.b, cfg->pwm_period, cfg->pulse_loss[LED_CHANNEL_BLUE]);
 }
 
 uint32_t led_output_estimate_ma_x10(const led_output_t *out)

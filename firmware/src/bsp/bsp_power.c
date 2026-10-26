@@ -84,8 +84,3 @@ bool bsp_power_full_clock(void)
     __enable_irq();
     return fast;
 }
-
-bool bsp_power_clock_is_slow(void)
-{
-    return s_slow;
-}

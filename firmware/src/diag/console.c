@@ -118,7 +118,7 @@ void console_task(void)
             }
         } else if (s_length < LINE_MAX - 1u && c >= ' ') {
             s_line[s_length++] = c;
-            usb_cdc_write(&c, 1u); /* echo */
+            usb_cdc_write(&c, 1u);
         }
     }
 }

@@ -15,8 +15,8 @@ export interface ChartSeries {
 export type ChartRow = Record<string, number | string>;
 
 /**
- * The lamp's uptime as h:mm:ss.mmm, the x value of the charts: one per
- * sample, since the chart merges the samples of a same value.
+ * The lamp's uptime as h:mm:ss.mmm, the x value of the charts. Each sample
+ * gets its own, since the chart merges the samples of a same value.
  */
 function formatUptime(ms: number): string {
   const seconds = Math.floor(ms / 1000) % 60;

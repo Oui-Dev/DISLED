@@ -3,9 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Every tunable of the firmware, in one place. Values marked "tune" are
- * first guesses, to be adjusted from the measurements on real boards
- * (docs/bringup.md: V1 light sensor, V2 thermal, V4 touch).
+ * Every tunable of the firmware, in one place, with the reason for its
+ * value. docs/bringup.md checks them on a new board.
  */
 #ifndef DISLED_APP_CONFIG_H
 #define DISLED_APP_CONFIG_H
@@ -18,7 +17,7 @@
 #include "touch_detector.h"
 
 /* LED PWM: above 20 kHz no audible capacitor whine. TIM3 runs at 72 MHz
- * (ADR 0009), so a period has 3600 ticks; the dithering splits each into
+ * (bsp.c), so a period has 3600 ticks; the dithering splits each into
  * sixteenths for the very dim evening levels. */
 #define APP_PWM_FREQUENCY_HZ 20000u
 #define APP_LED_FADE_MS      300u
@@ -42,8 +41,6 @@
 
 extern const tkey_config_t app_tkey_config;
 extern const touch_config_t app_touch_config;
-#define APP_BRIGHTNESS_CURVE_POINTS 6u
-extern const brightness_point_t app_brightness_curve[APP_BRIGHTNESS_CURVE_POINTS];
 extern const brightness_config_t app_brightness_config;
 extern const color_config_t app_color_config;
 extern const power_config_t app_power_config;

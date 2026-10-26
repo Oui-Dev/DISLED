@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// App updates (ADR 0014): the backend checks GitHub at start-up and then
-// once a day; the popup shows the result and installs the update on
-// request.
+// App updates. The backend checks GitHub at start-up and then once a day,
+// and the popup shows the result and installs the update on request.
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';

@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Lamp firmware updates (ADR 0010, 0016). With the app updates, the app
-//! looks for the newest firmware release on GitHub. On request it downloads
-//! the release build, checks the update key's signature, waits for the
-//! lamp's ROM bootloader (BOOT + RESET), flashes it with wchisp and checks
-//! the version the lamp then reports. The update window follows each step.
+//! Lamp firmware updates: the newest firmware release, looked for with the app updates,
+//! then on request its download and signature check, the wait for the ROM bootloader
+//! that BOOT and RESET start, the flash with wchisp and the check of the new version.
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -13,31 +11,28 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use disled_flash::firmware::{self as files, file_name};
+use disled_flash::firmware::{self as files, file_name, signature_name};
 use disled_flash::wchisp::{self, Probe, Stage, Wchisp};
-use disled_protocol::Command;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::device::DeviceHandle;
 use crate::updates::now;
 
 const EVENT_STATUS: &str = "firmware-status";
 
-/// Published releases only: GitHub hides the drafts from anonymous callers.
+/// The published releases only, since GitHub hides the drafts from
+/// anonymous callers.
 const RELEASES_URL: &str = "https://api.github.com/repos/Oui-Dev/DISLED/releases?per_page=100";
 const TAG_PREFIX: &str = "fw-v";
 
 /// How often the app looks for the bootloader.
 const POLL: Duration = Duration::from_secs(1);
-/// A lamp that restarts in its bootloader by itself gets this long before
-/// the app asks for the buttons.
-const COMMAND_GRACE: Duration = Duration::from_secs(10);
 /// wchisp failures in a row before the update gives up.
 const PROBE_FAILURES: u32 = 5;
-/// After the flash the lamp restarts, through its bootloader first: it
-/// takes several seconds.
+/// After the flash the lamp restarts through its bootloader, which takes
+/// several seconds.
 const LAMP_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// A firmware the app can install.
@@ -51,7 +46,7 @@ struct Release {
 enum Source {
     /// The release build attached to a GitHub release, and its signature.
     GitHub { hex: String, signature: String },
-    /// Development builds only: a local file, unsigned.
+    /// An unsigned local file, in development builds only.
     Local(PathBuf),
 }
 
@@ -78,16 +73,16 @@ pub enum Flash {
     #[default]
     Idle,
     Downloading,
-    /// Waiting for the ROM bootloader: the user holds BOOT and presses
-    /// RESET, or the lamp restarts in it by itself (`by_command`).
-    WaitingForBootloader {
-        by_command: bool,
-    },
-    /// Windows: the bootloader needs the WinUSB driver (Zadig), once.
+    /// Waiting for the ROM bootloader. The CH32V203 starts it only from a
+    /// reset with BOOT held, so the user holds BOOT and presses RESET.
+    WaitingForBootloader,
+    /// On Windows, the bootloader needs the WinUSB driver, installed once
+    /// with Zadig.
     DriverMissing,
-    /// Linux: the user may not open the bootloader (udev rule).
+    /// On Linux, the user may not open the bootloader, for lack of the udev
+    /// rule.
     NoPermission,
-    /// Several WCH bootloaders: which one is the lamp is unknown.
+    /// Several WCH bootloaders, so which one is the lamp is unknown.
     SeveralBootloaders,
     /// A WCH bootloader that is not a DISLED lamp.
     OtherChip {
@@ -96,7 +91,7 @@ pub enum Flash {
     Flashing {
         stage: Stage,
     },
-    /// Flashed: the lamp restarts.
+    /// Flashed, the lamp restarts.
     WaitingForLamp,
     Done {
         version: String,
@@ -140,7 +135,7 @@ impl FirmwareState {
 }
 
 /// Changes the status and tells every window.
-fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut FirmwareStatus)) {
+fn change(app: &AppHandle, edit: impl FnOnce(&mut FirmwareStatus)) {
     let status = match app.state::<FirmwareState>().status.lock() {
         Ok(mut status) => {
             edit(&mut status);
@@ -151,14 +146,13 @@ fn change<R: Runtime>(app: &AppHandle<R>, edit: impl FnOnce(&mut FirmwareStatus)
     let _ = app.emit(EVENT_STATUS, status);
 }
 
-fn show<R: Runtime>(app: &AppHandle<R>, flash: Flash) {
+fn show(app: &AppHandle, flash: Flash) {
     if app.state::<FirmwareState>().status().flash != flash {
         change(app, |s| s.flash = flash);
     }
 }
 
 /// The newest published firmware release whose release build is signed.
-/// The releases from before the signatures (up to 0.2.1) never qualify.
 fn newest(releases: &[GitHubRelease]) -> Option<Release> {
     releases
         .iter()
@@ -172,10 +166,9 @@ fn newest(releases: &[GitHubRelease]) -> Option<Release> {
                     .find(|asset| asset.name == name)
                     .map(|asset| asset.browser_download_url.clone())
             };
-            let hex = file_name(&version);
             let source = Source::GitHub {
-                signature: url(format!("{hex}.sig"))?,
-                hex: url(hex)?,
+                hex: url(file_name(&version))?,
+                signature: url(signature_name(&version))?,
             };
             Some(Release { version, source })
         })
@@ -183,7 +176,7 @@ fn newest(releases: &[GitHubRelease]) -> Option<Release> {
         .max_by(|a, b| a.version.cmp(&b.version))
 }
 
-/// Development builds only: `DISLED_FIRMWARE_HEX=path/disled-fw-X.Y.Z.hex`
+/// In development builds, `DISLED_FIRMWARE_HEX=path/disled-fw-X.Y.Z.hex`
 /// stands for the newest release, unsigned, to try an update with a local
 /// build. Release builds ignore it.
 fn local_release() -> Option<Release> {
@@ -214,8 +207,9 @@ fn flasher() -> Result<Wchisp, String> {
 }
 
 /// Downloads a file; GitHub wants a user agent.
-async fn get<R: Runtime>(app: &AppHandle<R>, url: &str) -> Result<Vec<u8>, String> {
-    // The same TLS stack as the updater: rustls with ring.
+async fn get(app: &AppHandle, url: &str) -> Result<Vec<u8>, String> {
+    // reqwest is built without a TLS provider, `rustls-no-provider`, so this
+    // installs ring, the one the updater uses, unless a provider is there.
     if rustls::crypto::CryptoProvider::get_default().is_none() {
         let _ = rustls::crypto::ring::default_provider().install_default();
     }
@@ -236,7 +230,7 @@ async fn get<R: Runtime>(app: &AppHandle<R>, url: &str) -> Result<Vec<u8>, Strin
 }
 
 /// Looks for the newest firmware on GitHub.
-pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
+pub async fn check(app: &AppHandle) -> FirmwareStatus {
     change(app, |s| s.checking = true);
     let result = match local_release() {
         Some(release) => Ok(Some(release)),
@@ -268,8 +262,9 @@ pub async fn check<R: Runtime>(app: &AppHandle<R>) -> FirmwareStatus {
     state.status()
 }
 
-/// The release build, checked, in a file for wchisp.
-async fn download<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<PathBuf, String> {
+/// Downloads the release build, checks it and writes it to a file for
+/// wchisp.
+async fn download(app: &AppHandle, release: &Release) -> Result<PathBuf, String> {
     let (hex, signature) = match &release.source {
         Source::Local(path) => return Ok(path.clone()),
         Source::GitHub { hex, signature } => (hex, signature),
@@ -301,15 +296,9 @@ impl From<String> for Stop {
     }
 }
 
-impl From<&str> for Stop {
-    fn from(error: &str) -> Self {
-        Stop::Failed(error.to_owned())
-    }
-}
-
 /// Updates the lamp with the firmware found by the last check, on its own
 /// thread; the update window follows the status.
-pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+pub fn install(app: &AppHandle) -> Result<(), String> {
     let state = app.state::<FirmwareState>();
     let release = state
         .release
@@ -332,8 +321,8 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
                 Err(Stop::Cancelled) => Flash::Idle,
                 Err(Stop::Failed(error)) => Flash::Failed { error },
             };
-            // Free first: the window offers to try again once it shows the
-            // result.
+            // Freed first, because the window offers to try again as soon as
+            // it shows the result.
             owner
                 .state::<FirmwareState>()
                 .running
@@ -348,7 +337,7 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 }
 
 /// Stops an update that waits for the bootloader.
-pub fn cancel<R: Runtime>(app: &AppHandle<R>) {
+pub fn cancel(app: &AppHandle) {
     app.state::<FirmwareState>()
         .cancel
         .store(true, Ordering::SeqCst);
@@ -356,7 +345,7 @@ pub fn cancel<R: Runtime>(app: &AppHandle<R>) {
 
 /// Forgets the result of the last update, when the update window opens
 /// again.
-pub fn clear_result<R: Runtime>(app: &AppHandle<R>) {
+pub fn clear_result(app: &AppHandle) {
     let state = app.state::<FirmwareState>();
     let finished = matches!(
         state.status().flash,
@@ -368,22 +357,16 @@ pub fn clear_result<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// The update itself; returns once the lamp runs the new firmware.
-fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop> {
+fn update(app: &AppHandle, release: &Release) -> Result<(), Stop> {
     show(app, Flash::Downloading);
     let flasher = flasher()?;
     let file = tauri::async_runtime::block_on(download(app, release))?;
 
-    // Into the ROM bootloader. A lamp that announces ENTER_BOOTLOADER
-    // restarts in it by itself; for the others (every board so far, ADR
-    // 0010) the user presses the buttons.
-    let device = app.state::<DeviceHandle>();
-    let by_command = device.info().is_some_and(|info| info.enter_bootloader)
-        && device.send(Command::EnterBootloader).is_ok();
-    wait_for_bootloader(app, &flasher, by_command)?;
-
+    wait_for_bootloader(app, &flasher)?;
     flasher.flash(&file, |stage| show(app, Flash::Flashing { stage }))?;
 
     show(app, Flash::WaitingForLamp);
+    let device = app.state::<DeviceHandle>();
     let since = Instant::now();
     loop {
         if let Some(info) = device.info() {
@@ -398,10 +381,10 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
             };
         }
         if since.elapsed() > LAMP_TIMEOUT {
-            return Err(
+            return Err(Stop::Failed(
                 "the lamp did not start again: press RESET, or unplug it and plug it back in"
                     .into(),
-            );
+            ));
         }
         thread::sleep(Duration::from_millis(250));
     }
@@ -409,17 +392,9 @@ fn update<R: Runtime>(app: &AppHandle<R>, release: &Release) -> Result<(), Stop>
 
 /// Waits until the lamp's bootloader can be flashed, showing what holds it
 /// up.
-fn wait_for_bootloader<R: Runtime>(
-    app: &AppHandle<R>,
-    flasher: &Wchisp,
-    by_command: bool,
-) -> Result<(), Stop> {
+fn wait_for_bootloader(app: &AppHandle, flasher: &Wchisp) -> Result<(), Stop> {
     let state = app.state::<FirmwareState>();
-    let since = Instant::now();
-    let waiting = || Flash::WaitingForBootloader {
-        by_command: by_command && since.elapsed() < COMMAND_GRACE,
-    };
-    show(app, waiting());
+    show(app, Flash::WaitingForBootloader);
     let mut previous = None;
     let mut failures = 0;
     loop {
@@ -442,9 +417,9 @@ fn wait_for_bootloader<R: Runtime>(
         };
         let flash = match &probe {
             Probe::Ready(chip) if chip.starts_with(wchisp::CHIP) => return Ok(()),
-            Probe::Nothing => Some(waiting()),
-            // A bootloader that just appeared may not open at once: a
-            // problem shows when two probes in a row see it.
+            Probe::Nothing => Some(Flash::WaitingForBootloader),
+            // A bootloader that just appeared may not open at once, so a
+            // problem shows only when two probes in a row see it.
             _ if previous.as_ref() != Some(&probe) => None,
             Probe::Ready(chip) => Some(Flash::OtherChip { chip: chip.clone() }),
             Probe::Several => Some(Flash::SeveralBootloaders),

@@ -3,8 +3,8 @@
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
   The active step of a lamp update: what it does, or what it needs from the
-  user (the BOOT and RESET buttons, the Windows driver, a device to
-  unplug).
+  user, such as the BOOT and RESET buttons, the Windows driver or a device
+  to unplug.
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
@@ -22,10 +22,6 @@ const { t } = useI18n();
       {{ t('lampUpdate.downloading', { version: latest }) }}
     </p>
 
-    <UpdateWaiting
-      v-else-if="flash.step === 'waiting_for_bootloader' && flash.by_command"
-      :text="t('lampUpdate.restartingInUpdateMode')"
-    />
     <template v-else-if="flash.step === 'waiting_for_bootloader'">
       <i18n-t keypath="lampUpdate.buttons" tag="p" scope="global">
         <template #boot><strong>BOOT</strong></template>

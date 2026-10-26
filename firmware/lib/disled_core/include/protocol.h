@@ -3,13 +3,9 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * USB HID protocol v1.1: report codec, without any I/O. The specification
- * is protocol/README.md at the repository root; protocol/vectors holds byte
- * vectors shared with the desktop app tests.
- *
- * Every report carries a 63-byte payload after its report ID:
- *   [0] type   [1] seq   [2] body length   [3..] body, zero padded
- * Multi-byte fields are little-endian.
+ * Codec of the USB HID protocol v1.1 (protocol/README.md), without I/O. A
+ * payload is [0] type, [1] seq, [2] body length, then the body, zero padded,
+ * with multi-byte fields in little-endian.
  */
 #ifndef DISLED_PROTOCOL_H
 #define DISLED_PROTOCOL_H
@@ -24,7 +20,8 @@
 #define PROTO_VERSION_MAJOR 1u
 #define PROTO_VERSION_MINOR 1u
 
-/* HID report IDs: commands go host -> device, messages device -> host. */
+/* HID report IDs: commands go from the host to the device, messages from
+ * the device to the host. */
 #define PROTO_REPORT_ID_COMMAND 1u
 #define PROTO_REPORT_ID_MESSAGE 2u
 
@@ -33,7 +30,7 @@
 #define PROTO_HEADER_SIZE   3u
 #define PROTO_MAX_BODY_SIZE (PROTO_REPORT_SIZE - PROTO_HEADER_SIZE)
 
-/* Host -> device. */
+/* From the host to the device. */
 #define PROTO_CMD_GET_INFO      0x01u
 #define PROTO_CMD_GET_STATE     0x02u
 #define PROTO_CMD_SET_STATE     0x03u
@@ -45,7 +42,7 @@
 #define PROTO_CMD_SELF_TEST        0x08u
 #define PROTO_CMD_ENTER_BOOTLOADER 0x09u
 
-/* Device -> host. */
+/* From the device to the host. */
 #define PROTO_MSG_INFO             0x81u
 #define PROTO_MSG_STATE            0x82u
 #define PROTO_MSG_TELEMETRY        0x83u
@@ -92,7 +89,7 @@
 
 #define PROTO_FW_VERSION_SIZE 24u
 
-/* Telemetry period limits, in ms (0 stops the stream). */
+/* Shortest telemetry period, in ms (0 stops the stream). */
 #define PROTO_TELEMETRY_MIN_MS 20u
 
 typedef enum {
@@ -176,10 +173,8 @@ typedef struct {
     int16_t touch_peak_permille;
 } proto_self_test_result_t;
 
-/* Decodes a command payload. A body longer than the command needs is
- * accepted and its extra bytes ignored (protocol compatibility rules). On
- * error, `command->type` and `command->seq` are still filled so that the
- * error can be reported to the host. */
+/* Extra body bytes are ignored, so that newer hosts can extend a command. On
+ * error, `command->type` and `command->seq` are still set, for the reply. */
 proto_status_t proto_decode_command(const uint8_t payload[PROTO_REPORT_SIZE],
                                     proto_command_t *command);
 

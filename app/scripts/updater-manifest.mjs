@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// Writes the update manifest (latest.json) of an app release from the
-// signatures of its installers (docs/releasing.md, ADR 0014):
-//
+// Writes the latest.json of an app release from the signatures of its installers:
 //   node scripts/updater-manifest.mjs <version> <download URL> <signature dir> [notes file]
-//
-// <download URL> is where the installers are, such as
-// https://github.com/Oui-Dev/DISLED/releases/download/app-v0.2.0.
+// <download URL> is that of the installers, .../releases/download/app-vX.Y.Z.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Installer name ending → updater target. The app looks for
+// Installer name endings and their updater targets. The app looks for
 // `{os}-{arch}-{bundle}` first, then `{os}-{arch}`.
 const TARGETS = [
   { ending: '_x64-setup.exe', os: 'windows', arch: 'x86_64', bundle: 'nsis' },

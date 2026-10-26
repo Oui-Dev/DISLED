@@ -27,15 +27,13 @@ typedef struct {
     uint32_t time_ms;
 } sample_t;
 
-static volatile uint8_t s_charge_time;
-static volatile uint8_t s_discharge_time;
+static uint8_t s_charge_time;
+static uint8_t s_discharge_time;
 static sample_t s_queue[QUEUE_SIZE];
 static volatile uint32_t s_head; /* written by the interrupt */
 static volatile uint32_t s_tail; /* written by the main loop */
 static volatile uint32_t s_overruns;
 static volatile uint32_t s_timeouts;
-static volatile bool s_dither;
-static uint32_t s_lfsr = 0xACE1u;
 
 void tkey_init(const tkey_config_t *config)
 {
@@ -89,21 +87,11 @@ static void measure(void)
     s_head = head + 1u;
 }
 
-/* Runs in the SysTick interrupt, every millisecond. */
-static void on_tick(void)
-{
-    if (s_dither) {
-        /* 16-bit Galois LFSR: a pseudo-random phase for each sample. */
-        s_lfsr = (s_lfsr >> 1) ^ ((0u - (s_lfsr & 1u)) & 0xB400u);
-        led_pwm_set_sample_phase((uint16_t)(s_lfsr % led_pwm_period()));
-    }
-    led_pwm_arm_sample();
-}
-
 void tkey_start(void)
 {
     led_pwm_set_sample_callback(measure);
-    bsp_time_set_tick_hook(on_tick);
+    /* Every millisecond, from the SysTick interrupt. */
+    bsp_time_set_tick_hook(led_pwm_arm_sample);
 }
 
 void tkey_stop(void)
@@ -133,22 +121,4 @@ uint32_t tkey_overruns(void)
 uint32_t tkey_timeouts(void)
 {
     return s_timeouts;
-}
-
-void tkey_set_phase(uint16_t phase_ticks)
-{
-    s_dither = false;
-    led_pwm_set_sample_phase(phase_ticks);
-}
-
-void tkey_set_dither(bool enabled)
-{
-    s_dither = enabled;
-}
-
-void tkey_set_timing(uint8_t charge_time, uint8_t discharge_time, uint8_t adc_sample_time)
-{
-    s_charge_time = charge_time;
-    s_discharge_time = discharge_time;
-    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, adc_sample_time);
 }

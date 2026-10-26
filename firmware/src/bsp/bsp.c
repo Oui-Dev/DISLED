@@ -43,9 +43,9 @@ static void init_clocks(void)
     SystemCoreClockUpdate();
 
     /* I2C needs PCLK1 <= 60 MHz: the SDK writes PCLK1 in MHz into a 6-bit
-     * field and only clamps it to 60 afterwards, so 72 MHz silently became
-     * 8 MHz and broke every byte transfer (found at bring-up). 144 / 4 =
-     * 36 MHz; the APB1 timers then run at 72 MHz. */
+     * field and only clamps it to 60 afterwards, so 72 MHz silently becomes
+     * 8 MHz and breaks every byte transfer. 144 / 4 = 36 MHz; the APB1
+     * timers then run at 72 MHz. */
     RCC_PCLK1Config(RCC_HCLK_Div4);
 
     /* ADC clock = PCLK2 / 8 must stay within 14 MHz: 72 MHz / 8 = 9 MHz. */

@@ -6,7 +6,6 @@
 #include "app_host.h"
 
 #include <stdbool.h>
-#include <string.h>
 
 #include "app_config.h"
 #include "app_context.h"
@@ -25,12 +24,9 @@ typedef struct {
     usb_link_t link;
 } state_content_t;
 
-/*
- * s_seen is the state observed on the last pass, s_sent the state carried by
- * the last STATE message. The sequence number grows by one with each STATE
- * message that carries new content, so the host sees a gap only when it
- * really lost a message, even when level changes are coalesced.
- */
+/* s_seen: the state of the last pass, s_sent: that of the last STATE message. The
+ * sequence number grows only with new content, so a gap tells the host that it
+ * lost a message, even when level changes are coalesced. */
 static state_content_t s_seen;
 static state_content_t s_sent;
 static uint16_t s_state_seq;
@@ -58,23 +54,18 @@ static state_content_t observe(void)
     return content;
 }
 
-static bool same_lamp(const lamp_state_t *a, const lamp_state_t *b)
-{
-    return a->on == b->on && a->color == b->color && a->brightness_mode == b->brightness_mode &&
-           a->manual_level == b->manual_level;
-}
-
 static bool same_content(const state_content_t *a, const state_content_t *b)
 {
-    return same_lamp(&a->lamp, &b->lamp) && a->applied_percent == b->applied_percent &&
+    return lamp_state_equal(&a->lamp, &b->lamp) && a->applied_percent == b->applied_percent &&
            a->link == b->link;
 }
 
-/* Records the cause of the latest change. */
+/* Records the cause of the latest change, and stops the telemetry when the
+ * host leaves. */
 static void observe_changes(void)
 {
     const state_content_t now = observe();
-    if (!same_lamp(&now.lamp, &s_seen.lamp)) {
+    if (!lamp_state_equal(&now.lamp, &s_seen.lamp)) {
         s_source = app.source;
     } else if (now.link != s_seen.link) {
         s_source = CHANGE_SOURCE_USB;
@@ -95,7 +86,7 @@ static bool notification_pending(void)
 /* Only the automatic brightness changed since the last STATE message. */
 static bool only_level_pending(void)
 {
-    return same_lamp(&s_seen.lamp, &s_sent.lamp) && s_seen.link == s_sent.link;
+    return lamp_state_equal(&s_seen.lamp, &s_sent.lamp) && s_seen.link == s_sent.link;
 }
 
 /* Sends the current state; `seq` is the request it answers (0: none). */
@@ -128,7 +119,7 @@ static void send_info(uint8_t seq)
         .fw_patch = DISLED_FW_VERSION_PATCH,
         .board_revision = BOARD_REVISION,
         /* No ENTER_BOOTLOADER: the CH32V203 cannot start its ROM
-         * bootloader from software (ADR 0010). */
+         * bootloader from software. */
         .capabilities = PROTO_CAP_TELEMETRY | PROTO_CAP_AUTO_BIAS | PROTO_CAP_DIAGNOSTICS |
                         PROTO_CAP_SELF_TEST | (DISLED_DEBUG ? PROTO_CAP_DEBUG_CONSOLE : 0u),
         .reset_cause = app.reset_cause,
@@ -172,6 +163,9 @@ _Static_assert(SELF_TEST_LIGHT_OK == PROTO_SELF_TEST_LIGHT_OK &&
                    SELF_TEST_TOUCH_PRESSED == PROTO_SELF_TEST_TOUCH_PRESSED &&
                    SELF_TEST_COMPLETED == PROTO_SELF_TEST_COMPLETED,
                "self-test result bits are part of the protocol");
+_Static_assert(BRIGHTNESS_BIAS_MIN == PROTO_AUTO_BIAS_MIN &&
+                   BRIGHTNESS_BIAS_MAX == PROTO_AUTO_BIAS_MAX,
+               "the bias limits are part of the protocol");
 
 static void send_self_test_result(void)
 {

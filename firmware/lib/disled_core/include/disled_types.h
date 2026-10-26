@@ -57,11 +57,11 @@ typedef enum {
 } reset_cause_t;
 
 /* LED channels, in PWM channel order. */
-typedef enum {
+enum {
     LED_CHANNEL_RED = 0,
     LED_CHANNEL_GREEN = 1,
     LED_CHANNEL_BLUE = 2,
-} led_channel_t;
+};
 
 #define LED_CHANNEL_COUNT 3u
 

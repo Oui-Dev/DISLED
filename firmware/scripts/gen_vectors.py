@@ -139,9 +139,18 @@ def generate(source, target):
     lines += ["};\n\nstatic const message_vector_t message_vectors[] = {\n"]
     lines += [message_entry(v) for v in doc["messages"]]
     lines += ["};\n"]
+    text = "".join(lines)
+    # Every test suite runs this script, and on Windows rewriting the header
+    # can fail while another process still holds it open.
+    try:
+        with open(target, encoding="utf-8", newline="\n") as handle:
+            if handle.read() == text:
+                return
+    except FileNotFoundError:
+        pass
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, "w", encoding="utf-8", newline="\n") as handle:
-        handle.writelines(lines)
+        handle.write(text)
 
 
 project_dir = env.subst("$PROJECT_DIR")  # noqa: F821

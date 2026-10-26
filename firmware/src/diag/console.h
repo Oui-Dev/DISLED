@@ -3,9 +3,8 @@
  * SPDX-FileCopyrightText: 2026 The DISLED contributors
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
- * Line-based command console on the CDC port (debug builds only). This
- * module only reads lines and dispatches them; the application provides
- * the commands.
+ * Line-based command console on the CDC port, debug builds only. It reads and
+ * dispatches the lines, and the application provides the commands.
  */
 #ifndef DISLED_CONSOLE_H
 #define DISLED_CONSOLE_H

@@ -22,9 +22,9 @@ const items = computed(() => {
       label: t('updates.check'),
       icon: 'i-lucide-refresh-cw',
       loading: checking.value,
-      // One check at a time: a loading item still takes clicks.
+      // One check at a time, since a loading item still takes clicks.
       disabled: checking.value,
-      // The menu stays open: its last lines show the outcome.
+      // The menu stays open, so that its last lines show the outcome.
       onSelect: (event) => {
         event.preventDefault();
         void checkAll();
@@ -35,8 +35,9 @@ const items = computed(() => {
       icon: 'i-lucide-activity',
       onSelect: () => void openDiagnostics(),
     },
-    // The lamp update window takes every case: a lamp up to date, one
-    // that no longer starts (its update mode), no firmware known yet.
+    // The lamp update window takes every case: a lamp up to date, one that
+    // no longer starts, which its update mode recovers, and no firmware known
+    // yet.
     {
       label: t('updates.reinstall'),
       icon: 'i-lucide-hard-drive-download',
@@ -52,7 +53,7 @@ const items = computed(() => {
 </script>
 
 <template>
-  <!-- Not modal: the popup stays readable to screen readers behind it. -->
+  <!-- Not modal, so that the popup behind it stays readable to screen readers. -->
   <UDropdownMenu
     :items="items"
     :modal="false"
@@ -67,7 +68,7 @@ const items = computed(() => {
       icon="i-lucide-ellipsis"
       :aria-label="t('settings.more')"
     />
-    <!-- The status lines wrap: an error can be long. -->
+    <!-- The status lines wrap, since an error can be long. -->
     <template #status="{ item }">
       <span class="whitespace-normal">{{ item.label }}</span>
     </template>

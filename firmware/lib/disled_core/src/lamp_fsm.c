@@ -5,8 +5,6 @@
  */
 #include "lamp_fsm.h"
 
-#include <stddef.h>
-
 void lamp_fsm_init(lamp_state_t *state)
 {
     state->on = true;
@@ -66,6 +64,12 @@ bool lamp_request_is_valid(const lamp_request_t *request)
     return true;
 }
 
+bool lamp_state_equal(const lamp_state_t *a, const lamp_state_t *b)
+{
+    return a->on == b->on && a->color == b->color && a->brightness_mode == b->brightness_mode &&
+           a->manual_level == b->manual_level;
+}
+
 bool lamp_fsm_apply(lamp_state_t *state, const lamp_request_t *request)
 {
     if (!lamp_request_is_valid(request)) {
@@ -86,9 +90,7 @@ bool lamp_fsm_apply(lamp_state_t *state, const lamp_request_t *request)
         next.manual_level = request->manual_level;
     }
 
-    const bool changed = next.on != state->on || next.color != state->color ||
-                         next.brightness_mode != state->brightness_mode ||
-                         next.manual_level != state->manual_level;
+    const bool changed = !lamp_state_equal(&next, state);
     *state = next;
     return changed;
 }
