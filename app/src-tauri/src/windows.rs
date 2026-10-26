@@ -19,7 +19,7 @@ use crate::firmware;
 use crate::i18n::{Locale, LocaleState};
 
 const POPUP: &str = "popup";
-const DIAGNOSTICS: &str = "diagnostics";
+pub const DIAGNOSTICS: &str = "diagnostics";
 const LAMP_UPDATE: &str = "lamp-update";
 
 /// The windows opened on demand, with the message key of their title.

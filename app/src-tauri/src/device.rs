@@ -19,6 +19,7 @@ use disled_protocol::{
 
 use crate::settings::SettingsState;
 use crate::tray::{self, Look};
+use crate::windows;
 
 const SCAN_INTERVAL: Duration = Duration::from_millis(1000);
 const READ_TIMEOUT_MS: i32 = 20;
@@ -250,7 +251,13 @@ impl Worker {
                             if !self.follow(device, &frame.message) {
                                 return Exit::Disconnected;
                             }
-                            let _ = self.app.emit(EVENT_MESSAGE, frame);
+                            // Up to 50 samples a second, which only the
+                            // Diagnostics window follows.
+                            let _ = if let Message::Telemetry(_) = frame.message {
+                                self.app.emit_to(windows::DIAGNOSTICS, EVENT_MESSAGE, frame)
+                            } else {
+                                self.app.emit(EVENT_MESSAGE, frame)
+                            };
                         }
                         // A newer lamp may send message types this app does
                         // not know, which the protocol says to ignore.
