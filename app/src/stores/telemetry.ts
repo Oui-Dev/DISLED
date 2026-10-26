@@ -55,10 +55,9 @@ export const useTelemetryStore = defineStore('telemetry', () => {
     }
   }
 
-  // The stream starts with the window, and again for a lamp that comes
-  // back, since a lamp streams nothing until asked. The backend stops it when
-  // the window closes. A lamp that leaves takes its charts along, because the
-  // next one counts its uptime from zero.
+  // The stream starts with the window, and again for a lamp that comes back, which
+  // streams nothing until asked; the backend stops it with the window. A lamp that
+  // leaves takes its charts along, since the next one counts its uptime from zero.
   watch(
     () => following.value && supported.value,
     (streaming) => {

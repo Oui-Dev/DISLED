@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! The languages of the app, English and French. The windows translate
-//! themselves with vue-i18n, and the backend reads the same message files,
-//! in `app/src/locales`, for the few texts the system draws: the tray menu
-//! and tooltip, and the window titles.
+//! English and French. The windows translate themselves with vue-i18n, and the backend
+//! reads the same files in `app/src/locales` for the texts the system draws: the tray
+//! menu and tooltip, and the window titles.
 
 use std::sync::{LazyLock, Mutex};
 

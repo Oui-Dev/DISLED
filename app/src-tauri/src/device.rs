@@ -185,10 +185,8 @@ impl Worker {
         device.write(&report).is_ok()
     }
 
-    /// Reacts to the lamp's messages: a warning when it speaks another major
-    /// protocol version, the settings applied once its capabilities are
-    /// known, and its state shown in the tray icon. Returns false if the
-    /// lamp is gone.
+    /// Warns of another major protocol version, applies the settings once the
+    /// capabilities are known, and shows the state in the tray. False if the lamp is gone.
     fn follow(&mut self, device: &HidDevice, message: &Message) -> bool {
         match message {
             Message::Info(info) => {

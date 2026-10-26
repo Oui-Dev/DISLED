@@ -6,12 +6,9 @@ import type { Ref } from 'vue';
 import { popupResize } from '@/ipc/commands';
 
 /**
- * Asks for a popup window as tall as its parts stacked, whatever the page,
- * the language or the message on show; the backend keeps it within its
- * minimum and the screen, against the tray icon. The page scrolls only when
- * the screen is too short, or a scrollbar would flash while the window
- * catches up with taller content. `fit` measures again at once, for a page
- * changed while hidden.
+ * Asks for a popup window as tall as its parts stacked, within the limits the backend
+ * keeps. The page scrolls only on a short screen, or a scrollbar would flash while the
+ * window catches up. `fit` measures again at once, for a page changed while hidden.
  */
 export function usePopupAutoSize(...parts: Readonly<Ref<HTMLElement | null>>[]): {
   fit: () => Promise<void>;

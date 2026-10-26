@@ -2,12 +2,9 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-  Brightness, automatic with a "darker / brighter" correction of the curve,
-  or a fixed level, chosen with an Auto switch. The slider sets the
-  correction in automatic mode and the level otherwise. It only moves under
-  the user's hand, while the level in use shows next to the switch. These
-  are settings, saved on this computer and applied to the lamp at every
-  connection.
+  Brightness, automatic with a "darker / brighter" correction, or a fixed level, with
+  an Auto switch. The slider moves only under the user's hand, and the level in use
+  shows next to the switch. Settings, saved here and applied at every connection.
 -->
 <script setup lang="ts">
 import { useThrottleFn } from '@vueuse/core';

@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Lamp firmware updates. Along with the app updates, the app looks for the
-//! newest firmware release on GitHub. On request it downloads the release
-//! build, checks the update key's signature, waits for the lamp's ROM
-//! bootloader, which BOOT and RESET start, flashes it with wchisp and checks
-//! the version the lamp then reports. The update window follows each step.
+//! Lamp firmware updates: the newest firmware release, looked for with the app updates,
+//! then on request its download and signature check, the wait for the ROM bootloader
+//! that BOOT and RESET start, the flash with wchisp and the check of the new version.
 
 use std::path::PathBuf;
 use std::sync::Mutex;

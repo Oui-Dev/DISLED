@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-//! Settings kept on this computer. The lamp starts in automatic brightness
-//! after each power-up and forgets its bias, so the app applies the
-//! brightness settings at every connection. Power and color are not
-//! settings, since the lamp always starts green. The color mode and the
-//! language are the app's own.
+//! Settings kept on this computer. The lamp starts in automatic brightness and forgets
+//! its bias at each power-up, so the app applies the brightness ones at every
+//! connection. Power and color are not settings, since the lamp always starts green.
 
 use std::sync::Mutex;
 
