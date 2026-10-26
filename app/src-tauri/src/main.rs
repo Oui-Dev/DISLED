@@ -47,9 +47,10 @@ fn device_send(device: State<'_, DeviceHandle>, command: Command) -> Result<(), 
     device.send(command)
 }
 
-/// Writes a recording chosen by the user in a save dialog.
+/// Writes a recording chosen by the user in a save dialog. Async, so that
+/// a long recording does not hold up the event loop, and every window with it.
 #[tauri::command]
-fn save_csv(path: String, contents: String) -> Result<(), String> {
+async fn save_csv(path: String, contents: String) -> Result<(), String> {
     if !path.to_ascii_lowercase().ends_with(".csv") {
         return Err("recordings are saved as .csv files".into());
     }
