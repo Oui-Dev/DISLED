@@ -273,8 +273,12 @@ fn main() {
             tray::create(&handle, locale)?;
             windows::hide_popup_on_blur(&handle);
             app.manage(DeviceHandle::spawn(handle.clone()));
-            updates::spawn_automatic_checks(handle.clone());
-            if !started_at_login {
+            // A new version most often follows an update, whose restart keeps
+            // the arguments, `--autostart` included. It checks again at once
+            // and shows the popup, so that a lamp update shows next.
+            let new_version = settings::first_launch_of_version(&handle);
+            updates::spawn_automatic_checks(handle.clone(), new_version);
+            if !started_at_login || new_version {
                 windows::show_popup(&handle);
             }
             Ok(())

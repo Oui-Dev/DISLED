@@ -181,7 +181,8 @@ time, so that it cannot drift under the hand and blunt the next touch.
 - **Updates.** A thread checks the `latest.json` of the latest GitHub
   release at start-up and once a day (`updates.rs`, updater plugin). The
   popup shows the result (`update-status`) and asks the backend to install
-  it.
+  it. The first launch of a new version, as after an update, checks at once
+  and opens the popup, so that a lamp update shows right after the app's.
 - **Lamp updates.** The same thread looks for the newest signed `fw-v*`
   release (`firmware.rs`). An update runs on its own thread: download,
   signature check against the update key, `wchisp probe` every second until

@@ -14,6 +14,8 @@ use tauri_plugin_store::StoreExt;
 
 const STORE_FILE: &str = "settings.json";
 const KEY: &str = "settings";
+/// The version of the app that ran last, kept next to the settings.
+const VERSION_KEY: &str = "version";
 
 /// Light or dark windows, or as the system.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -163,6 +165,25 @@ pub fn save(app: &AppHandle, settings: Settings) -> Result<(), String> {
         serde_json::to_value(settings).map_err(|e| e.to_string())?,
     );
     store.save().map_err(|e| e.to_string())
+}
+
+/// Tells whether this version of the app runs for the first time, as after
+/// an update, and remembers it. Never under `tauri dev`, whose version would
+/// pass for an update of the installed app.
+pub fn first_launch_of_version(app: &AppHandle) -> bool {
+    if cfg!(debug_assertions) {
+        return false;
+    }
+    let Ok(store) = app.store(STORE_FILE) else {
+        return false;
+    };
+    let version = app.package_info().version.to_string();
+    if store.get(VERSION_KEY).as_ref().and_then(|v| v.as_str()) == Some(version.as_str()) {
+        return false;
+    }
+    store.set(VERSION_KEY, version);
+    let _ = store.save();
+    true
 }
 
 #[cfg(test)]
