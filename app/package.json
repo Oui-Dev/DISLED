@@ -34,7 +34,7 @@
     "@iconify-json/lucide": "^1.2.147",
     "@intlify/unplugin-vue-i18n": "^11.2.7",
     "@tauri-apps/cli": "2.11.5",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.5",
     "@vitejs/plugin-vue": "^6.0.10",
     "typescript": "^6.0.3",
     "vite": "^8.3.5",
