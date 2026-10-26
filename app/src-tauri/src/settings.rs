@@ -5,17 +5,21 @@
 //! its bias at each power-up, so the app applies the brightness ones at every
 //! connection. Power and color are not settings, since the lamp always starts green.
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use disled_protocol::{AUTO_BIAS_MAX, AUTO_BIAS_MIN, BrightnessMode, Command, SetState};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Theme};
-use tauri_plugin_store::StoreExt;
+use tauri::{AppHandle, Manager, Theme, Wry};
+use tauri_plugin_store::{Store, StoreExt};
 
 const STORE_FILE: &str = "settings.json";
 const KEY: &str = "settings";
 /// The version of the app that ran last, kept next to the settings.
 const VERSION_KEY: &str = "version";
+/// The store writes its file once the changes stop for this long, and at
+/// exit, since a slider changes the settings several times a second.
+const SAVE_DELAY: Duration = Duration::from_millis(500);
 
 /// Light or dark windows, or as the system.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -147,24 +151,31 @@ impl SettingsState {
 /// Reads the saved settings, or the defaults when there are none or they
 /// cannot be read.
 pub fn load(app: &AppHandle) -> Settings {
-    app.store(STORE_FILE)
+    store(app)
         .ok()
         .and_then(|store| store.get(KEY))
         .and_then(|value| serde_json::from_value(value).ok())
         .unwrap_or_default()
 }
 
-/// Saves the settings and updates the shared copy.
+/// The store of the settings. Its options hold from the first call, which
+/// opens it.
+fn store(app: &AppHandle) -> tauri_plugin_store::Result<Arc<Store<Wry>>> {
+    app.store_builder(STORE_FILE).auto_save(SAVE_DELAY).build()
+}
+
+/// Updates the shared copy and the store, which writes them to its file a
+/// moment later.
 pub fn save(app: &AppHandle, settings: Settings) -> Result<(), String> {
     if let Ok(mut shared) = app.state::<SettingsState>().0.lock() {
         *shared = settings;
     }
-    let store = app.store(STORE_FILE).map_err(|e| e.to_string())?;
+    let store = store(app).map_err(|e| e.to_string())?;
     store.set(
         KEY,
         serde_json::to_value(settings).map_err(|e| e.to_string())?,
     );
-    store.save().map_err(|e| e.to_string())
+    Ok(())
 }
 
 /// Tells whether this version of the app runs for the first time, as after
@@ -174,7 +185,7 @@ pub fn first_launch_of_version(app: &AppHandle) -> bool {
     if cfg!(debug_assertions) {
         return false;
     }
-    let Ok(store) = app.store(STORE_FILE) else {
+    let Ok(store) = store(app) else {
         return false;
     };
     let version = app.package_info().version.to_string();

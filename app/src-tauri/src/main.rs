@@ -47,9 +47,10 @@ fn device_send(device: State<'_, DeviceHandle>, command: Command) -> Result<(), 
     device.send(command)
 }
 
-/// Writes a recording chosen by the user in a save dialog.
+/// Writes a recording chosen by the user in a save dialog. Async, so that
+/// a long recording does not hold up the event loop, and every window with it.
 #[tauri::command]
-fn save_csv(path: String, contents: String) -> Result<(), String> {
+async fn save_csv(path: String, contents: String) -> Result<(), String> {
     if !path.to_ascii_lowercase().ends_with(".csv") {
         return Err("recordings are saved as .csv files".into());
     }
@@ -80,19 +81,19 @@ fn settings_set(
     if patch.language.is_some() {
         apply_language(&app, settings.language);
     }
-    if device.connection().connected {
-        if patch.brightness_mode.is_some() || patch.manual_level.is_some() {
-            device.send(Command::SetState(SetState {
-                brightness_mode: Some(settings.brightness_mode),
-                manual_level: Some(settings.manual_level),
-                ..SetState::default()
-            }))?;
-        }
-        if patch.auto_bias.is_some() && device.auto_bias_supported() {
-            device.send(Command::SetAutoBias {
-                bias: settings.auto_bias,
-            })?;
-        }
+    // Without a lamp, or with one that just left, the settings are saved
+    // all the same and reach the lamp at its next connection.
+    if patch.brightness_mode.is_some() || patch.manual_level.is_some() {
+        let _ = device.send(Command::SetState(SetState {
+            brightness_mode: Some(settings.brightness_mode),
+            manual_level: Some(settings.manual_level),
+            ..SetState::default()
+        }));
+    }
+    if patch.auto_bias.is_some() && device.auto_bias_supported() {
+        let _ = device.send(Command::SetAutoBias {
+            bias: settings.auto_bias,
+        });
     }
     Ok(settings)
 }
@@ -137,8 +138,8 @@ fn update_status(updates: State<'_, UpdateState>) -> UpdateStatus {
 }
 
 #[tauri::command]
-async fn update_check(app: AppHandle) -> UpdateStatus {
-    updates::check(&app).await
+async fn update_check(app: AppHandle) {
+    updates::check(&app).await;
 }
 
 /// Returns only on failure, since on success the app restarts.
@@ -153,8 +154,8 @@ fn firmware_status(firmware: State<'_, FirmwareState>) -> FirmwareStatus {
 }
 
 #[tauri::command]
-async fn firmware_check(app: AppHandle) -> FirmwareStatus {
-    firmware::check(&app).await
+async fn firmware_check(app: AppHandle) {
+    firmware::check(&app).await;
 }
 
 /// Starts a lamp update; `firmware-status` events follow it.
@@ -264,6 +265,14 @@ fn main() {
             // No Dock icon, since the app lives in the menu bar.
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            // The shortcut of the developer tools, in debug builds only,
+            // which a capability file would grant to every build.
+            #[cfg(debug_assertions)]
+            app.add_capability(
+                tauri::ipc::CapabilityBuilder::new("devtools")
+                    .window("*")
+                    .permission("core:webview:allow-internal-toggle-devtools"),
+            )?;
 
             let handle = app.handle().clone();
             let settings = init_settings(&handle);
@@ -271,7 +280,7 @@ fn main() {
             let locale = Locale::of(settings.language);
             handle.state::<LocaleState>().replace(locale);
             tray::create(&handle, locale)?;
-            windows::hide_popup_on_blur(&handle);
+            windows::hide_popup_on_blur_or_close(&handle);
             app.manage(DeviceHandle::spawn(handle.clone()));
             // A new version most often follows an update, whose restart keeps
             // the arguments, `--autostart` included. It checks again at once

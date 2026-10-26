@@ -229,9 +229,15 @@ async fn get(app: &AppHandle, url: &str) -> Result<Vec<u8>, String> {
     Ok(body.to_vec())
 }
 
-/// Looks for the newest firmware on GitHub.
-pub async fn check(app: &AppHandle) -> FirmwareStatus {
-    change(app, |s| s.checking = true);
+/// Looks for the newest firmware on GitHub; the `firmware-status` events
+/// bring the result.
+pub async fn check(app: &AppHandle) {
+    // One at a time, as for the app updates.
+    let mut running = false;
+    change(app, |s| running = std::mem::replace(&mut s.checking, true));
+    if running {
+        return;
+    }
     let result = match local_release() {
         Some(release) => Ok(Some(release)),
         None => get(app, RELEASES_URL).await.and_then(|body| {
@@ -259,7 +265,6 @@ pub async fn check(app: &AppHandle) -> FirmwareStatus {
             s.error = Some(error);
         }),
     }
-    state.status()
 }
 
 /// Downloads the release build, checks it and writes it to a file for
@@ -306,8 +311,10 @@ pub fn install(app: &AppHandle) -> Result<(), String> {
         .ok()
         .and_then(|release| release.clone())
         .ok_or("no firmware to install: check for updates first")?;
+    // A second click goes to the update already running, which the window
+    // follows; an error would show it as failed.
     if state.running.swap(true, Ordering::SeqCst) {
-        return Err("a lamp update is already running".into());
+        return Ok(());
     }
     state.cancel.store(false, Ordering::SeqCst);
     let owner = app.clone();
@@ -341,6 +348,14 @@ pub fn cancel(app: &AppHandle) {
     app.state::<FirmwareState>()
         .cancel
         .store(true, Ordering::SeqCst);
+}
+
+/// Takes back the cancel of a closed update window, when a new one opens
+/// and follows the update still running.
+pub fn uncancel(app: &AppHandle) {
+    app.state::<FirmwareState>()
+        .cancel
+        .store(false, Ordering::SeqCst);
 }
 
 /// Forgets the result of the last update, when the update window opens

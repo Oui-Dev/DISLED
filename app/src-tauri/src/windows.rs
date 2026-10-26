@@ -15,10 +15,11 @@ use tauri::{
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::device::DeviceHandle;
+use crate::firmware;
 use crate::i18n::{Locale, LocaleState};
 
 const POPUP: &str = "popup";
-const DIAGNOSTICS: &str = "diagnostics";
+pub const DIAGNOSTICS: &str = "diagnostics";
 const LAMP_UPDATE: &str = "lamp-update";
 
 /// The windows opened on demand, with the message key of their title.
@@ -83,14 +84,18 @@ pub fn hide_popup(app: &AppHandle) {
     }
 }
 
-/// Hides the popup whenever it loses the focus.
-pub fn hide_popup_on_blur(app: &AppHandle) {
+/// Hides the popup whenever it loses the focus, and instead of closing it on
+/// Alt+F4 or Cmd+W, since nothing would create it again.
+pub fn hide_popup_on_blur_or_close(app: &AppHandle) {
     if let Some(window) = popup(app) {
         let owner = app.clone();
-        window.on_window_event(move |event| {
-            if let WindowEvent::Focused(false) = event {
+        window.on_window_event(move |event| match event {
+            WindowEvent::Focused(false) => hide_popup(&owner),
+            WindowEvent::CloseRequested { api, .. } => {
+                api.prevent_close();
                 hide_popup(&owner);
             }
+            _ => {}
         });
     }
 }
@@ -211,6 +216,15 @@ pub fn open_lamp_update(app: &AppHandle) {
         .resizable(false)
         .build();
     if let Ok(window) = built {
+        firmware::uncancel(app);
+        // Otherwise the update would keep waiting for a bootloader, and flash
+        // the next one with no window to show it.
+        let owner = app.clone();
+        window.on_window_event(move |event| {
+            if let WindowEvent::Destroyed = event {
+                firmware::cancel(&owner);
+            }
+        });
         let _ = window.set_focus();
     }
 }

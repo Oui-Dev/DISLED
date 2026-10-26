@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Every window: the events of the backend, and the developer tools of debug builds",
+  "description": "Every window: the events of the backend",
   "windows": [
     "popup",
     "diagnostics",
@@ -9,7 +9,6 @@
   ],
   "permissions": [
     "core:event:allow-listen",
-    "core:event:allow-unlisten",
-    "core:webview:allow-internal-toggle-devtools"
+    "core:event:allow-unlisten"
   ]
 }

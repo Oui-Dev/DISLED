@@ -25,6 +25,11 @@ const FIRST_CHECK_DELAY: Duration = Duration::from_secs(30);
 /// 24 h sleep would not count the hours the computer spends asleep.
 const TICK: Duration = Duration::from_secs(3600);
 const CHECK_INTERVAL: Duration = Duration::from_secs(24 * 3600);
+/// Without them, a connection that stalls, as across a sleep, would hold
+/// the check, and the automatic checks after it, for good. A read timeout
+/// rather than a total one, so that a slow download still ends.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
+const READ_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// What the popup shows about updates.
 #[derive(Debug, Clone, Default, Serialize)]
@@ -80,10 +85,26 @@ fn change(app: &AppHandle, edit: impl FnOnce(&mut UpdateStatus)) {
     let _ = app.emit(EVENT_STATUS, status);
 }
 
-/// Asks GitHub for a newer version.
-pub async fn check(app: &AppHandle) -> UpdateStatus {
-    change(app, |s| s.checking = true);
-    let result = match app.updater() {
+/// Asks GitHub for a newer version; the `update-status` events bring the
+/// result.
+pub async fn check(app: &AppHandle) {
+    // One at a time: a click during the automatic check gets its result,
+    // through the events.
+    let mut running = false;
+    change(app, |s| running = std::mem::replace(&mut s.checking, true));
+    if running {
+        return;
+    }
+    // The update found keeps these timeouts for its download.
+    let updater = app
+        .updater_builder()
+        .configure_client(|client| {
+            client
+                .connect_timeout(CONNECT_TIMEOUT)
+                .read_timeout(READ_TIMEOUT)
+        })
+        .build();
+    let result = match updater {
         Ok(updater) => updater.check().await,
         Err(error) => Err(error),
     };
@@ -106,7 +127,6 @@ pub async fn check(app: &AppHandle) -> UpdateStatus {
             s.error = Some(error.to_string());
         }),
     }
-    state.status()
 }
 
 /// Downloads and installs the update found by the last check, then

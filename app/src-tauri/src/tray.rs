@@ -139,7 +139,12 @@ pub fn create(app: &AppHandle, locale: Locale) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "open" => windows::show_popup(app),
-            "diagnostics" => windows::open_diagnostics(app),
+            // Off the event loop, where creating a window deadlocks WebView2
+            // on Windows, as for the `open_diagnostics` command.
+            "diagnostics" => {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move { windows::open_diagnostics(&app) });
+            }
             "quit" => app.exit(0),
             _ => {}
         })

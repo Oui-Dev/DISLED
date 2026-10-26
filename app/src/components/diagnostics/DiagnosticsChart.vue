@@ -7,7 +7,7 @@
   gives, down to a minimum, and the tooltip gives the lamp's uptime and the values.
 -->
 <script setup lang="ts">
-import { useElementSize, useThrottleFn } from '@vueuse/core';
+import { useDocumentVisibility, useElementSize, useThrottleFn } from '@vueuse/core';
 import { computed, shallowRef, useTemplateRef, watch } from 'vue';
 import { useTelemetryStore } from '@/stores/telemetry';
 import { type ChartRow, type ChartSeries, chartRows } from '@/utils/chart';
@@ -41,7 +41,17 @@ const refresh = useThrottleFn(
   REFRESH_MS,
   true,
 );
-watch([() => telemetry.history, () => props.series], refresh, { immediate: true });
+// Nothing to draw in a hidden or minimized window; it catches up when shown.
+const visibility = useDocumentVisibility();
+watch(
+  [() => telemetry.history, () => props.series, visibility],
+  () => {
+    if (visibility.value === 'visible') {
+      void refresh();
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

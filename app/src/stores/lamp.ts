@@ -13,7 +13,7 @@ import type { Info } from '@/bindings/Info';
 import type { LampState } from '@/bindings/LampState';
 import type { SetState } from '@/bindings/SetState';
 import { deviceConnection, deviceSend } from '@/ipc/commands';
-import { on } from '@/ipc/events';
+import { follow, on } from '@/ipc/events';
 import { useErrorStore } from './errors';
 
 export const useLampStore = defineStore('lamp', () => {
@@ -64,15 +64,6 @@ export const useLampStore = defineStore('lamp', () => {
 
   /** Follows the backend events. Call once per window. */
   async function start(): Promise<void> {
-    await on('device-connection', (next) => {
-      connection.value = next;
-      if (next.connected) {
-        errors.clear();
-      } else {
-        info.value = null;
-        state.value = null;
-      }
-    });
     // Telemetry, diagnostics and self-test results go to their own stores.
     await on('device-message', ({ message }) => {
       switch (message.kind) {
@@ -90,7 +81,19 @@ export const useLampStore = defineStore('lamp', () => {
     await on('device-protocol-error', (detail) => {
       errors.report({ kind: 'unreadable', detail });
     });
-    connection.value = await deviceConnection();
+    await follow(
+      'device-connection',
+      (next) => {
+        connection.value = next;
+        if (next.connected) {
+          errors.clear();
+        } else {
+          info.value = null;
+          state.value = null;
+        }
+      },
+      deviceConnection,
+    );
     if (connection.value.connected) {
       await send({ kind: 'get_info' }, { automatic: true });
       await send({ kind: 'get_state' }, { automatic: true });

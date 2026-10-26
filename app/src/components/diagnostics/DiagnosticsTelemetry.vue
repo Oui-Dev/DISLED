@@ -121,7 +121,17 @@ const charts = computed<
   <section class="flex flex-col">
     <div class="@container flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="font-semibold text-highlighted">{{ t('telemetry.title') }}</h2>
+          <!-- The figures and charts of a stream turned off stay on show, frozen. -->
+          <UBadge
+            v-if="telemetry.latest && telemetry.periodMs === 0"
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-circle-pause"
+            :label="t('telemetry.stopped')"
+          />
+        </div>
         <USelect
           :model-value="telemetry.periodMs"
           :items="periods"
@@ -162,7 +172,7 @@ const charts = computed<
         variant="outline"
         size="sm"
         icon="i-lucide-circle-dot"
-        :disabled="!telemetry.latest"
+        :disabled="!telemetry.latest || telemetry.periodMs === 0"
         @click="telemetry.startRecording"
       >
         {{ t('telemetry.record') }}

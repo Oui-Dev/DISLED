@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 The DISLED contributors
 
-// The events the backend sends to every window, and their payloads.
+// The events the backend sends, to every window or to one, and their payloads.
 
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import type { UnlistenFn } from '@tauri-apps/api/event';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import type { Connection } from '@/bindings/Connection';
 import type { FirmwareStatus } from '@/bindings/FirmwareStatus';
 import type { Frame } from '@/bindings/Frame';
@@ -26,10 +27,37 @@ interface Events {
   'firmware-status': FirmwareStatus;
 }
 
-/** Calls `handler` with the payload of each `event`. */
+/**
+ * Calls `handler` with the payload of each `event` sent to every window or to
+ * this one. A listener of any target would also get those sent to another
+ * window, as the telemetry for Diagnostics.
+ */
 export function on<E extends keyof Events>(
   event: E,
   handler: (payload: Events[E]) => void,
 ): Promise<UnlistenFn> {
-  return listen<Events[E]>(event, ({ payload }) => handler(payload));
+  return getCurrentWebviewWindow().listen<Events[E]>(event, ({ payload }) => handler(payload));
+}
+
+/**
+ * Keeps a value of the backend current in this window, for a window that
+ * starts after the last `event`: `apply` gets the answer of `read`, then
+ * each event. Every change comes with the event, so once one is heard the
+ * events keep the value current, and the answer, which may be older, is
+ * dropped.
+ */
+export async function follow<E extends keyof Events>(
+  event: E,
+  apply: (payload: Events[E]) => void,
+  read: () => Promise<Events[E]>,
+): Promise<void> {
+  let heard = false;
+  await on(event, (payload) => {
+    heard = true;
+    apply(payload);
+  });
+  const current = await read();
+  if (!heard) {
+    apply(current);
+  }
 }

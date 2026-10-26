@@ -9,7 +9,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import type { FirmwareStatus } from '@/bindings/FirmwareStatus';
 import { firmwareCancel, firmwareCheck, firmwareInstall, firmwareStatus } from '@/ipc/commands';
-import { on } from '@/ipc/events';
+import { follow } from '@/ipc/events';
 import { useLampStore } from './lamp';
 
 /** Whether `latest`, an "X.Y.Z" string, is newer than the version a lamp reports. */
@@ -41,8 +41,9 @@ export const useFirmwareStore = defineStore('firmware', () => {
     return latest && info && isNewer(latest, info.firmware) ? latest : null;
   });
 
+  /** The status events bring the result, in order with the other changes. */
   async function check(): Promise<void> {
-    status.value = await firmwareCheck();
+    await firmwareCheck();
   }
 
   async function install(): Promise<void> {
@@ -55,10 +56,13 @@ export const useFirmwareStore = defineStore('firmware', () => {
 
   /** Follows the backend events. Call once, in the popup or the update window. */
   async function start(): Promise<void> {
-    await on('firmware-status', (next) => {
-      status.value = next;
-    });
-    status.value = await firmwareStatus();
+    await follow(
+      'firmware-status',
+      (next) => {
+        status.value = next;
+      },
+      firmwareStatus,
+    );
   }
 
   return { status, updateForLamp, check, install, cancel: firmwareCancel, start };
