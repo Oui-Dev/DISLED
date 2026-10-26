@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.1](https://github.com/Oui-Dev/DISLED/compare/app-v1.0.0...app-v1.0.1) (2026-10-26)
+
+
+### 🩹 Fixes
+
+* **app:** grant each window only the permissions it uses ([ded5ebd](https://github.com/Oui-Dev/DISLED/commit/ded5ebd24bd482ae173c17a723cf9b3f3ff601d5))
+
+
+### 🔥 Performance
+
+* **app:** redraw the tray icon only when the lamp look changes ([8caab6b](https://github.com/Oui-Dev/DISLED/commit/8caab6b72819081cbeb1f8c9d7327b2a7acb2ba2))
+
+
+### 💅 Refactors
+
+* **app:** concrete AppHandle, and no bootloader by command ([2cea903](https://github.com/Oui-Dev/DISLED/commit/2cea903ba387b884f4626d3db9beaac3f4e1f9dc))
+* **app:** single-use modules folded in, and the offer computed once ([22c0501](https://github.com/Oui-Dev/DISLED/commit/22c050147ceffb609db9c99bc6fbff7c51cb9438))
+
 ## [1.0.0](https://github.com/Oui-Dev/DISLED/compare/app-v0.5.1...app-v1.0.0) (2026-10-25)
 
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/Oui-Dev/DISLED/compare/fw-v0.3.1...fw-v0.3.2) (2026-10-26)
+
+
+### 💅 Refactors
+
+* **firmware:** remove dead code and derived state from the core ([ceb38db](https://github.com/Oui-Dev/DISLED/commit/ceb38dbf12b381dbd84caed289f5908b99d0dc47))
+* **firmware:** remove the tuning commands and the bring-up switches ([9d7231e](https://github.com/Oui-Dev/DISLED/commit/9d7231e6985111e0e5ff685f646b4a036aa947f3))
+
 ## [0.3.1](https://github.com/Oui-Dev/DISLED/compare/fw-v0.3.0...fw-v0.3.1) (2026-10-25)
 
 
