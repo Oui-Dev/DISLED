@@ -58,10 +58,10 @@ static int16_t compute_delta_permille(const touch_detector_t *td)
         return 0;
     }
     const int32_t drop = baseline - (int32_t)td->value;
+    /* At most 1000, since the drop never exceeds the baseline; a reading far
+     * above a small baseline (a failing electrode) goes far below. */
     int32_t permille = (drop * 1000) / baseline;
-    if (permille > INT16_MAX) {
-        permille = INT16_MAX;
-    } else if (permille < INT16_MIN) {
+    if (permille < INT16_MIN) {
         permille = INT16_MIN;
     }
     return (int16_t)permille;
