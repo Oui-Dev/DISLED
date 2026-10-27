@@ -65,8 +65,8 @@ back to its previous state.
 The caps use the worst-case LED currents at 100 % duty: 86 mA for red,
 63 mA for green and 125 mA for blue. When a color would exceed the cap,
 the firmware scales the three channels down together, which keeps the hue.
-A pure color fits within 125 mA, and warm white gets about half of its
-full power.
+A pure color fits within 125 mA. Warm white would draw about 140 mA at
+100 %: it keeps about 90 % of its power with a host, and half without one.
 
 ## Self-test (production)
 
