@@ -7,7 +7,6 @@
 
 #include <string.h>
 
-#include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "tusb.h"
 
@@ -28,11 +27,6 @@ static size_t s_rx_count;
 static report_t s_tx[TX_QUEUE_SIZE];
 static size_t s_tx_head;
 static size_t s_tx_count;
-
-uint32_t tusb_time_millis_api(void)
-{
-    return bsp_time_ms();
-}
 
 void usb_device_init(bool crystal_ok)
 {
