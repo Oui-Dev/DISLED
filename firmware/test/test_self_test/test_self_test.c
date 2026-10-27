@@ -106,9 +106,22 @@ static void test_missing_sensor_and_bad_touch_baseline_are_reported(void)
     in.light_present = false;
     in.touch_baseline = 4090; /* saturated TouchKey */
     self_test_start(&t, 0);
+    (void)run(0, 7500);
     in.touch_pressed = true;
-    (void)run(0, 8000);
+    (void)run(7510, 8000);
     TEST_ASSERT_EQUAL_HEX8(SELF_TEST_TOUCH_PRESSED | SELF_TEST_COMPLETED, t.results);
+}
+
+static void test_a_finger_held_from_the_colors_must_lift_first(void)
+{
+    self_test_start(&t, 0);
+    in.touch_pressed = true; /* down since the colors */
+    TEST_ASSERT_EQUAL_UINT32(0, run(0, 9000));
+    in.touch_pressed = false;
+    TEST_ASSERT_EQUAL_UINT32(0, run(9010, 9100));
+    in.touch_pressed = true;
+    TEST_ASSERT_EQUAL_UINT32(9110, run(9110, 9200));
+    TEST_ASSERT_EQUAL_HEX8(SELF_TEST_TOUCH_PRESSED, t.results & SELF_TEST_TOUCH_PRESSED);
 }
 
 static void test_abort_leaves_the_test_incomplete(void)
@@ -128,6 +141,7 @@ int main(void)
     RUN_TEST(test_a_touch_passes_the_test);
     RUN_TEST(test_no_touch_ends_after_the_wait);
     RUN_TEST(test_missing_sensor_and_bad_touch_baseline_are_reported);
+    RUN_TEST(test_a_finger_held_from_the_colors_must_lift_first);
     RUN_TEST(test_abort_leaves_the_test_incomplete);
     return UNITY_END();
 }

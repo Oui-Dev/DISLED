@@ -57,6 +57,7 @@ typedef struct {
     uint32_t lux_centi;
     uint16_t touch_baseline;
     int16_t touch_peak_permille;
+    bool touch_released; /* seen with no press since the blue glow started */
 } self_test_t;
 
 void self_test_init(self_test_t *t, const self_test_config_t *config);

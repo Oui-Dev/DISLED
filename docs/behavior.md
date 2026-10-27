@@ -70,14 +70,15 @@ full power.
 
 ## Self-test (production)
 
-On request from the host, the lamp shows red,
-green, blue and warm white for 1.5 s each, checks that the light sensor
-answers and that the idle touch reading is plausible, then glows blue and
-waits up to 10 s for a touch on the lid. It then restores its state and
-reports the results. A person checks the colors, and the touch that ends the
-test does not change the lamp. During the test the touch does nothing, and
-the lamp refuses the host's changes ("busy"). A USB suspend cuts the test
-short, and the lamp reports it when the host wakes up.
+On request from the host, the lamp shows red, green, blue and warm white
+for 1.5 s each, checks that the light sensor answers and that the idle
+touch reading is plausible, then glows blue and waits up to 10 s for a
+touch on the lid; a finger already on the lid must lift first. It then
+restores its state and reports the results. A person checks the colors,
+and the touch that ends the test does not change the lamp. During the
+test the touch does nothing, and the lamp refuses the host's changes
+("busy"). A USB suspend cuts the test short, and the lamp reports it
+when the host wakes up.
 
 ## Out of scope
 
