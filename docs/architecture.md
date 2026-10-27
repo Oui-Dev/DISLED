@@ -116,8 +116,8 @@ on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 27.4 KB | 4.9 KB |
-| release (HID) | 20.2 KB | 4.1 KB |
+| debug (HID + CDC console) | 23.4 KB | 4.8 KB |
+| release (HID) | 18.2 KB | 4.1 KB |
 
 ### Configuration
 
