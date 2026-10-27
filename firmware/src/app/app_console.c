@@ -142,7 +142,7 @@ static void cmd_watch(int argc, char **argv)
     }
     s_watch_period_ms = period;
     s_watch_next_ms = 0;
-    console_printf("raw value baseline delta(permille) state | lux range count level | mA\r\n");
+    console_printf("raw value baseline delta(permille) state | lux count level | mA\r\n");
 }
 
 static void cmd_cap(int argc, char **argv)
@@ -247,13 +247,12 @@ void app_console_task(uint32_t now_ms)
     const uint32_t lux = app.als.lux_milli;
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
     console_printf(
-        "%u %u %u %d %u | %lu.%03lu %u %u %u | %lu.%lu\r\n",
-        (unsigned)touch_detector_raw(&app.touch), (unsigned)touch_detector_value(&app.touch),
-        (unsigned)touch_detector_baseline(&app.touch),
+        "%u %u %u %d %u | %lu.%03lu %u %u | %lu.%lu\r\n", (unsigned)touch_detector_raw(&app.touch),
+        (unsigned)touch_detector_value(&app.touch), (unsigned)touch_detector_baseline(&app.touch),
         (int)touch_detector_delta_permille(&app.touch), (unsigned)touch_detector_state(&app.touch),
-        (unsigned long)(lux / 1000u), (unsigned long)(lux % 1000u), (unsigned)app.als.step,
-        (unsigned)app.als.count, (unsigned)brightness_level_permille(&app.brightness),
-        (unsigned long)(estimate / 10u), (unsigned long)(estimate % 10u));
+        (unsigned long)(lux / 1000u), (unsigned long)(lux % 1000u), (unsigned)app.als.count,
+        (unsigned)brightness_level_permille(&app.brightness), (unsigned long)(estimate / 10u),
+        (unsigned long)(estimate % 10u));
 }
 
 #endif

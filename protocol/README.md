@@ -155,7 +155,7 @@ and should send `GET_STATE`.
 | 10 | 2 | touch: signed drop below the baseline, per mille |
 | 12 | 1 | touch state: 0 calibrating, 1 idle, 2 pressed |
 | 13 | 4 | ambient light, lux x 100 |
-| 17 | 2 | ambient light sensor raw count, at the gain and integration time in use (the lamp changes them with the light) |
+| 17 | 2 | ambient light sensor raw count, at gain 2 and 400 ms: 0.0084 lx a count, saturated from about 550 lx |
 | 19 | 6 | PWM duty red, green, blue, in whole timer ticks (3600 = 100 %; the firmware dithers to 1/16 tick and reports the rounded value) |
 | 25 | 2 | estimated LED current, mA x 10 |
 | 27 | 2 | LED current cap in force, mA |

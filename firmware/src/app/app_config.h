@@ -23,8 +23,8 @@
 #define APP_LED_FADE_MS      300u
 #define APP_OUTPUT_PERIOD_MS 10u
 
-/* Light sensor: the task runs as often as the shortest integration and
- * reads once per integration (lib/disled_core/als_range.h). */
+/* Light sensor: the task polls, and reads once per integration
+ * (drivers/veml7700.h). */
 #define APP_ALS_PERIOD_MS      100u
 #define APP_ALS_MAX_ERRORS     5u    /* consecutive failures before giving up */
 #define APP_ALS_RETRY_MS       5000u /* then retry the sensor this often */

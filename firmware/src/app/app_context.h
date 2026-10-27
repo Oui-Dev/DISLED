@@ -28,8 +28,7 @@ typedef struct {
     uint8_t errors;    /* consecutive failures */
     uint32_t retry_ms; /* next detection attempt while absent */
     uint32_t read_ms;  /* next reading: once per integration */
-    uint8_t step;      /* measuring range (als_range.h) */
-    uint16_t count;    /* last count, at that step */
+    uint16_t count;    /* last count */
     uint32_t lux_milli;
     uint16_t probes; /* detection attempts since boot (diagnostics) */
 } app_als_t;

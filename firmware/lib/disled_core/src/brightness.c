@@ -9,7 +9,7 @@
 
 #include "time_utils.h"
 
-/* Readings far apart, after a range change or in the dark, catch up this many ticks at most. */
+/* Readings far apart, after a restart of the sensor, catch up this many ticks at most. */
 #define MAX_TICKS 16u
 
 /* log2(x) in Q8 for x >= 1, Mitchell's approximation: at most 6 % off in lux,

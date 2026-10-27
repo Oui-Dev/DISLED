@@ -11,7 +11,6 @@
 
 #include <stddef.h>
 
-#include "als_range.h"
 #include "app_config.h"
 #include "app_console.h"
 #include "app_context.h"
@@ -138,17 +137,14 @@ static void task_touch(uint32_t now_ms)
     }
 }
 
-/* Starts (or wakes) the sensor at its least sensitive step, which nothing
- * indoors saturates. The first readings after power-on are not valid until
- * an integration completes, so they are skipped. */
+/* Starts (or wakes) the sensor. The first readings after power-on are not
+ * valid until an integration completes, so they are skipped. */
 static void als_start(app_als_t *als, uint32_t now_ms, uint32_t retry_delay_ms)
 {
-    const als_range_setting_t setting = als_range_setting(ALS_RANGE_FIRST);
-    als->present = veml7700_init(setting.gain_eighths, setting.integration_ms);
-    als->step = ALS_RANGE_FIRST;
+    als->present = veml7700_init();
     als->errors = 0;
     als->retry_ms = now_ms + retry_delay_ms;
-    als->read_ms = now_ms + 2u * setting.integration_ms;
+    als->read_ms = now_ms + 2u * VEML7700_INTEGRATION_MS;
 }
 
 /* A detection attempt (start-up, sensor lost): counted for the diagnostics. */
@@ -185,21 +181,10 @@ static void task_als(uint32_t now_ms)
     if (veml7700_read(&count)) {
         als->errors = 0;
         als->count = count;
-        als->lux_milli = als_range_lux_milli(als->step, count);
+        als->lux_milli = veml7700_lux_milli(count);
         brightness_update_lux(&app.brightness, als->lux_milli, now_ms);
-        const uint8_t step = als_range_next(als->step, count);
-        const als_range_setting_t setting = als_range_setting(step);
-        if (step == als->step) {
-            als->read_ms = now_ms + setting.integration_ms;
-            return;
-        }
-        if (veml7700_configure(setting.gain_eighths, setting.integration_ms)) {
-            als->step = step;
-            /* The integration under way may mix both settings: skip it. */
-            als->read_ms = now_ms + 2u * setting.integration_ms;
-            return;
-        }
-        /* Not reconfigured: the next reading tries again. */
+        als->read_ms = now_ms + VEML7700_INTEGRATION_MS;
+        return;
     }
     if (++als->errors >= APP_ALS_MAX_ERRORS) {
         LOG_WARN("als: sensor lost, fixed brightness until it answers again");
