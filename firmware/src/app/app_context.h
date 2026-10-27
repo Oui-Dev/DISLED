@@ -53,16 +53,12 @@ typedef struct {
 /* The single instance, owned by app.c. */
 extern app_context_t app;
 
-/* Applies a lamp request coming from the host or the console. Returns
- * true if the state changed. */
-bool app_apply_request(const lamp_request_t *request);
+/* Applies a lamp request coming from the host or the console. */
+void app_apply_request(const lamp_request_t *request);
 
 /* Starts the self-test; its result is reported to the host with `seq`.
  * Never while one runs: the host gets BUSY instead. */
 void app_start_self_test(uint8_t seq);
-
-/* Name of a USB link state, for the logs and the console. */
-const char *app_link_name(usb_link_t link);
 
 /* Snapshot of the DIAGNOSTICS message. */
 void app_diagnostics(proto_diagnostics_t *diagnostics);

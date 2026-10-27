@@ -12,7 +12,6 @@
 #include "bsp/board.h"
 #include "bsp/bsp.h"
 #include "bsp/bsp_uid.h"
-#include "diag/log.h"
 #include "protocol.h"
 #include "time_utils.h"
 #include "usb/usb_device.h"
@@ -196,7 +195,6 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
     proto_command_t command;
     const proto_status_t status = proto_decode_command(payload, &command);
     if (status != PROTO_OK) {
-        LOG_WARN("host: command 0x%02x rejected (%u)", command.type, (unsigned)status);
         send_error(command.seq, command.type, status);
         return;
     }
@@ -214,12 +212,7 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             (void)send_state(command.seq);
             break;
         case PROTO_CMD_SET_STATE:
-            if (app_apply_request(&command.body.set_state)) {
-                LOG_INFO("host: lamp %s, color %u, %s %u%%", app.lamp.on ? "on" : "off",
-                         (unsigned)app.lamp.color,
-                         app.lamp.brightness_mode == BRIGHTNESS_MODE_AUTO ? "auto" : "manual",
-                         (unsigned)app.lamp.manual_level);
-            }
+            app_apply_request(&command.body.set_state);
             /* The answer is the new state; it also serves as the
              * notification of the change. */
             observe_changes();
@@ -237,7 +230,6 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             break;
         case PROTO_CMD_SET_AUTO_BIAS:
             brightness_set_auto_bias(&app.brightness, command.body.auto_bias);
-            LOG_INFO("host: auto brightness bias %d%%", (int)command.body.auto_bias);
             send_ack(command.seq, command.type);
             break;
         case PROTO_CMD_GET_DIAGNOSTICS:
@@ -320,7 +312,6 @@ void app_host_task(uint32_t now_ms)
     }
 
     if (s_reset_pending && time_reached(now_ms, s_reset_at_ms)) {
-        LOG_WARN("host: reset requested");
         bsp_system_reset();
     }
 }

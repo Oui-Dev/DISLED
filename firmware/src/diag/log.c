@@ -17,7 +17,7 @@
 
 void log_write(log_level_t level, const char *format, ...)
 {
-    static const char tags[] = { 'E', 'W', 'I' };
+    static const char tags[] = { 'E', 'I' };
 
     char line[LINE_MAX];
     const uint32_t now = bsp_time_ms();

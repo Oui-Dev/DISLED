@@ -30,25 +30,10 @@
 
 app_context_t app;
 
-bool app_apply_request(const lamp_request_t *request)
+void app_apply_request(const lamp_request_t *request)
 {
-    const bool changed = lamp_fsm_apply(&app.lamp, request);
-    if (changed) {
+    if (lamp_fsm_apply(&app.lamp, request)) {
         app.source = CHANGE_SOURCE_HOST;
-    }
-    return changed;
-}
-
-const char *app_link_name(usb_link_t link)
-{
-    switch (link) {
-        case USB_LINK_CONFIGURED:
-            return "configured";
-        case USB_LINK_SUSPENDED:
-            return "suspended";
-        case USB_LINK_UNCONFIGURED:
-        default:
-            return "unconfigured";
     }
 }
 
@@ -110,7 +95,6 @@ static void task_usb(uint32_t now_ms)
     } else if (previous == USB_LINK_SUSPENDED) {
         leave_suspend(now_ms);
     }
-    LOG_INFO("usb: %s", app_link_name(link));
 }
 
 static void task_touch(uint32_t now_ms)
@@ -166,9 +150,6 @@ static void task_als(uint32_t now_ms)
     if (!als->present) {
         if (time_reached(now_ms, als->retry_ms)) {
             als_probe(als, now_ms, APP_ALS_RETRY_MS);
-            if (als->present) {
-                LOG_INFO("als: sensor found");
-            }
         }
         return;
     }
@@ -186,7 +167,7 @@ static void task_als(uint32_t now_ms)
         return;
     }
     if (++als->errors >= APP_ALS_MAX_ERRORS) {
-        LOG_WARN("als: sensor lost, fixed brightness until it answers again");
+        /* Fixed brightness until the sensor answers again. */
         als->present = false;
         als->retry_ms = now_ms + APP_ALS_RETRY_MS;
         brightness_lux_lost(&app.brightness);
@@ -219,7 +200,6 @@ void app_start_self_test(uint8_t seq)
     app.self_test_seq = seq;
     app.self_test_report = false;
     self_test_start(&app.self_test, bsp_time_ms());
-    LOG_INFO("self-test: started");
 }
 
 static void task_output(uint32_t now_ms)
@@ -330,9 +310,6 @@ void app_init(const fault_record_t *fault)
              (unsigned)app.reset_cause, app.fault.valid ? ", after a FAULT" : "");
     if (!app.crystal_ok) {
         LOG_ERROR("crystal failed: USB disabled");
-    }
-    if (!app.als.present) {
-        LOG_WARN("als: sensor not found");
     }
 }
 

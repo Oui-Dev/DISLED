@@ -19,6 +19,7 @@ static uint32_t s_watch_period_ms;
 static uint32_t s_watch_next_ms;
 
 static const char *const color_names[] = { "green", "orange", "red", "warm-white" };
+static const char *const link_names[] = { "unconfigured", "configured", "suspended" };
 
 /* Parses a decimal number; false if `text` is not one. */
 static bool parse_u32(const char *text, uint32_t *value)
@@ -54,7 +55,7 @@ static void cmd_state(int argc, char **argv)
                    (unsigned)app.lamp.manual_level,
                    (unsigned)brightness_level_permille(&app.brightness));
     const uint32_t estimate = led_output_estimate_ma_x10(&app.output);
-    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty ", app_link_name(app.link),
+    console_printf("usb %s, LED %lu.%lu mA of %u mA, duty ", link_names[app.link],
                    (unsigned long)(estimate / 10u), (unsigned long)(estimate % 10u),
                    (unsigned)led_output_cap_ma(&app.output));
     for (size_t i = 0; i < LED_CHANNEL_COUNT; i++) {
@@ -99,7 +100,7 @@ static void cmd_set(int argc, char **argv)
         console_printf("invalid value\r\n");
         return;
     }
-    (void)app_apply_request(&request);
+    app_apply_request(&request);
     cmd_state(0, NULL);
 }
 

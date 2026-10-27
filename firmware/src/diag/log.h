@@ -12,7 +12,6 @@
 
 typedef enum {
     LOG_LEVEL_ERROR = 0,
-    LOG_LEVEL_WARN,
     LOG_LEVEL_INFO,
 } log_level_t;
 
@@ -21,7 +20,6 @@ typedef enum {
 __attribute__((format(printf, 2, 3))) void log_write(log_level_t level, const char *format, ...);
 
 #define LOG_ERROR(...) log_write(LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_WARN(...)  log_write(LOG_LEVEL_WARN, __VA_ARGS__)
 #define LOG_INFO(...)  log_write(LOG_LEVEL_INFO, __VA_ARGS__)
 
 #else
@@ -32,7 +30,6 @@ __attribute__((format(printf, 1, 2))) static inline void log_discard(const char 
 }
 
 #define LOG_ERROR(...) log_discard(__VA_ARGS__)
-#define LOG_WARN(...)  log_discard(__VA_ARGS__)
 #define LOG_INFO(...)  log_discard(__VA_ARGS__)
 
 #endif
