@@ -45,10 +45,9 @@ changelog. The maintainers release the hardware by hand
    General, Releases). Their files and tag can no longer change, only their
    title and notes.
 
-From 1.0.0 (the app), a breaking change raises the major version, `feat`
-the minor version and the other releasing types the patch version. Below
-1.0.0 (the firmware), a breaking change raises the minor version, as `feat`
-does.
+Both components are past 1.0.0: a breaking change raises the major
+version, `feat` the minor version and the other releasing types the patch
+version.
 
 The notes of a published release can still change, but the installed apps
 have already read those of the app in `latest.json`. Anything to add goes
