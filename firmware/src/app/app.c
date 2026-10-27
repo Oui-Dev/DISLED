@@ -82,7 +82,8 @@ static void enter_suspend(uint32_t now_ms)
 
 static void leave_suspend(uint32_t now_ms)
 {
-    /* The USB wake-up interrupt normally restored the clock already. */
+    /* The USB wake-up interrupt already restarted the crystal: this only
+     * reports a failure, retried at the next suspend. */
     if (!bsp_power_full_clock()) {
         LOG_ERROR("crystal failed on resume");
     }

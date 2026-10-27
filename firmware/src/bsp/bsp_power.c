@@ -49,13 +49,16 @@ static bool wait_for(const volatile uint32_t *reg, uint32_t mask, uint32_t value
 bool bsp_power_full_clock_from_isr(void)
 {
     if (!s_slow) {
-        return true;
+        return (RCC->CFGR0 & RCC_SWS) == RCC_SWS_PLL;
     }
     /* Full speed internal oscillator first, so that the waits below are
      * short and the time base stays right if the crystal fails. */
     RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV1;
     SystemCoreClockUpdate();
     bsp_time_core_clock_changed();
+    /* No longer slow, even if the crystal fails below: the next suspend must
+     * slow the core down again, and the next interrupt not retry. */
+    s_slow = false;
 
     RCC->CTLR |= RCC_HSEON;
     if (!wait_for(&RCC->CTLR, RCC_HSERDY, RCC_HSERDY)) {
@@ -73,7 +76,6 @@ bool bsp_power_full_clock_from_isr(void)
     }
     SystemCoreClockUpdate();
     bsp_time_core_clock_changed();
-    s_slow = false;
     return true;
 }
 

@@ -16,10 +16,11 @@
  * crystal and the PLL. USB, which needs the PLL, must be suspended. */
 void bsp_power_slow_clock(void);
 
-/* Back to the crystal and the PLL (144 MHz). Returns false if the crystal
- * did not start: the chip then stays on the internal oscillator (8 MHz).
- * Safe to call when already fast. The _from_isr variant expects interrupts
- * to be off. */
+/* Back to the crystal and the PLL (144 MHz). Returns false if the core does
+ * not run from them: the crystal did not start, and the chip stays on the
+ * internal oscillator (8 MHz). A failed start is not retried before the next
+ * slow clock. Safe to call when already fast. The _from_isr variant expects
+ * interrupts to be off. */
 bool bsp_power_full_clock(void);
 bool bsp_power_full_clock_from_isr(void);
 
