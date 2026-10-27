@@ -46,16 +46,11 @@ void tkey_init(const tkey_config_t *config)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
     bsp_gpio_config(BOARD_TOUCH_PORT, BOARD_TOUCH_PIN, GPIO_Mode_AIN, GPIO_Speed_2MHz);
 
-    ADC_InitTypeDef adc = {
-        .ADC_Mode = ADC_Mode_Independent,
-        .ADC_ScanConvMode = DISABLE,
-        .ADC_ContinuousConvMode = DISABLE,
-        .ADC_ExternalTrigConv = ADC_ExternalTrigConv_None,
-        .ADC_DataAlign = ADC_DataAlign_Right,
-        .ADC_NbrOfChannel = 1,
-    };
-    ADC_Init(ADC1, &adc);
-    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, config->adc_sample_time);
+    /* One conversion of the touch channel, started by software: the reset
+     * values but for the trigger and the sample time (channel 9: SAMPTR2). */
+    ADC1->CTLR2 = ADC_ExternalTrigConv_None;
+    ADC1->SAMPTR2 = (uint32_t)config->adc_sample_time << (3u * BOARD_TOUCH_ADC_CHANNEL);
+    ADC1->RSQR3 = BOARD_TOUCH_ADC_CHANNEL;
 }
 
 /* Runs in the TIM3 interrupt, at the sample point of the PWM period. */
@@ -66,7 +61,7 @@ static void measure(void)
     TKey1->IDATAR1 = s_charge_time;
     TKey1->RDATAR = s_discharge_time;
     uint32_t polls = 0;
-    while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET) {
+    while ((ADC1->STATR & ADC_EOC) == 0u) {
         if (++polls >= MEASURE_MAX_POLLS) {
             s_timeouts++;
             return;
@@ -85,7 +80,7 @@ static void measure(void)
 
 void tkey_start(void)
 {
-    ADC_Cmd(ADC1, ENABLE);
+    ADC1->CTLR2 |= ADC_ADON;
     TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
     led_pwm_set_sample_callback(measure);
     /* Every millisecond, from the SysTick interrupt. */
@@ -98,7 +93,7 @@ void tkey_stop(void)
     led_pwm_set_sample_callback(NULL);
     /* Powered down, within the 2.5 mA of a suspended USB device. */
     TKey1->CTLR1 &= ~(ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN);
-    ADC_Cmd(ADC1, DISABLE);
+    ADC1->CTLR2 &= ~ADC_ADON;
 }
 
 bool tkey_read(uint16_t *sample, uint32_t *time_ms)
