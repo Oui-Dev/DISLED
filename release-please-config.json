@@ -23,8 +23,7 @@
     "firmware": {
       "release-type": "simple",
       "component": "fw",
-      "initial-version": "0.1.0",
-      "release-as": "1.0.0"
+      "initial-version": "0.1.0"
     },
     "app": {
       "release-type": "node",
