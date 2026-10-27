@@ -32,25 +32,18 @@ static void capture_reset_cause(void)
 
 static void init_clocks(void)
 {
-    /* The startup code ran SystemInit(): 8 MHz crystal x 18 = 144 MHz,
-     * HCLK = PCLK2 = 144 MHz, PCLK1 = 72 MHz (both lowered below). If the
-     * crystal failed, the chip stayed on the internal oscillator, at 8 MHz. */
-    s_crystal_ok = (RCC->CFGR0 & RCC_SWS) == RCC_SWS_PLL;
-    SystemCoreClock = s_crystal_ok ? BSP_POWER_PLL_HZ : HSI_VALUE;
-
-    /* I2C needs PCLK1 <= 60 MHz: the SDK writes PCLK1 in MHz into a 6-bit
+    /* SystemInit() left the chip on the internal oscillator, with these
+     * fields cleared. PLL = 8 MHz crystal x 18 = 144 MHz = HCLK.
+     * I2C needs PCLK1 <= 60 MHz: the SDK writes PCLK1 in MHz into a 6-bit
      * field and only clamps it to 60 afterwards, so 72 MHz silently becomes
      * 8 MHz and breaks every byte transfer. 144 / 4 = 36 MHz; the APB1
-     * timers then run at 72 MHz. */
-    RCC_PCLK1Config(RCC_HCLK_Div4);
-
-    /* ADC clock = PCLK2 / 8 must stay within 14 MHz: 72 MHz / 8 = 9 MHz. */
-    RCC_PCLK2Config(RCC_HCLK_Div2);
-    RCC_ADCCLKConfig(RCC_PCLK2_Div8);
-
-    if (s_crystal_ok) {
-        RCC_USBCLKConfig(RCC_USBCLKSource_PLLCLK_Div3); /* 144 / 3 = 48 MHz */
-    }
+     * timers then run at 72 MHz.
+     * The ADC clock, PCLK2 / 8, must stay within 14 MHz: 72 / 8 = 9 MHz.
+     * USB: 144 / 3 = 48 MHz. */
+    RCC->CFGR0 |= RCC_PLLSRC_HSE | RCC_PLLXTPRE_HSE | RCC_PLLMULL18 | RCC_PPRE1_DIV4 |
+                  RCC_PPRE2_DIV2 | RCC_ADCPRE_DIV8 | ((uint32_t)RCC_USBCLKSource_PLLCLK_Div3 << 22);
+    /* If the crystal fails, the chip stays on the internal oscillator. */
+    s_crystal_ok = bsp_power_full_clock();
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO,
                            ENABLE);
@@ -71,9 +64,11 @@ static void init_unused_pins(void)
 void bsp_init(void)
 {
     capture_reset_cause();
+    /* The time base first: it follows the start of the crystal as it
+     * follows the end of a USB suspend. */
+    bsp_time_init();
     init_clocks();
     init_unused_pins();
-    bsp_time_init();
 }
 
 reset_cause_t bsp_reset_cause(void)

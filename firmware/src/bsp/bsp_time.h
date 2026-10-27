@@ -19,8 +19,9 @@ uint32_t bsp_time_ms(void);
 /* Microseconds, for durations (wraps every 71 minutes). */
 uint32_t bsp_time_us(void);
 
-/* The core clock changed (USB suspend): restarts the 1 ms period at the new
- * SystemCoreClock. The time never goes back, but may jump a millisecond ahead. */
+/* The core clock changed (start of the crystal, USB suspend): restarts the
+ * 1 ms period at the new SystemCoreClock. The time never goes back, but may
+ * jump a millisecond ahead. */
 void bsp_time_core_clock_changed(void);
 
 /* Busy-waits at least the given number of microseconds (short waits: the

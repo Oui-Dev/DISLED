@@ -11,7 +11,12 @@
 /* A few milliseconds at 8 MHz: the crystal starts in about 2 ms. */
 #define START_TIMEOUT_LOOPS 0x8000u
 
-static volatile bool s_slow;
+/* Core clock from the crystal and the PLL: 8 MHz x 18. */
+#define PLL_HZ 144000000u
+
+/* On the internal oscillator: from reset until bsp_init() starts the
+ * crystal, and in suspend. */
+static volatile bool s_slow = true;
 
 static bool wait_for(const volatile uint32_t *reg, uint32_t mask, uint32_t value)
 {
@@ -71,7 +76,7 @@ bool bsp_power_full_clock_from_isr(void)
     if (!wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_PLL)) {
         return false;
     }
-    SystemCoreClock = BSP_POWER_PLL_HZ;
+    SystemCoreClock = PLL_HZ;
     bsp_time_core_clock_changed();
     return true;
 }
