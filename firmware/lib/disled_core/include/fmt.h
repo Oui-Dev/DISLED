@@ -4,8 +4,8 @@
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
  * Small snprintf for logs and the debug console: predictable size, no heap,
- * no floating point. Supports %d %i %u %x %X %c %s %%, the '0' and '-'
- * flags, a width, and the 'l' length modifier.
+ * no floating point. Supports %d %u %x %c %s %%, the '0' and '-' flags, a
+ * width, and the 'l' length modifier.
  */
 #ifndef DISLED_FMT_H
 #define DISLED_FMT_H

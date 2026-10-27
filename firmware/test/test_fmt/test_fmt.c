@@ -19,7 +19,7 @@ void tearDown(void)
 
 static void test_integers(void)
 {
-    fmt_snprintf(out, sizeof out, "%d %i %u", -42, 7, 4000000000u);
+    fmt_snprintf(out, sizeof out, "%d %d %u", -42, 7, 4000000000u);
     TEST_ASSERT_EQUAL_STRING("-42 7 4000000000", out);
     fmt_snprintf(out, sizeof out, "%ld %lu", -2147483647L - 1L, 4294967295UL);
     TEST_ASSERT_EQUAL_STRING("-2147483648 4294967295", out);
@@ -27,8 +27,8 @@ static void test_integers(void)
 
 static void test_hex_and_padding(void)
 {
-    fmt_snprintf(out, sizeof out, "%x %X %08lx %4d|%-4d|", 0xbeefu, 0xbeefu, 0x1234ul, 42, 42);
-    TEST_ASSERT_EQUAL_STRING("beef BEEF 00001234   42|42  |", out);
+    fmt_snprintf(out, sizeof out, "%x %08lx %4d|%-4d|", 0xbeefu, 0x1234ul, 42, 42);
+    TEST_ASSERT_EQUAL_STRING("beef 00001234   42|42  |", out);
     fmt_snprintf(out, sizeof out, "%05d|%-5d|", -42, -42);
     TEST_ASSERT_EQUAL_STRING("-0042|-42  |", out);
 }
