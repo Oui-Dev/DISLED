@@ -258,7 +258,7 @@ void app_diagnostics(proto_diagnostics_t *diagnostics)
         .stack_free_min = bsp_stack_free_min(),
         .i2c_errors = i2c_bus_error_count(),
         .light_sensor_probes = app.als.probes,
-        .touch_samples_lost = saturate_u16(tkey_overruns()),
+        .touch_samples_lost = saturate_u16(tkey_samples_lost()),
         .touch_recalibrations = touch_detector_recalibrations(&app.touch),
         .usb_suspends = app.usb_suspends,
         .auto_bias = brightness_auto_bias(&app.brightness),

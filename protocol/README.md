@@ -181,7 +181,7 @@ registers); the others restart at every boot.
 | 22 | 2 | stack bytes never used since boot (the smallest margin seen) |
 | 24 | 2 | I2C errors since boot |
 | 26 | 2 | light sensor probes since boot (1 when it answered at the first try) |
-| 28 | 2 | touch samples lost since boot |
+| 28 | 2 | touch samples lost since boot (not read in time, or a measurement that never completed) |
 | 30 | 2 | touch baseline recalibrations since boot (finger at start-up, object on the lid) |
 | 32 | 2 | USB suspends since boot |
 | 34 | 1 | automatic brightness bias, `i8` percent |
