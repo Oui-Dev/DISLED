@@ -10,7 +10,6 @@
 #define DISLED_APP_CONTEXT_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #include "brightness.h"
@@ -19,7 +18,6 @@
 #include "lamp_fsm.h"
 #include "led_output.h"
 #include "protocol.h"
-#include "scheduler.h"
 #include "self_test.h"
 #include "touch_detector.h"
 
@@ -28,8 +26,7 @@ typedef struct {
     uint8_t errors;    /* consecutive failures */
     uint32_t retry_ms; /* next detection attempt while absent */
     uint32_t read_ms;  /* next reading: once per integration */
-    uint8_t step;      /* measuring range (als_range.h) */
-    uint16_t count;    /* last count, at that step */
+    uint16_t count;    /* last count */
     uint32_t lux_milli;
     uint16_t probes; /* detection attempts since boot (diagnostics) */
 } app_als_t;
@@ -56,21 +53,14 @@ typedef struct {
 /* The single instance, owned by app.c. */
 extern app_context_t app;
 
-/* Applies a lamp request coming from the host or the console. Returns
- * true if the state changed. */
-bool app_apply_request(const lamp_request_t *request);
+/* Applies a lamp request coming from the host or the console. */
+void app_apply_request(const lamp_request_t *request);
 
 /* Starts the self-test; its result is reported to the host with `seq`.
- * Returns false if one is already running. */
-bool app_start_self_test(uint8_t seq);
-
-/* Name of a USB link state, for the logs and the console. */
-const char *app_link_name(usb_link_t link);
+ * Never while one runs: the host gets BUSY instead. */
+void app_start_self_test(uint8_t seq);
 
 /* Snapshot of the DIAGNOSTICS message. */
 void app_diagnostics(proto_diagnostics_t *diagnostics);
-
-/* The scheduler table, with the longest run of each task (console). */
-const scheduler_task_t *app_tasks(size_t *count);
 
 #endif /* DISLED_APP_CONTEXT_H */

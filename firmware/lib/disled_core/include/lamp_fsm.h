@@ -49,8 +49,8 @@ void lamp_fsm_init(lamp_state_t *state);
  * the state changed. */
 bool lamp_fsm_short_press(lamp_state_t *state);
 
-/* Toggles the power, keeping the color. Returns true. */
-bool lamp_fsm_long_press(lamp_state_t *state);
+/* Toggles the power, keeping the color: the state always changes. */
+void lamp_fsm_long_press(lamp_state_t *state);
 
 /* True if every selected field holds a valid value and no unknown field
  * bit is set. */

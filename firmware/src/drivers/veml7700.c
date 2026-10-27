@@ -13,52 +13,16 @@
 #define REG_ID       0x07u
 
 #define DEVICE_ID_LSB 0x81u
-#define CONF_SHUTDOWN (1u << 0) /* ALS_SD */
 
-/* ALS_CONF_0 of the current setting, shutdown bit cleared. */
-static uint16_t s_conf;
+/* ALS_CONF_0: ALS_GAIN x2 (bits 12:11), ALS_IT 400 ms (bits 9:6),
+ * persistence 1, interrupt off. ALS_SD, bit 0, shuts the sensor down. */
+#define CONF_GAIN_X2  (0x1u << 11)
+#define CONF_IT_400MS (0x2u << 6)
+#define CONF_ON       (CONF_GAIN_X2 | CONF_IT_400MS)
+#define CONF_SHUTDOWN (CONF_ON | 0x1u)
 
-/* ALS_GAIN, bits 12:11. */
-static uint16_t gain_bits(uint8_t gain_eighths)
-{
-    switch (gain_eighths) {
-        case 16:
-            return 0x1u; /* x2 */
-        case 8:
-            return 0x0u; /* x1 */
-        case 2:
-            return 0x3u; /* x1/4 */
-        case 1:
-        default:
-            return 0x2u; /* x1/8 */
-    }
-}
-
-/* ALS_IT, bits 9:6. */
-static uint16_t integration_bits(uint16_t integration_ms)
-{
-    switch (integration_ms) {
-        case 25:
-            return 0xCu;
-        case 50:
-            return 0x8u;
-        case 200:
-            return 0x1u;
-        case 400:
-            return 0x2u;
-        case 800:
-            return 0x3u;
-        case 100:
-        default:
-            return 0x0u;
-    }
-}
-
-/* Persistence 1, interrupt off. */
-static uint16_t configuration(uint8_t gain_eighths, uint16_t integration_ms)
-{
-    return (uint16_t)((gain_bits(gain_eighths) << 11) | (integration_bits(integration_ms) << 6));
-}
+/* veml7700_lux_milli() holds for this gain and integration time only. */
+_Static_assert(VEML7700_INTEGRATION_MS == 400u, "CONF_ON sets ALS_IT to 400 ms");
 
 static bool write_register(uint8_t reg, uint16_t value)
 {
@@ -76,26 +40,18 @@ static bool read_register(uint8_t reg, uint16_t *value)
     return true;
 }
 
-bool veml7700_init(uint8_t gain_eighths, uint16_t integration_ms)
+bool veml7700_init(void)
 {
     uint16_t id;
     if (!read_register(REG_ID, &id) || (id & 0xFFu) != DEVICE_ID_LSB) {
         return false;
     }
-    s_conf = configuration(gain_eighths, integration_ms);
-    return write_register(REG_ALS_CONF, s_conf); /* shutdown bit cleared: powered on */
-}
-
-bool veml7700_configure(uint8_t gain_eighths, uint16_t integration_ms)
-{
-    s_conf = configuration(gain_eighths, integration_ms);
-    return write_register(REG_ALS_CONF, (uint16_t)(s_conf | CONF_SHUTDOWN)) &&
-           write_register(REG_ALS_CONF, s_conf);
+    return write_register(REG_ALS_CONF, CONF_ON);
 }
 
 bool veml7700_shutdown(void)
 {
-    return write_register(REG_ALS_CONF, (uint16_t)(s_conf | CONF_SHUTDOWN));
+    return write_register(REG_ALS_CONF, CONF_SHUTDOWN);
 }
 
 bool veml7700_read(uint16_t *count)

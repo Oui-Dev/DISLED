@@ -16,14 +16,13 @@ void bsp_time_init(void);
  * time_elapsed_ms() from time_utils.h, never with < or >. */
 uint32_t bsp_time_ms(void);
 
-/* Microseconds, for durations (wraps every 71 minutes). */
-uint32_t bsp_time_us(void);
-
-/* The core clock changed (USB suspend): keeps the millisecond count and
- * restarts the 1 ms period at the new SystemCoreClock. */
+/* The core clock changed (start of the crystal, USB suspend): restarts the
+ * 1 ms period at the new SystemCoreClock. The time never goes back, but may
+ * jump a millisecond ahead. */
 void bsp_time_core_clock_changed(void);
 
-/* Busy-waits at least the given number of microseconds (up to 1000). */
+/* Busy-waits at least the given number of microseconds (short waits: the
+ * watchdog runs). */
 void bsp_time_delay_us(uint32_t us);
 
 /* Function called from the SysTick interrupt every millisecond, after the

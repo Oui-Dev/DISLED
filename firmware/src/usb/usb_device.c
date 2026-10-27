@@ -7,7 +7,6 @@
 
 #include <string.h>
 
-#include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "tusb.h"
 
@@ -28,11 +27,6 @@ static size_t s_rx_count;
 static report_t s_tx[TX_QUEUE_SIZE];
 static size_t s_tx_head;
 static size_t s_tx_count;
-
-uint32_t tusb_time_millis_api(void)
-{
-    return bsp_time_ms();
-}
 
 void usb_device_init(bool crystal_ok)
 {
@@ -70,12 +64,30 @@ void usb_device_wake_irq(bool enabled)
     }
 }
 
+/* Read from the stack rather than kept by the mount and suspend callbacks:
+ * a bus reset, as when the computer restarts with the lamp powered,
+ * unconfigures the device without tud_umount_cb(). */
+static usb_link_t stack_link(void)
+{
+    if (tud_suspended()) {
+        return USB_LINK_SUSPENDED;
+    }
+    return tud_mounted() ? USB_LINK_CONFIGURED : USB_LINK_UNCONFIGURED;
+}
+
 void usb_device_task(void)
 {
     if (!s_started) {
         return;
     }
     tud_task();
+    const usb_link_t link = stack_link();
+    if (link == USB_LINK_UNCONFIGURED && s_link != USB_LINK_UNCONFIGURED) {
+        /* What waits in the queues belongs to the host that left. */
+        s_tx_count = 0;
+        s_rx_count = 0;
+    }
+    s_link = link;
     flush_tx();
 }
 
@@ -96,6 +108,11 @@ bool usb_hid_send(const uint8_t payload[PROTO_REPORT_SIZE])
     return true;
 }
 
+bool usb_hid_idle(void)
+{
+    return s_link == USB_LINK_CONFIGURED && s_tx_count == 0u && tud_hid_ready();
+}
+
 bool usb_hid_receive(uint8_t payload[PROTO_REPORT_SIZE])
 {
     if (s_rx_count == 0u) {
@@ -108,29 +125,6 @@ bool usb_hid_receive(uint8_t payload[PROTO_REPORT_SIZE])
 }
 
 /* --- TinyUSB callbacks (called from tud_task, in the main loop) --- */
-
-void tud_mount_cb(void)
-{
-    s_link = USB_LINK_CONFIGURED;
-}
-
-void tud_umount_cb(void)
-{
-    s_link = USB_LINK_UNCONFIGURED;
-    s_tx_count = 0;
-    s_rx_count = 0;
-}
-
-void tud_suspend_cb(bool remote_wakeup_en)
-{
-    (void)remote_wakeup_en;
-    s_link = USB_LINK_SUSPENDED;
-}
-
-void tud_resume_cb(void)
-{
-    s_link = tud_mounted() ? USB_LINK_CONFIGURED : USB_LINK_UNCONFIGURED;
-}
 
 uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type,
                                uint8_t *buffer, uint16_t reqlen)

@@ -47,7 +47,7 @@ typedef struct {
     int8_t bias_percent;
     bool have_lux;
     bool fast;               /* following a large change */
-    int8_t large_sign;       /* sign of a large difference being confirmed, else 0 */
+    int8_t large_sign;       /* sign of a large difference confirmed or followed, else 0 */
     uint32_t large_since_ms; /* when that difference appeared */
     uint32_t last_ms;        /* time of the previous reading */
     int32_t light_q8;        /* filtered light, log2(lux x 1000) in Q8 */

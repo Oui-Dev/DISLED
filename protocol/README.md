@@ -92,7 +92,9 @@ glows blue at 20 %. It then restores its state and sends
 `SELF_TEST_RESULT`, with the `seq` of the `SELF_TEST` command. During the
 test the lamp ignores the touch and answers `SET_STATE`, `SET_AUTO_BIAS`
 and a second `SELF_TEST` with `ERROR` (busy). Only a person can check the
-colors: the result covers the light sensor and the touch.
+colors: the result covers the light sensor and the touch. A USB suspend
+cuts the test short: the result follows the resume, with bit 3 of
+`results` clear.
 
 ## Messages (lamp to host)
 
@@ -137,6 +139,8 @@ colors: the result covers the light sensor and the touch.
 
 Unsolicited `STATE` messages caused only by automatic brightness are sent
 at most every 500 ms; changes in between are merged into the next message.
+So are the changes made while earlier messages wait to leave, as when the
+host does not read the lamp.
 A host that sees `state_seq` jump by more than one has missed a message
 and should send `GET_STATE`.
 
@@ -151,7 +155,7 @@ and should send `GET_STATE`.
 | 10 | 2 | touch: signed drop below the baseline, per mille |
 | 12 | 1 | touch state: 0 calibrating, 1 idle, 2 pressed |
 | 13 | 4 | ambient light, lux x 100 |
-| 17 | 2 | ambient light sensor raw count, at the gain and integration time in use (the lamp changes them with the light) |
+| 17 | 2 | ambient light sensor raw count, at gain 2 and 400 ms: 0.0084 lx a count, saturated from about 550 lx |
 | 19 | 6 | PWM duty red, green, blue, in whole timer ticks (3600 = 100 %; the firmware dithers to 1/16 tick and reports the rounded value) |
 | 25 | 2 | estimated LED current, mA x 10 |
 | 27 | 2 | LED current cap in force, mA |
@@ -177,7 +181,7 @@ registers); the others restart at every boot.
 | 22 | 2 | stack bytes never used since boot (the smallest margin seen) |
 | 24 | 2 | I2C errors since boot |
 | 26 | 2 | light sensor probes since boot (1 when it answered at the first try) |
-| 28 | 2 | touch samples lost since boot |
+| 28 | 2 | touch samples lost since boot (not read in time, or a measurement that never completed) |
 | 30 | 2 | touch baseline recalibrations since boot (finger at start-up, object on the lid) |
 | 32 | 2 | USB suspends since boot |
 | 34 | 1 | automatic brightness bias, `i8` percent |
@@ -187,7 +191,7 @@ registers); the others restart at every boot.
 
 | Offset | Size | Field |
 |---|---|---|
-| 0 | 1 | results: bit 0 light sensor answered with a plausible reading, bit 1 touch baseline within the expected range, bit 2 a touch was detected, bit 3 the test ran to its end |
+| 0 | 1 | results: bit 0 light sensor answered, bit 1 touch baseline within the expected range, bit 2 a touch was detected, bit 3 the test ran to its end |
 | 1 | 4 | ambient light during the test, lux × 100 |
 | 5 | 2 | touch baseline, TouchKey counts |
 | 7 | 2 | largest touch drop seen while waiting, per mille (`i16`) |

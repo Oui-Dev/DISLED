@@ -26,7 +26,7 @@ specifies the behavior itself.
 | USB | `src/usb/` | bsp, TinyUSB, core | descriptors, link state, HID queues, CDC stream |
 | Drivers | `src/drivers/` | bsp, SDK | LED PWM, TouchKey, I2C, VEML7700 |
 | Board support | `src/bsp/` | SDK | pin map, clocks, time base, watchdog, unique ID, faults |
-| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, light sensor ranging, brightness, color, power cap, PWM dithering, self-test, protocol codec, scheduler, formatter, assertions |
+| Core | `lib/disled_core/` | C library only | all decisions: state machine, touch detection, brightness, color, power cap, PWM dithering, self-test, protocol codec, scheduler, formatter, assertions |
 
 Only `src/bsp/ch32.h` includes the vendor device header. Includes are
 relative to `src/` (`#include "drivers/led_pwm.h"`), so every include shows
@@ -39,8 +39,8 @@ builds natively and runs under Unity in CI.
 TIM3 CC4 interrupt (1 kHz, fixed PWM phase) ─> TouchKey sample ─> queue
                                                                     │
 main loop ── touch task ─> touch_detector ─> short/long press ─> lamp_fsm
-          ── ALS task (100 ms) ─> VEML7700 count ─> als_range: lux, next
-                                     range ─> brightness
+          ── ALS task (100 ms) ─> VEML7700 count at one range, every 400 ms
+                                     ─> lux ─> brightness
           ── output task (10 ms) ─> led_output: palette, level, fade,
                                      power cap, pulse loss ─> duties in
                                      1/16 tick ─> led_pwm
@@ -87,12 +87,12 @@ nests.
   sensor leaves a fixed brightness, and the firmware probes it again every
   5 s. A TouchKey conversion gives up after about 100 µs.
 - **Watchdog.** The loop feeds the independent watchdog (1 s) only after
-  every task ran. The scheduler records the longest run of each task
-  (console `tasks`): 0.5 ms at most, 1.7 ms on the suspend clock.
+  every task ran. The longest task took 0.5 ms when measured during
+  development, 1.7 ms on the suspend clock: far within that second.
 - **Faults are reported.** A crash or a failed `DISLED_ASSERT` leaves its
   cause in the backup registers, then the chip resets. A failed assertion
   shows as `mcause` 0x0A55nnnn, nnnn being its source line. The next boot reports
-  the fault in `INFO`, on the console and in `DIAGNOSTICS`. `DIAGNOSTICS`
+  the fault in `INFO` and in `DIAGNOSTICS`. `DIAGNOSTICS`
   also counts boots, watchdog resets and faults since power-up, and gives
   the smallest stack margin (the boot fills the stack with a pattern) and
   error counters.
@@ -116,8 +116,8 @@ on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 27.4 KB | 4.9 KB |
-| release (HID) | 20.2 KB | 4.1 KB |
+| debug (HID + CDC console) | 23.0 KB | 4.8 KB |
+| release (HID) | 18.0 KB | 4.1 KB |
 
 ### Configuration
 
@@ -150,8 +150,8 @@ time, so that it cannot drift under the hand and blunt the next touch.
 - `pio test -e native` runs the core on the build machine (Unity): lamp
   rules, touch detection on synthetic signals (mains hum, drift, objects,
   finger at power-up, hand resting near the lid), brightness, color, power
-  cap, output fades and pulse loss, PWM dithering, self-test, scheduler
-  and its task timing, formatter and the protocol codec.
+  cap, output fades and pulse loss, PWM dithering, self-test, scheduler,
+  formatter and the protocol codec.
 - The protocol tests check the codec byte for byte against
   `protocol/vectors/v1.json`, the same file the app tests use.
 - `pio check` runs cppcheck on `src/` and the core at every severity.

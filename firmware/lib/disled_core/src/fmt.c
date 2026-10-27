@@ -38,14 +38,13 @@ static void emit_padded(sink_t *sink, const char *text, size_t text_length, size
     }
 }
 
-/* Writes `value` in `base`, ending at `buffer_end`. Returns its start. */
-static char *format_unsigned(char *buffer_end, unsigned long value, unsigned base, bool upper)
+/* Writes `value` in decimal, ending at `buffer_end`. Returns its start. */
+static char *format_unsigned(char *buffer_end, unsigned long value)
 {
-    const char *digits = upper ? "0123456789ABCDEF" : "0123456789abcdef";
     char *p = buffer_end;
     do {
-        *--p = digits[value % base];
-        value /= base;
+        *--p = (char)('0' + value % 10u);
+        value /= 10u;
     } while (value != 0u);
     return p;
 }
@@ -85,12 +84,11 @@ size_t fmt_vsnprintf(char *out, size_t size, const char *format, va_list args)
         char number[24];
         char *const end = number + sizeof number;
         switch (*f) {
-            case 'd':
-            case 'i': {
+            case 'd': {
                 const long value = is_long ? va_arg(args, long) : (long)va_arg(args, int);
                 const unsigned long magnitude =
                     (value < 0) ? (0ul - (unsigned long)value) : (unsigned long)value;
-                char *start = format_unsigned(end, magnitude, 10u, false);
+                char *start = format_unsigned(end, magnitude);
                 if (value < 0 && pad == '0' && !left) {
                     /* The sign goes before the zero padding: -0042. */
                     emit(&sink, '-');
@@ -101,19 +99,11 @@ size_t fmt_vsnprintf(char *out, size_t size, const char *format, va_list args)
                 emit_padded(&sink, start, (size_t)(end - start), width, left, pad);
                 break;
             }
-            case 'u':
-            case 'x':
-            case 'X': {
+            case 'u': {
                 const unsigned long value =
                     is_long ? va_arg(args, unsigned long) : (unsigned long)va_arg(args, unsigned);
-                const unsigned base = (*f == 'u') ? 10u : 16u;
-                const char *start = format_unsigned(end, value, base, *f == 'X');
+                const char *start = format_unsigned(end, value);
                 emit_padded(&sink, start, (size_t)(end - start), width, left, pad);
-                break;
-            }
-            case 'c': {
-                const char c = (char)va_arg(args, int);
-                emit_padded(&sink, &c, 1u, width, left, ' ');
                 break;
             }
             case 's': {

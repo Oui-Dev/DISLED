@@ -9,6 +9,7 @@
 
 #include "bsp/board.h"
 #include "bsp/bsp.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/ch32.h"
 #include "pwm_dither.h"
 
@@ -20,26 +21,12 @@ static volatile led_pwm_sample_callback_t s_sample_callback;
 static volatile uint16_t s_duty[LED_CHANNEL_COUNT];
 static uint8_t s_dither[LED_CHANNEL_COUNT]; /* interrupt only */
 
-static void init_channel(void (*oc_init)(TIM_TypeDef *, TIM_OCInitTypeDef *),
-                         void (*preload)(TIM_TypeDef *, uint16_t), uint16_t mode,
-                         uint16_t output_state)
+/* Output compare modes, compares preloaded: `led` for red, green and blue,
+ * and the timing mode for channel 4, an internal event only. */
+static void set_modes(uint16_t led)
 {
-    TIM_OCInitTypeDef oc = {
-        .TIM_OCMode = mode,
-        .TIM_OutputState = output_state,
-        .TIM_Pulse = 0,
-        .TIM_OCPolarity = TIM_OCPolarity_High,
-    };
-    oc_init(BOARD_LED_TIMER, &oc);
-    preload(BOARD_LED_TIMER, TIM_OCPreload_Enable);
-}
-
-/* The three LED channels, in PWM mode. */
-static void init_led_channels(void)
-{
-    init_channel(TIM_OC1Init, TIM_OC1PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC2Init, TIM_OC2PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
-    init_channel(TIM_OC3Init, TIM_OC3PreloadConfig, TIM_OCMode_PWM1, TIM_OutputState_Enable);
+    BOARD_LED_TIMER->CHCTLR1 = (uint16_t)((led | TIM_OC1PE) | ((led | TIM_OC1PE) << 8));
+    BOARD_LED_TIMER->CHCTLR2 = (uint16_t)(led | TIM_OC3PE | TIM_OC4PE);
 }
 
 void led_pwm_init(uint32_t frequency_hz)
@@ -52,35 +39,19 @@ void led_pwm_init(uint32_t frequency_hz)
     const uint32_t prescaler = (ticks - 1u) / PWM_DITHER_PERIOD_MAX;
     s_period = (uint16_t)(ticks / (prescaler + 1u));
 
-    TIM_TimeBaseInitTypeDef base = {
-        .TIM_Prescaler = (uint16_t)prescaler,
-        .TIM_CounterMode = TIM_CounterMode_Up,
-        .TIM_Period = (uint16_t)(s_period - 1u),
-        .TIM_ClockDivision = TIM_CKD_DIV1,
-        .TIM_RepetitionCounter = 0,
-    };
-    TIM_TimeBaseInit(BOARD_LED_TIMER, &base);
-
-    init_led_channels();
-    /* Channel 4: internal compare event only, output disabled (PB1 is the
-     * touch input). */
-    init_channel(TIM_OC4Init, TIM_OC4PreloadConfig, TIM_OCMode_Timing, TIM_OutputState_Disable);
-    TIM_SetCompare4(BOARD_LED_TIMER, (uint16_t)(s_period / 2u));
-
-    TIM_ARRPreloadConfig(BOARD_LED_TIMER, ENABLE);
-    TIM_Cmd(BOARD_LED_TIMER, ENABLE);
+    BOARD_LED_TIMER->PSC = (uint16_t)prescaler;
+    BOARD_LED_TIMER->ATRLR = (uint16_t)(s_period - 1u);
+    BOARD_LED_TIMER->CH4CVR = (uint16_t)(s_period / 2u);
+    /* Channel 4 drives no pin: PB1 is the touch input. */
+    BOARD_LED_TIMER->CCER = TIM_CC1E | TIM_CC2E | TIM_CC3E;
+    BOARD_LED_TIMER->CTLR1 = TIM_ARPE;
+    led_pwm_start(); /* its update event also loads the prescaler */
 
     /* Hand the pins to the timer only now, with every duty at 0 %. */
-    GPIO_InitTypeDef pins = { .GPIO_Speed = GPIO_Speed_2MHz, .GPIO_Mode = GPIO_Mode_AF_PP };
-    pins.GPIO_Pin = BOARD_LED_RED_PIN;
-    GPIO_Init(BOARD_LED_RED_PORT, &pins);
-    pins.GPIO_Pin = BOARD_LED_GREEN_PIN;
-    GPIO_Init(BOARD_LED_GREEN_PORT, &pins);
-    pins.GPIO_Pin = BOARD_LED_BLUE_PIN;
-    GPIO_Init(BOARD_LED_BLUE_PORT, &pins);
+    bsp_gpio_config(BOARD_LED_RED_PORT, BOARD_LED_RED_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
+    bsp_gpio_config(BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
+    bsp_gpio_config(BOARD_LED_BLUE_PORT, BOARD_LED_BLUE_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
 
-    TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
-    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 
@@ -91,19 +62,23 @@ void led_pwm_stop(void)
     }
     /* Force the outputs low now: stopping the counter in the middle of a
      * pulse would otherwise leave a channel on. */
-    TIM_ForcedOC1Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
-    TIM_ForcedOC2Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
-    TIM_ForcedOC3Config(BOARD_LED_TIMER, TIM_ForcedAction_InActive);
-    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update | TIM_IT_CC4, DISABLE);
-    TIM_Cmd(BOARD_LED_TIMER, DISABLE);
+    set_modes(TIM_ForcedAction_InActive);
+    BOARD_LED_TIMER->DMAINTENR = 0;
+    BOARD_LED_TIMER->CTLR1 &= (uint16_t)~TIM_CEN;
 }
 
 void led_pwm_start(void)
 {
-    init_led_channels();
-    TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
-    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
-    TIM_Cmd(BOARD_LED_TIMER, ENABLE);
+    /* The compares are preloaded: the update event loads the zeros now and
+     * restarts the count, so that no pulse of the old duties comes out. */
+    BOARD_LED_TIMER->CH1CVR = 0;
+    BOARD_LED_TIMER->CH2CVR = 0;
+    BOARD_LED_TIMER->CH3CVR = 0;
+    BOARD_LED_TIMER->SWEVGR = TIM_UG;
+    set_modes(TIM_OCMode_PWM1);
+    BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_Update;
+    BOARD_LED_TIMER->DMAINTENR = TIM_IT_Update;
+    BOARD_LED_TIMER->CTLR1 |= TIM_CEN;
 }
 
 uint16_t led_pwm_period(void)
@@ -137,8 +112,8 @@ void led_pwm_set_sample_callback(led_pwm_sample_callback_t callback)
 
 void led_pwm_arm_sample(void)
 {
-    TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_CC4);
-    TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_CC4, ENABLE);
+    BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_CC4;
+    BOARD_LED_TIMER->DMAINTENR |= TIM_IT_CC4;
 }
 
 void TIM3_IRQHandler(void) BSP_ISR;
@@ -149,10 +124,11 @@ void TIM3_IRQHandler(void)
         BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_Update;
         dither_period();
     }
-    if (TIM_GetITStatus(BOARD_LED_TIMER, TIM_IT_CC4) != RESET) {
+    /* The CC4 flag rises every period: only an armed sample counts. */
+    if ((BOARD_LED_TIMER->INTFR & BOARD_LED_TIMER->DMAINTENR & TIM_IT_CC4) != 0u) {
         /* One shot: disarm before running the callback. */
-        TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_CC4, DISABLE);
-        TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_CC4);
+        BOARD_LED_TIMER->DMAINTENR &= (uint16_t)~TIM_IT_CC4;
+        BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_CC4;
         const led_pwm_sample_callback_t callback = s_sample_callback;
         if (callback != NULL) {
             callback();

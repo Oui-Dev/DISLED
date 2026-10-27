@@ -5,9 +5,9 @@ compare detector settings before flashing them.
 
 ## Recording
 
-On the debug console, run `log 2`, which keeps the touch events for
-comparison, then `watch 20`, which prints one line per 20 ms window as the
-detector sees it. Save the console output to a file.
+On the debug console, run `watch 20`, which prints one line per 20 ms window
+as the detector sees it, between the touch events of the log for
+comparison. Save the console output to a file.
 
 The replay feeds each window value to the detector 20 times, as 1 kHz
 samples. The console may skip a window now and then, so the timing is close

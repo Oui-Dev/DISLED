@@ -81,13 +81,13 @@ Type `help` for the list of commands:
 
 | Command | Use |
 |---|---|
-| `info`, `state` | firmware, chip, fault; lamp, USB link and LED output |
+| `state` | lamp, USB link and LED output, the duties to 1/16 tick |
 | `set on\|off\|auto\|color <0-3>\|level <1-100>\|bias <-50..50>` | change the lamp as the host does |
-| `watch <ms>\|off` | stream touch, light (lux, sensor range, count, level) and current (`watch 20`: every touch window) |
-| `diag`, `tasks` | diagnostics counters; longest run of each task |
-| `selftest` | production self-test (colors, light sensor, touch) |
+| `watch <ms>\|off` | stream touch, light (lux, count, level) and current (`watch 20`: every touch window) |
 | `cap <mA>\|off` | override the LED current cap, for the heat test of [bringup.md](bringup.md#8-heat) only |
-| `log <0-2>`, `reset` | log level; restart |
+
+The Diagnostics window of the desktop app shows the rest: chip, faults,
+counters and the self-test.
 
 ## Without PlatformIO
 

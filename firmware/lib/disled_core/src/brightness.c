@@ -9,7 +9,7 @@
 
 #include "time_utils.h"
 
-/* Readings far apart, after a range change or in the dark, catch up this many ticks at most. */
+/* Readings far apart, after a restart of the sensor, catch up this many ticks at most. */
 #define MAX_TICKS 16u
 
 /* log2(x) in Q8 for x >= 1, Mitchell's approximation: at most 6 % off in lux,
@@ -107,14 +107,18 @@ static void follow(brightness_t *b, int32_t light_q8, uint32_t now_ms)
     const int8_t sign = (int8_t)((difference < 0) ? -1 : 1);
 
     if (size < (int32_t)cfg->large_q8) {
-        b->large_sign = 0;
-    } else if (!b->fast) {
-        /* Wait until the change lasts: a hand or a shadow on the sensor must not move the lamp. */
-        if (b->large_sign != sign) {
-            b->large_sign = sign;
-            b->large_since_ms = now_ms;
-            return;
+        /* Kept while followed: a second change the same way needs no new wait. */
+        if (!b->fast) {
+            b->large_sign = 0;
         }
+    } else if (b->large_sign != sign) {
+        /* Wait until the change lasts: a hand or a shadow on the sensor must not move the
+         * lamp, even while it follows a light just switched on or off. */
+        b->fast = false;
+        b->large_sign = sign;
+        b->large_since_ms = now_ms;
+        return;
+    } else if (!b->fast) {
         if (time_elapsed_ms(now_ms, b->large_since_ms) < cfg->confirm_ms) {
             return;
         }
@@ -122,6 +126,7 @@ static void follow(brightness_t *b, int32_t light_q8, uint32_t now_ms)
     }
     if (size < (int32_t)cfg->settled_q8) {
         b->fast = false;
+        b->large_sign = 0;
     }
     if (size < (int32_t)cfg->hold_q8) {
         return;

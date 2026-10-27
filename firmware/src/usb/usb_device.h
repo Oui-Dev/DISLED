@@ -31,6 +31,11 @@ usb_link_t usb_device_link(void);
  * listening; the caller decides whether that matters. */
 bool usb_hid_send(const uint8_t payload[PROTO_REPORT_SIZE]);
 
+/* Nothing waits to go out. The messages the lamp sends on its own wait for
+ * it, so that they never fill the queue while the host reads nothing (Linux
+ * reads only while an app has the lamp open), and the answers find room. */
+bool usb_hid_idle(void);
+
 /* Pops a received command report. False if none is waiting. */
 bool usb_hid_receive(uint8_t payload[PROTO_REPORT_SIZE]);
 

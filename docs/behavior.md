@@ -65,18 +65,20 @@ back to its previous state.
 The caps use the worst-case LED currents at 100 % duty: 86 mA for red,
 63 mA for green and 125 mA for blue. When a color would exceed the cap,
 the firmware scales the three channels down together, which keeps the hue.
-A pure color fits within 125 mA, and warm white gets about half of its
-full power.
+A pure color fits within 125 mA. Warm white would draw about 140 mA at
+100 %: it keeps about 90 % of its power with a host, and half without one.
 
 ## Self-test (production)
 
-On request from the host or the debug console, the lamp shows red,
-green, blue and warm white for 1.5 s each, checks that the light sensor
-answers and that the idle touch reading is plausible, then glows blue and
-waits up to 10 s for a touch on the lid. It then restores its state and
-reports the results. A person checks the colors, and the touch that ends the
-test does not change the lamp. During the test the touch does nothing, and
-the lamp refuses the host's changes ("busy").
+On request from the host, the lamp shows red, green, blue and warm white
+for 1.5 s each, checks that the light sensor answers and that the idle
+touch reading is plausible, then glows blue and waits up to 10 s for a
+touch on the lid; a finger already on the lid must lift first. It then
+restores its state and reports the results. A person checks the colors,
+and the touch that ends the test does not change the lamp. During the
+test the touch does nothing, and the lamp refuses the host's changes
+("busy"). A USB suspend cuts the test short, and the lamp reports it
+when the host wakes up.
 
 ## Out of scope
 

@@ -94,6 +94,18 @@ static void test_calibration_sets_the_baseline(void)
     TEST_ASSERT_EQUAL_INT16(0, touch_detector_delta_permille(&td));
 }
 
+static void test_recalibration_drops_the_old_baseline(void)
+{
+    /* As at the end of a USB suspend: the old baseline may no longer hold. */
+    touch_detector_recalibrate(&td);
+    TEST_ASSERT_EQUAL(TOUCH_STATE_CALIBRATING, touch_detector_state(&td));
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_baseline(&td));
+
+    hold(BASELINE + 100u, 200);
+    TEST_ASSERT_EQUAL(TOUCH_STATE_IDLE, touch_detector_state(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE + 100u, touch_detector_baseline(&td));
+}
+
 static void test_flat_signal_gives_no_event(void)
 {
     hold(BASELINE, 5000);
@@ -223,6 +235,31 @@ static void test_object_near_the_lid_is_absorbed(void)
     TEST_ASSERT_EQUAL_UINT16(1, touch_detector_recalibrations(&td));
 }
 
+static void test_a_rise_after_a_hand_near_the_lid_waits_its_own_delay(void)
+{
+    /* The hand leaves 1 s short of an object, then the reading rises above
+     * the baseline: the rise counts its own second, not the hand's time. */
+    hold((uint16_t)(BASELINE - 40u), 9000);
+    hold(BASELINE + 80u, 900);
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE, touch_detector_baseline(&td));
+
+    hold(BASELINE + 80u, 200);
+    TEST_ASSERT_EQUAL_UINT16(1, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE + 80u, touch_detector_baseline(&td));
+}
+
+static void test_a_press_restarts_the_hand_near_the_lid_delay(void)
+{
+    /* Without the restart, the hand would pass for an object 1 s after the tap. */
+    hold((uint16_t)(BASELINE - 40u), 9000);
+    hold(TOUCHED, 300);
+    hold((uint16_t)(BASELINE - 40u), 2000);
+    TEST_ASSERT_EQUAL_UINT(1, short_presses);
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE, touch_detector_baseline(&td));
+}
+
 static void test_taps_with_the_hand_resting_near_the_lid(void)
 {
     /* The resting hand (30 per mille) sits above the release threshold:
@@ -257,13 +294,6 @@ static void test_blip_right_after_a_release_is_ignored(void)
 
 static void test_a_consumed_touch_fires_nothing(void)
 {
-    /* Consumed while the press is still being debounced. */
-    hold(TOUCHED, 20);
-    touch_detector_consume(&td);
-    hold(TOUCHED, 2500);
-    hold(BASELINE, 300);
-    TEST_ASSERT_EQUAL_UINT(0, short_presses + long_presses);
-
     /* Consumed once pressed. */
     hold(TOUCHED, 300);
     touch_detector_consume(&td);
@@ -276,19 +306,11 @@ static void test_a_consumed_touch_fires_nothing(void)
     TEST_ASSERT_EQUAL_UINT(1, short_presses);
 }
 
-static void test_consume_expires_without_a_press(void)
-{
-    touch_detector_consume(&td); /* nothing pending: no effect later */
-    hold(BASELINE, 300);
-    hold(TOUCHED, 300);
-    hold(BASELINE, 300);
-    TEST_ASSERT_EQUAL_UINT(1, short_presses);
-}
-
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_calibration_sets_the_baseline);
+    RUN_TEST(test_recalibration_drops_the_old_baseline);
     RUN_TEST(test_flat_signal_gives_no_event);
     RUN_TEST(test_short_press_fires_once_on_release);
     RUN_TEST(test_blip_shorter_than_debounce_is_ignored);
@@ -300,10 +322,11 @@ int main(void)
     RUN_TEST(test_hysteresis_keeps_the_press_between_thresholds);
     RUN_TEST(test_hand_near_the_lid_freezes_the_baseline);
     RUN_TEST(test_object_near_the_lid_is_absorbed);
+    RUN_TEST(test_a_rise_after_a_hand_near_the_lid_waits_its_own_delay);
+    RUN_TEST(test_a_press_restarts_the_hand_near_the_lid_delay);
     RUN_TEST(test_taps_with_the_hand_resting_near_the_lid);
     RUN_TEST(test_long_press_with_the_hand_resting_near_the_lid);
     RUN_TEST(test_blip_right_after_a_release_is_ignored);
     RUN_TEST(test_a_consumed_touch_fires_nothing);
-    RUN_TEST(test_consume_expires_without_a_press);
     return UNITY_END();
 }

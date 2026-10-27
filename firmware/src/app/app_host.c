@@ -12,7 +12,6 @@
 #include "bsp/board.h"
 #include "bsp/bsp.h"
 #include "bsp/bsp_uid.h"
-#include "diag/log.h"
 #include "protocol.h"
 #include "time_utils.h"
 #include "usb/usb_device.h"
@@ -65,13 +64,17 @@ static bool same_content(const state_content_t *a, const state_content_t *b)
 static void observe_changes(void)
 {
     const state_content_t now = observe();
+    if (now.link != USB_LINK_CONFIGURED) {
+        s_telemetry_period_ms = 0; /* the host left: stop streaming */
+    }
+    if (now.link == USB_LINK_UNCONFIGURED) {
+        /* A suspended host still waits for the result; the next one never asked. */
+        app.self_test_report = false;
+    }
     if (!lamp_state_equal(&now.lamp, &s_seen.lamp)) {
         s_source = app.source;
     } else if (now.link != s_seen.link) {
         s_source = CHANGE_SOURCE_USB;
-        if (now.link != USB_LINK_CONFIGURED) {
-            s_telemetry_period_ms = 0; /* the host left: stop streaming */
-        }
     } else if (now.applied_percent != s_seen.applied_percent) {
         s_source = CHANGE_SOURCE_AUTO_BRIGHTNESS;
     }
@@ -196,7 +199,6 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
     proto_command_t command;
     const proto_status_t status = proto_decode_command(payload, &command);
     if (status != PROTO_OK) {
-        LOG_WARN("host: command 0x%02x rejected (%u)", command.type, (unsigned)status);
         send_error(command.seq, command.type, status);
         return;
     }
@@ -214,12 +216,7 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             (void)send_state(command.seq);
             break;
         case PROTO_CMD_SET_STATE:
-            if (app_apply_request(&command.body.set_state)) {
-                LOG_INFO("host: lamp %s, color %u, %s %u%%", app.lamp.on ? "on" : "off",
-                         (unsigned)app.lamp.color,
-                         app.lamp.brightness_mode == BRIGHTNESS_MODE_AUTO ? "auto" : "manual",
-                         (unsigned)app.lamp.manual_level);
-            }
+            app_apply_request(&command.body.set_state);
             /* The answer is the new state; it also serves as the
              * notification of the change. */
             observe_changes();
@@ -237,14 +234,13 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             break;
         case PROTO_CMD_SET_AUTO_BIAS:
             brightness_set_auto_bias(&app.brightness, command.body.auto_bias);
-            LOG_INFO("host: auto brightness bias %d%%", (int)command.body.auto_bias);
             send_ack(command.seq, command.type);
             break;
         case PROTO_CMD_GET_DIAGNOSTICS:
             send_diagnostics(command.seq);
             break;
         case PROTO_CMD_SELF_TEST:
-            (void)app_start_self_test(command.seq);
+            app_start_self_test(command.seq);
             send_ack(command.seq, command.type);
             break;
         default:
@@ -257,7 +253,9 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
 
 static void send_telemetry(uint32_t now_ms)
 {
-    if (s_telemetry_period_ms == 0u || !time_reached(now_ms, s_telemetry_next_ms)) {
+    /* A sample due waits for the previous messages to leave. */
+    if (s_telemetry_period_ms == 0u || !time_reached(now_ms, s_telemetry_next_ms) ||
+        !usb_hid_idle()) {
         return;
     }
     s_telemetry_next_ms = now_ms + s_telemetry_period_ms;
@@ -270,7 +268,7 @@ static void send_telemetry(uint32_t now_ms)
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),
         .touch_state = (uint8_t)touch_detector_state(&app.touch),
         .lux_centi = (app.als.lux_milli + 5u) / 10u,
-        .als_raw = app.als.count, /* at the sensor's current range */
+        .als_raw = app.als.count,
         /* The protocol reports whole ticks. */
         .duty = { subticks_to_ticks(app.duty[LED_CHANNEL_RED]),
                   subticks_to_ticks(app.duty[LED_CHANNEL_GREEN]),
@@ -301,7 +299,8 @@ void app_host_task(uint32_t now_ms)
     }
 
     observe_changes();
-    if (notification_pending() && app.link == USB_LINK_CONFIGURED) {
+    /* Until the way is clear, the changes add up in s_seen and go out as one STATE. */
+    if (notification_pending() && usb_hid_idle()) {
         const bool level_only = only_level_pending();
         const bool throttled = level_only && time_elapsed_ms(now_ms, s_last_level_notify_ms) <
                                                  APP_AUTO_LEVEL_NOTIFY_MS;
@@ -317,7 +316,6 @@ void app_host_task(uint32_t now_ms)
     }
 
     if (s_reset_pending && time_reached(now_ms, s_reset_at_ms)) {
-        LOG_WARN("host: reset requested");
         bsp_system_reset();
     }
 }

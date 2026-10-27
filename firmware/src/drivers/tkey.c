@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "bsp/board.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "led_pwm.h"
@@ -29,11 +30,12 @@ typedef struct {
 
 static uint8_t s_charge_time;
 static uint8_t s_discharge_time;
-static sample_t s_queue[QUEUE_SIZE];
+/* Volatile as the indices, so that a slot is read before s_tail frees it
+ * to the interrupt. */
+static volatile sample_t s_queue[QUEUE_SIZE];
 static volatile uint32_t s_head; /* written by the interrupt */
 static volatile uint32_t s_tail; /* written by the main loop */
-static volatile uint32_t s_overruns;
-static volatile uint32_t s_timeouts;
+static volatile uint32_t s_lost;
 
 void tkey_init(const tkey_config_t *config)
 {
@@ -41,25 +43,13 @@ void tkey_init(const tkey_config_t *config)
     s_discharge_time = config->discharge_time;
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-    GPIO_InitTypeDef pin = {
-        .GPIO_Pin = BOARD_TOUCH_PIN,
-        .GPIO_Speed = GPIO_Speed_2MHz,
-        .GPIO_Mode = GPIO_Mode_AIN,
-    };
-    GPIO_Init(BOARD_TOUCH_PORT, &pin);
+    bsp_gpio_config(BOARD_TOUCH_PORT, BOARD_TOUCH_PIN, GPIO_Mode_AIN, GPIO_Speed_2MHz);
 
-    ADC_InitTypeDef adc = {
-        .ADC_Mode = ADC_Mode_Independent,
-        .ADC_ScanConvMode = DISABLE,
-        .ADC_ContinuousConvMode = DISABLE,
-        .ADC_ExternalTrigConv = ADC_ExternalTrigConv_None,
-        .ADC_DataAlign = ADC_DataAlign_Right,
-        .ADC_NbrOfChannel = 1,
-    };
-    ADC_Init(ADC1, &adc);
-    ADC_RegularChannelConfig(ADC1, BOARD_TOUCH_ADC_CHANNEL, 1, config->adc_sample_time);
-    ADC_Cmd(ADC1, ENABLE);
-    TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
+    /* One conversion of the touch channel, started by software: the reset
+     * values but for the trigger and the sample time (channel 9: SAMPTR2). */
+    ADC1->CTLR2 = ADC_ExternalTrigConv_None;
+    ADC1->SAMPTR2 = (uint32_t)config->adc_sample_time << (3u * BOARD_TOUCH_ADC_CHANNEL);
+    ADC1->RSQR3 = BOARD_TOUCH_ADC_CHANNEL;
 }
 
 /* Runs in the TIM3 interrupt, at the sample point of the PWM period. */
@@ -70,9 +60,9 @@ static void measure(void)
     TKey1->IDATAR1 = s_charge_time;
     TKey1->RDATAR = s_discharge_time;
     uint32_t polls = 0;
-    while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET) {
+    while ((ADC1->STATR & ADC_EOC) == 0u) {
         if (++polls >= MEASURE_MAX_POLLS) {
-            s_timeouts++;
+            s_lost++;
             return;
         }
     }
@@ -80,7 +70,7 @@ static void measure(void)
 
     const uint32_t head = s_head;
     if (head - s_tail >= QUEUE_SIZE) {
-        s_overruns++;
+        s_lost++;
         return;
     }
     s_queue[head & (QUEUE_SIZE - 1u)] = (sample_t){ value, bsp_time_ms() };
@@ -89,6 +79,8 @@ static void measure(void)
 
 void tkey_start(void)
 {
+    ADC1->CTLR2 |= ADC_ADON;
+    TKey1->CTLR1 |= ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN;
     led_pwm_set_sample_callback(measure);
     /* Every millisecond, from the SysTick interrupt. */
     bsp_time_set_tick_hook(led_pwm_arm_sample);
@@ -98,6 +90,9 @@ void tkey_stop(void)
 {
     bsp_time_set_tick_hook(NULL);
     led_pwm_set_sample_callback(NULL);
+    /* Powered down, within the 2.5 mA of a suspended USB device. */
+    TKey1->CTLR1 &= ~(ADC_CTLR1_TKENABLE | ADC_CTLR1_BUFEN);
+    ADC1->CTLR2 &= ~ADC_ADON;
 }
 
 bool tkey_read(uint16_t *sample, uint32_t *time_ms)
@@ -113,12 +108,7 @@ bool tkey_read(uint16_t *sample, uint32_t *time_ms)
     return true;
 }
 
-uint32_t tkey_overruns(void)
+uint32_t tkey_samples_lost(void)
 {
-    return s_overruns;
-}
-
-uint32_t tkey_timeouts(void)
-{
-    return s_timeouts;
+    return s_lost;
 }

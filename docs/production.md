@@ -80,7 +80,7 @@ otherwise:
 | `signature` | `checked`, or `none` with `--unsigned` |
 | `board_revision` | Board revision the firmware reports |
 | `colors` | `ok`, or `fail:` and the wrong colors (operator) |
-| `light_sensor`, `lux` | The sensor answered with a plausible reading; the light it measured |
+| `light_sensor`, `lux` | The sensor answered; the light it measured |
 | `touch_idle`, `touch_baseline` | Touch reading at rest in the expected range; that reading |
 | `touch`, `touch_peak_permille` | A touch was detected; the largest drop seen |
 | `result` | `PASS` when every check passed |

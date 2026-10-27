@@ -28,7 +28,7 @@ const touch_config_t app_touch_config = {
     .window_samples = 20,     /* 20 ms at 1 kHz: one 50 Hz mains period */
     .calibration_windows = 8, /* 160 ms */
     .baseline_shift = 8,      /* about 5 s time constant */
-    .press_permille = APP_TOUCH_PRESS_PERMILLE,
+    .press_permille = 60,
     .release_permille = 34,
     .press_rise_permille = 50,
     .proximity_permille = 10, /* rest noise and the LED on/off shift stay below */
@@ -60,7 +60,7 @@ static const brightness_point_t app_brightness_curve[] = {
 const brightness_config_t app_brightness_config = {
     .curve = app_brightness_curve,
     .curve_points = sizeof app_brightness_curve / sizeof app_brightness_curve[0],
-    .tick_ms = 100,    /* the shortest integration of the sensor */
+    .tick_ms = 100,    /* four filter steps per reading of the sensor */
     .slow_divisor = 8, /* small changes: time constant about 0.75 s */
     .fast_divisor = 3, /* large ones: about 0.25 s */
     .large_q8 = 256,   /* large: a factor of 2 */
@@ -93,8 +93,8 @@ const uint16_t app_led_pulse_loss_ns[LED_CHANNEL_COUNT] = { 28, 42, 58 };
 /* Worst-case LED currents at 100 % duty, at 5.25 V and the lowest forward
  * voltage (constraint N2 in hardware/README.md). 70 mA plus about 25 mA for
  * the MCU stays within the 100 mA of an unconfigured USB device. 125 mA lets
- * any single color reach 100 % and holds warm white near half power; the
- * heat test of docs/bringup.md tells whether it may rise. */
+ * any single color reach 100 % and holds warm white, about 140 mA, near 90 %
+ * of its power; the heat test of docs/bringup.md tells whether it may rise. */
 const power_config_t app_power_config = {
     .full_scale_ma = { 86, 63, 125 },
     .unconfigured_cap_ma = 70,
@@ -114,5 +114,4 @@ const self_test_config_t app_self_test_config = {
     .wait_linear = 1959,
     .touch_idle_min = 1000,
     .touch_idle_max = 3800,
-    .touch_press_permille = APP_TOUCH_PRESS_PERMILLE,
 };

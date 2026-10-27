@@ -26,7 +26,9 @@ enum {
     STRID_PRODUCT,
     STRID_SERIAL,
     STRID_HID,
+#if CFG_TUD_CDC
     STRID_CDC,
+#endif
 };
 
 static const tusb_desc_device_t desc_device = {
@@ -94,11 +96,13 @@ static const char *const string_table[] = {
     [STRID_MANUFACTURER] = USB_MANUFACTURER_STRING,
     [STRID_PRODUCT] = USB_PRODUCT_STRING,
     [STRID_HID] = "DISLED control",
+#if CFG_TUD_CDC
     [STRID_CDC] = "DISLED console",
+#endif
 };
 
 /* Longest string: the 24-digit serial number. */
-#define STRING_MAX_CHARS 32u
+#define STRING_MAX_CHARS BSP_UID_HEX_CHARS
 static uint16_t desc_string[1u + STRING_MAX_CHARS];
 
 const uint8_t *tud_descriptor_device_cb(void)

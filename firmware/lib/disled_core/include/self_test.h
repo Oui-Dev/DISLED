@@ -31,15 +31,16 @@ typedef struct {
     uint16_t wait_linear;    /* light of the blue glow while waiting */
     uint16_t touch_idle_min; /* plausible idle TouchKey baseline, counts */
     uint16_t touch_idle_max;
-    uint16_t touch_press_permille; /* drop that counts as a touch */
 } self_test_config_t;
 
 typedef struct {
     bool light_present; /* the sensor answers */
     uint32_t lux_centi;
-    bool touch_ready; /* the touch detector has a baseline */
-    uint16_t touch_baseline;
+    uint16_t touch_baseline; /* 0 while the detector calibrates: not plausible */
     int16_t touch_delta_permille;
+    /* The detector sees a press. A drop alone is no touch: a hand above
+     * the lid reaches the press threshold too. */
+    bool touch_pressed;
 } self_test_inputs_t;
 
 typedef enum {
@@ -56,6 +57,7 @@ typedef struct {
     uint32_t lux_centi;
     uint16_t touch_baseline;
     int16_t touch_peak_permille;
+    bool touch_released; /* seen with no press since the blue glow started */
 } self_test_t;
 
 void self_test_init(self_test_t *t, const self_test_config_t *config);

@@ -33,8 +33,7 @@ static void check_idle(self_test_t *t, const self_test_inputs_t *in)
         t->results |= SELF_TEST_LIGHT_OK;
     }
     t->touch_baseline = in->touch_baseline;
-    if (in->touch_ready && in->touch_baseline >= cfg->touch_idle_min &&
-        in->touch_baseline <= cfg->touch_idle_max) {
+    if (in->touch_baseline >= cfg->touch_idle_min && in->touch_baseline <= cfg->touch_idle_max) {
         t->results |= SELF_TEST_TOUCH_IDLE_OK;
     }
 }
@@ -57,7 +56,11 @@ bool self_test_update(self_test_t *t, uint32_t now_ms, const self_test_inputs_t 
             if (in->touch_delta_permille > t->touch_peak_permille) {
                 t->touch_peak_permille = in->touch_delta_permille;
             }
-            if (in->touch_delta_permille >= (int32_t)cfg->touch_press_permille) {
+            /* A finger already down when the blue glow starts must lift first:
+             * only a press made during the wait answers it. */
+            if (!in->touch_pressed) {
+                t->touch_released = true;
+            } else if (t->touch_released) {
                 t->results |= SELF_TEST_TOUCH_PRESSED;
             }
             if ((t->results & SELF_TEST_TOUCH_PRESSED) != 0u || elapsed >= cfg->touch_wait_ms) {

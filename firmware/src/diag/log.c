@@ -15,25 +15,13 @@
 
 #define LINE_MAX 128u
 
-static log_level_t s_level = LOG_LEVEL_INFO;
-
-void log_set_level(log_level_t level)
+void log_write(const char *format, ...)
 {
-    s_level = level;
-}
-
-void log_write(log_level_t level, const char *format, ...)
-{
-    static const char tags[] = { 'E', 'W', 'I' };
-    if (level > s_level) {
-        return;
-    }
-
     char line[LINE_MAX];
     const uint32_t now = bsp_time_ms();
-    size_t length =
-        fmt_snprintf(line, sizeof line, "[%6lu.%03lu] %c ", (unsigned long)(now / 1000u),
-                     (unsigned long)(now % 1000u), tags[level]);
+    /* "I", for info: tools/touch_replay looks for "] I touch:". */
+    size_t length = fmt_snprintf(line, sizeof line, "[%6lu.%03lu] I ", (unsigned long)(now / 1000u),
+                                 (unsigned long)(now % 1000u));
     if (length < sizeof line) {
         va_list args;
         va_start(args, format);

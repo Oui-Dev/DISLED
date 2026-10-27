@@ -6,6 +6,7 @@
 #include "i2c_bus.h"
 
 #include "bsp/board.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "time_utils.h"
@@ -29,13 +30,9 @@ static bool fail(void)
  * sending and release SDA, then a STOP condition resets its state. */
 static void release_bus(void)
 {
-    GPIO_InitTypeDef pins = {
-        .GPIO_Pin = BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN,
-        .GPIO_Speed = GPIO_Speed_10MHz,
-        .GPIO_Mode = GPIO_Mode_Out_OD,
-    };
     GPIO_SetBits(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN);
-    GPIO_Init(BOARD_I2C_PORT, &pins);
+    bsp_gpio_config(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN, GPIO_Mode_Out_OD,
+                    GPIO_Speed_10MHz);
     for (int i = 0; i < 9; i++) {
         if (GPIO_ReadInputDataBit(BOARD_I2C_PORT, BOARD_I2C_SDA_PIN) == Bit_SET) {
             break;
@@ -68,12 +65,8 @@ static void configure_peripheral(void)
     I2C_SoftwareResetCmd(BOARD_I2C, ENABLE);
     I2C_SoftwareResetCmd(BOARD_I2C, DISABLE);
 
-    GPIO_InitTypeDef pins = {
-        .GPIO_Pin = BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN,
-        .GPIO_Speed = GPIO_Speed_10MHz,
-        .GPIO_Mode = GPIO_Mode_AF_OD,
-    };
-    GPIO_Init(BOARD_I2C_PORT, &pins);
+    bsp_gpio_config(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN, GPIO_Mode_AF_OD,
+                    GPIO_Speed_10MHz);
 
     I2C_InitTypeDef init = {
         .I2C_ClockSpeed = s_speed_hz,
@@ -83,16 +76,22 @@ static void configure_peripheral(void)
         .I2C_Ack = I2C_Ack_Enable,
         .I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit,
     };
-    I2C_Init(BOARD_I2C, &init);
-    I2C_Cmd(BOARD_I2C, ENABLE);
+    I2C_Init(BOARD_I2C, &init); /* also enables the peripheral */
+}
+
+/* Releases the bus and resets the peripheral: at start-up, and after a
+ * failed transfer so that the next one starts clean whatever went wrong. */
+static void recover(void)
+{
+    release_bus();
+    configure_peripheral();
 }
 
 void i2c_bus_init(uint32_t speed_hz)
 {
     s_speed_hz = speed_hz;
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
-    release_bus();
-    configure_peripheral();
+    recover();
 }
 
 /* Waits until all the flags of `event` are set. A NACK, a lost arbitration
@@ -134,19 +133,6 @@ static bool wait_bus_free(void)
     return true;
 }
 
-/* Ends a failed transaction and leaves the peripheral ready: if the bus
- * stays busy after the STOP, it is released and the peripheral reset. */
-static void abort_transfer(void)
-{
-    I2C_GenerateSTOP(BOARD_I2C, ENABLE);
-    I2C_ClearFlag(BOARD_I2C, I2C_FLAG_AF | I2C_FLAG_ARLO | I2C_FLAG_BERR);
-    I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
-    I2C_NACKPositionConfig(BOARD_I2C, I2C_NACKPosition_Current);
-    if (!wait_bus_free()) {
-        i2c_bus_recover();
-    }
-}
-
 static bool start_write(uint8_t address)
 {
     if (!wait_bus_free()) {
@@ -170,7 +156,7 @@ bool i2c_bus_write(uint8_t address, const uint8_t *data, size_t length)
     if (ok) {
         I2C_GenerateSTOP(BOARD_I2C, ENABLE);
     } else {
-        abort_transfer();
+        recover();
     }
     return ok;
 }
@@ -187,7 +173,7 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
         ok = wait_event(I2C_EVENT_MASTER_MODE_SELECT);
     }
     if (!ok) {
-        abort_transfer();
+        recover();
         return false;
     }
 
@@ -208,18 +194,10 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
             out[i] = I2C_ReceiveData(BOARD_I2C);
         }
     }
-    I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
     if (!ok) {
-        abort_transfer();
+        recover();
     }
     return ok;
-}
-
-void i2c_bus_recover(void)
-{
-    I2C_Cmd(BOARD_I2C, DISABLE);
-    release_bus();
-    configure_peripheral();
 }
 
 uint16_t i2c_bus_error_count(void)
