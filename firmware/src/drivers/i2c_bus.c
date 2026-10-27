@@ -127,17 +127,13 @@ static bool wait_bus_free(void)
     return true;
 }
 
-/* Ends a failed transaction and leaves the peripheral ready: if the bus
- * stays busy after the STOP, it is released and the peripheral reset. */
-static void abort_transfer(void)
+/* Ends a failed transfer: releases the bus and resets the peripheral, so
+ * that the next transfer starts clean whatever went wrong. */
+static void recover(void)
 {
-    I2C_GenerateSTOP(BOARD_I2C, ENABLE);
-    I2C_ClearFlag(BOARD_I2C, I2C_FLAG_AF | I2C_FLAG_ARLO | I2C_FLAG_BERR);
-    I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
-    I2C_NACKPositionConfig(BOARD_I2C, I2C_NACKPosition_Current);
-    if (!wait_bus_free()) {
-        i2c_bus_recover();
-    }
+    I2C_Cmd(BOARD_I2C, DISABLE);
+    release_bus();
+    configure_peripheral();
 }
 
 static bool start_write(uint8_t address)
@@ -163,7 +159,7 @@ bool i2c_bus_write(uint8_t address, const uint8_t *data, size_t length)
     if (ok) {
         I2C_GenerateSTOP(BOARD_I2C, ENABLE);
     } else {
-        abort_transfer();
+        recover();
     }
     return ok;
 }
@@ -180,7 +176,7 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
         ok = wait_event(I2C_EVENT_MASTER_MODE_SELECT);
     }
     if (!ok) {
-        abort_transfer();
+        recover();
         return false;
     }
 
@@ -203,16 +199,9 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
     }
     I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
     if (!ok) {
-        abort_transfer();
+        recover();
     }
     return ok;
-}
-
-void i2c_bus_recover(void)
-{
-    I2C_Cmd(BOARD_I2C, DISABLE);
-    release_bus();
-    configure_peripheral();
 }
 
 uint16_t i2c_bus_error_count(void)

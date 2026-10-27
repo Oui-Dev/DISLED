@@ -4,7 +4,8 @@
  * Additional permission under GNU GPL version 3 section 7: see LICENSING.md.
  *
  * Blocking I2C master on I2C1. Every wait has a timeout, so a stuck bus costs a
- * few milliseconds, and i2c_bus_recover() frees a slave that holds SDA low.
+ * few milliseconds, and a failed transfer clocks SCL by hand to free a slave
+ * that holds SDA low, then resets the peripheral.
  */
 #ifndef DISLED_I2C_BUS_H
 #define DISLED_I2C_BUS_H
@@ -25,8 +26,5 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2]);
 
 /* Failed transfers since boot (diagnostics). */
 uint16_t i2c_bus_error_count(void);
-
-/* Clocks SCL until a stuck slave releases SDA, then re-initializes. */
-void i2c_bus_recover(void);
 
 #endif /* DISLED_I2C_BUS_H */

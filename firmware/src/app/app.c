@@ -165,7 +165,6 @@ static void task_als(uint32_t now_ms)
     }
     if (!als->present) {
         if (time_reached(now_ms, als->retry_ms)) {
-            i2c_bus_recover(); /* start each attempt from a clean bus */
             als_probe(als, now_ms, APP_ALS_RETRY_MS);
             if (als->present) {
                 LOG_INFO("als: sensor found");
@@ -191,7 +190,6 @@ static void task_als(uint32_t now_ms)
         als->present = false;
         als->retry_ms = now_ms + APP_ALS_RETRY_MS;
         brightness_lux_lost(&app.brightness);
-        i2c_bus_recover();
     }
 }
 
