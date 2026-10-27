@@ -13,29 +13,6 @@
 
 static volatile bool s_slow;
 
-void bsp_power_slow_clock(void)
-{
-    if (s_slow) {
-        return;
-    }
-    __disable_irq();
-    RCC->CTLR |= RCC_HSION;
-    while ((RCC->CTLR & RCC_HSIRDY) == 0u) {
-    }
-    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_HSI;
-    while ((RCC->CFGR0 & RCC_SWS) != RCC_SWS_HSI) {
-    }
-    /* The PLL settings stay in CFGR0 for the way back. */
-    RCC->CTLR &= ~RCC_PLLON;
-    RCC->CTLR &= ~RCC_HSEON;
-    /* 8 MHz / 8: the core and the buses run at 1 MHz (APB1 at 250 kHz). */
-    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV8;
-    SystemCoreClockUpdate();
-    bsp_time_core_clock_changed();
-    s_slow = true;
-    __enable_irq();
-}
-
 static bool wait_for(const volatile uint32_t *reg, uint32_t mask, uint32_t value)
 {
     for (uint32_t i = 0; i < START_TIMEOUT_LOOPS; i++) {
@@ -46,6 +23,26 @@ static bool wait_for(const volatile uint32_t *reg, uint32_t mask, uint32_t value
     return false;
 }
 
+void bsp_power_slow_clock(void)
+{
+    if (s_slow) {
+        return;
+    }
+    __disable_irq();
+    /* The internal oscillator never stops: no need to start it. */
+    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_HSI;
+    (void)wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_HSI);
+    /* The PLL settings stay in CFGR0 for the way back. */
+    RCC->CTLR &= ~RCC_PLLON;
+    RCC->CTLR &= ~RCC_HSEON;
+    /* 8 MHz / 8: the core and the buses run at 1 MHz (APB1 at 250 kHz). */
+    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV8;
+    SystemCoreClock = HSI_VALUE / 8u;
+    bsp_time_core_clock_changed();
+    s_slow = true;
+    __enable_irq();
+}
+
 bool bsp_power_full_clock_from_isr(void)
 {
     if (!s_slow) {
@@ -54,7 +51,7 @@ bool bsp_power_full_clock_from_isr(void)
     /* Full speed internal oscillator first, so that the waits below are
      * short and the time base stays right if the crystal fails. */
     RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV1;
-    SystemCoreClockUpdate();
+    SystemCoreClock = HSI_VALUE;
     bsp_time_core_clock_changed();
     /* No longer slow, even if the crystal fails below: the next suspend must
      * slow the core down again, and the next interrupt not retry. */
@@ -74,7 +71,7 @@ bool bsp_power_full_clock_from_isr(void)
     if (!wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_PLL)) {
         return false;
     }
-    SystemCoreClockUpdate();
+    SystemCoreClock = BSP_POWER_PLL_HZ;
     bsp_time_core_clock_changed();
     return true;
 }

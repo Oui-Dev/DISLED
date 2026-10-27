@@ -6,6 +6,7 @@
 #include "bsp.h"
 
 #include "board.h"
+#include "bsp_power.h"
 #include "bsp_time.h"
 #include "ch32.h"
 
@@ -14,33 +15,28 @@ static bool s_crystal_ok;
 
 static void capture_reset_cause(void)
 {
-    /* Highest priority first: a watchdog reset also sets the pin flag. */
-    if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST) != RESET) {
+    /* Highest priority first: a watchdog reset also sets the pin flag. The
+     * window watchdog and the low-power modes are never used. */
+    const uint32_t flags = RCC->RSTSCKR;
+    if ((flags & RCC_IWDGRSTF) != 0u) {
         s_reset_cause = RESET_CAUSE_WATCHDOG;
-    } else if (RCC_GetFlagStatus(RCC_FLAG_WWDGRST) != RESET) {
-        s_reset_cause = RESET_CAUSE_WINDOW_WATCHDOG;
-    } else if (RCC_GetFlagStatus(RCC_FLAG_SFTRST) != RESET) {
+    } else if ((flags & RCC_SFTRSTF) != 0u) {
         s_reset_cause = RESET_CAUSE_SOFTWARE;
-    } else if (RCC_GetFlagStatus(RCC_FLAG_LPWRRST) != RESET) {
-        s_reset_cause = RESET_CAUSE_LOW_POWER;
-    } else if (RCC_GetFlagStatus(RCC_FLAG_PORRST) != RESET) {
+    } else if ((flags & RCC_PORRSTF) != 0u) {
         s_reset_cause = RESET_CAUSE_POWER_ON;
-    } else if (RCC_GetFlagStatus(RCC_FLAG_PINRST) != RESET) {
+    } else if ((flags & RCC_PINRSTF) != 0u) {
         s_reset_cause = RESET_CAUSE_PIN;
-    } else {
-        s_reset_cause = RESET_CAUSE_UNKNOWN;
     }
-    RCC_ClearFlag();
+    RCC->RSTSCKR |= RCC_RMVF;
 }
 
 static void init_clocks(void)
 {
     /* The startup code ran SystemInit(): 8 MHz crystal x 18 = 144 MHz,
      * HCLK = PCLK2 = 144 MHz, PCLK1 = 72 MHz (both lowered below). If the
-     * crystal failed, the chip stayed on the internal oscillator; recompute
-     * the real clock. */
+     * crystal failed, the chip stayed on the internal oscillator, at 8 MHz. */
     s_crystal_ok = (RCC->CFGR0 & RCC_SWS) == RCC_SWS_PLL;
-    SystemCoreClockUpdate();
+    SystemCoreClock = s_crystal_ok ? BSP_POWER_PLL_HZ : HSI_VALUE;
 
     /* I2C needs PCLK1 <= 60 MHz: the SDK writes PCLK1 in MHz into a 6-bit
      * field and only clamps it to 60 afterwards, so 72 MHz silently becomes
@@ -92,11 +88,8 @@ bool bsp_crystal_ok(void)
 
 uint32_t bsp_apb1_timer_clock_hz(void)
 {
-    RCC_ClocksTypeDef clocks;
-    RCC_GetClocksFreq(&clocks);
-    /* Timers run at twice PCLK1 when APB1 is divided. */
-    const bool divided = (RCC->CFGR0 & RCC_PPRE1) != RCC_PPRE1_DIV1;
-    return divided ? 2u * clocks.PCLK1_Frequency : clocks.PCLK1_Frequency;
+    /* APB1 runs at HCLK / 4 (init_clocks), and its timers at twice that. */
+    return SystemCoreClock / 2u;
 }
 
 /* Stack bounds from the linker script (2 KB at the top of RAM). */

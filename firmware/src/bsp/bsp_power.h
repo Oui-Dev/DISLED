@@ -12,6 +12,9 @@
 
 #include <stdbool.h>
 
+/* Core clock from the crystal and the PLL: 8 MHz x 18. */
+#define BSP_POWER_PLL_HZ 144000000u
+
 /* Switches the core to 1 MHz (internal oscillator / 8) and stops the
  * crystal and the PLL. USB, which needs the PLL, must be suspended. */
 void bsp_power_slow_clock(void);
