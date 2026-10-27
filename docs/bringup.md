@@ -154,7 +154,6 @@ for instance, at room temperature.
 ## 9. Diagnostics and self-test
 
 - [ ] Console `diag`: no faults, a stack margin above 1 KB, no I2C errors.
-- [ ] Console `tasks`: no task longer than a few milliseconds.
 - [ ] Console `selftest`: check the four colors by eye and touch the lid
       while it glows blue. The log shows `results 0x0f`, and the lamp is
       back in its previous state.

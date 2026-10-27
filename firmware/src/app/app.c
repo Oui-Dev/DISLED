@@ -272,13 +272,13 @@ void app_diagnostics(proto_diagnostics_t *diagnostics)
 }
 
 static scheduler_task_t tasks[] = {
-    { "usb", 0, task_usb, 0, 0 },
-    { "touch", 0, task_touch, 0, 0 },
-    { "als", APP_ALS_PERIOD_MS, task_als, 0, 0 },
-    { "output", APP_OUTPUT_PERIOD_MS, task_output, 0, 0 },
-    { "host", 0, app_host_task, 0, 0 },
+    { 0, task_usb, 0 },
+    { 0, task_touch, 0 },
+    { APP_ALS_PERIOD_MS, task_als, 0 },
+    { APP_OUTPUT_PERIOD_MS, task_output, 0 },
+    { 0, app_host_task, 0 },
 #if DISLED_DEBUG
-    { "console", 0, app_console_task, 0, 0 },
+    { 0, app_console_task, 0 },
 #endif
 };
 
@@ -344,15 +344,9 @@ void app_run(void)
 {
     scheduler_start(tasks, TASK_COUNT, bsp_time_ms());
     for (;;) {
-        scheduler_run(tasks, TASK_COUNT, bsp_time_ms(), bsp_time_us);
+        scheduler_run(tasks, TASK_COUNT, bsp_time_ms());
         /* Every task ran in this pass: the loop is alive. */
         bsp_watchdog_feed();
         /* No WFI: in this loop the core never wakes up from it. */
     }
-}
-
-const scheduler_task_t *app_tasks(size_t *count)
-{
-    *count = TASK_COUNT;
-    return tasks;
 }

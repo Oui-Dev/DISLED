@@ -5,7 +5,6 @@
  */
 #include "bsp_time.h"
 
-#include <stdbool.h>
 #include <stddef.h>
 
 #include "ch32.h"
@@ -53,8 +52,8 @@ void bsp_time_init(void)
 void bsp_time_core_clock_changed(void)
 {
     /* The restart drops a tick not counted yet and the part of the
-     * millisecond under way: both count as whole ones, or the time read by
-     * bsp_time_us() would go back. */
+     * millisecond under way: both count as whole ones, so that no time is
+     * lost. */
     if ((SysTick->SR & 1u) != 0u) {
         s_ms++;
     }
@@ -71,22 +70,6 @@ uint32_t bsp_time_ms(void)
 static uint32_t systick_count(void)
 {
     return (uint32_t)SysTick->CNT;
-}
-
-uint32_t bsp_time_us(void)
-{
-    uint32_t ms;
-    uint32_t count;
-    bool reloaded;
-    do {
-        ms = s_ms;
-        count = systick_count();
-        reloaded = (SysTick->SR & 1u) != 0u; /* tick pending, not counted yet */
-    } while (ms != s_ms);
-    if (reloaded && count < (uint32_t)SysTick->CMP / 2u) {
-        ms++;
-    }
-    return ms * 1000u + count / (SystemCoreClock / 1000000u);
 }
 
 void bsp_time_delay_us(uint32_t us)

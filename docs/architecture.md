@@ -87,8 +87,8 @@ nests.
   sensor leaves a fixed brightness, and the firmware probes it again every
   5 s. A TouchKey conversion gives up after about 100 µs.
 - **Watchdog.** The loop feeds the independent watchdog (1 s) only after
-  every task ran. The scheduler records the longest run of each task
-  (console `tasks`): 0.5 ms at most, 1.7 ms on the suspend clock.
+  every task ran. The longest task took 0.5 ms when measured during
+  development, 1.7 ms on the suspend clock: far within that second.
 - **Faults are reported.** A crash or a failed `DISLED_ASSERT` leaves its
   cause in the backup registers, then the chip resets. A failed assertion
   shows as `mcause` 0x0A55nnnn, nnnn being its source line. The next boot reports
@@ -150,8 +150,8 @@ time, so that it cannot drift under the hand and blunt the next touch.
 - `pio test -e native` runs the core on the build machine (Unity): lamp
   rules, touch detection on synthetic signals (mains hum, drift, objects,
   finger at power-up, hand resting near the lid), brightness, color, power
-  cap, output fades and pulse loss, PWM dithering, self-test, scheduler
-  and its task timing, formatter and the protocol codec.
+  cap, output fades and pulse loss, PWM dithering, self-test, scheduler,
+  formatter and the protocol codec.
 - The protocol tests check the codec byte for byte against
   `protocol/vectors/v1.json`, the same file the app tests use.
 - `pio check` runs cppcheck on `src/` and the core at every severity.

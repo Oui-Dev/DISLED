@@ -14,22 +14,15 @@
 #include <stdint.h>
 
 typedef struct {
-    const char *name;
     uint32_t period_ms;
     void (*run)(uint32_t now_ms);
     uint32_t next_ms; /* managed by the scheduler */
-    uint32_t max_us;  /* longest run, in microseconds */
 } scheduler_task_t;
-
-/* Microsecond clock for scheduler_run(); it may wrap. */
-typedef uint32_t (*scheduler_clock_us_t)(void);
 
 /* Makes every task due at `now_ms`. */
 void scheduler_start(scheduler_task_t *tasks, size_t count, uint32_t now_ms);
 
-/* Runs the due tasks in table order, and records the longest run of each in
- * `max_us`, timed with `clock_us`, which must not be NULL. */
-void scheduler_run(scheduler_task_t *tasks, size_t count, uint32_t now_ms,
-                   scheduler_clock_us_t clock_us);
+/* Runs the due tasks in table order. */
+void scheduler_run(scheduler_task_t *tasks, size_t count, uint32_t now_ms);
 
 #endif /* DISLED_SCHEDULER_H */

@@ -10,7 +10,6 @@
 #define DISLED_APP_CONTEXT_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #include "brightness.h"
@@ -19,7 +18,6 @@
 #include "lamp_fsm.h"
 #include "led_output.h"
 #include "protocol.h"
-#include "scheduler.h"
 #include "self_test.h"
 #include "touch_detector.h"
 
@@ -68,8 +66,5 @@ const char *app_link_name(usb_link_t link);
 
 /* Snapshot of the DIAGNOSTICS message. */
 void app_diagnostics(proto_diagnostics_t *diagnostics);
-
-/* The scheduler table, with the longest run of each task (console). */
-const scheduler_task_t *app_tasks(size_t *count);
 
 #endif /* DISLED_APP_CONTEXT_H */

@@ -16,9 +16,6 @@ void bsp_time_init(void);
  * time_elapsed_ms() from time_utils.h, never with < or >. */
 uint32_t bsp_time_ms(void);
 
-/* Microseconds, for durations (wraps every 71 minutes). */
-uint32_t bsp_time_us(void);
-
 /* The core clock changed (start of the crystal, USB suspend): restarts the
  * 1 ms period at the new SystemCoreClock. The time never goes back, but may
  * jump a millisecond ahead. */

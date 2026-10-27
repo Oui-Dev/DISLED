@@ -199,18 +199,6 @@ static void cmd_diag(int argc, char **argv)
                    (unsigned)d.usb_suspends, (int)d.auto_bias);
 }
 
-static void cmd_tasks(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    size_t count = 0;
-    const scheduler_task_t *tasks = app_tasks(&count);
-    for (size_t i = 0; i < count; i++) {
-        console_printf("%-8s longest run %lu us\r\n", tasks[i].name,
-                       (unsigned long)tasks[i].max_us);
-    }
-}
-
 static void cmd_selftest(int argc, char **argv)
 {
     (void)argc;
@@ -226,7 +214,6 @@ static const console_command_t commands[] = {
     { "watch", "<ms>|off", "print touch, light and current periodically", cmd_watch },
     { "cap", "<mA>|off", "override the LED current cap (thermal test only)", cmd_cap },
     { "diag", "", "diagnostics counters (as sent to the host)", cmd_diag },
-    { "tasks", "", "longest run of each task (watchdog margin)", cmd_tasks },
     { "selftest", "", "run the production self-test", cmd_selftest },
     { "log", "<0-2>", "log level", cmd_log },
     { "reset", "", "restart the firmware", cmd_reset },

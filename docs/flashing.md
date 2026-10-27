@@ -84,7 +84,7 @@ Type `help` for the list of commands:
 | `info`, `state` | firmware, chip, fault; lamp, USB link and LED output |
 | `set on\|off\|auto\|color <0-3>\|level <1-100>\|bias <-50..50>` | change the lamp as the host does |
 | `watch <ms>\|off` | stream touch, light (lux, count, level) and current (`watch 20`: every touch window) |
-| `diag`, `tasks` | diagnostics counters; longest run of each task |
+| `diag` | diagnostics counters |
 | `selftest` | production self-test (colors, light sensor, touch) |
 | `cap <mA>\|off` | override the LED current cap, for the heat test of [bringup.md](bringup.md#8-heat) only |
 | `log <0-2>`, `reset` | log level; restart |
