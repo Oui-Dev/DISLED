@@ -191,7 +191,7 @@ registers); the others restart at every boot.
 
 | Offset | Size | Field |
 |---|---|---|
-| 0 | 1 | results: bit 0 light sensor answered with a plausible reading, bit 1 touch baseline within the expected range, bit 2 a touch was detected, bit 3 the test ran to its end |
+| 0 | 1 | results: bit 0 light sensor answered, bit 1 touch baseline within the expected range, bit 2 a touch was detected, bit 3 the test ran to its end |
 | 1 | 4 | ambient light during the test, lux × 100 |
 | 5 | 2 | touch baseline, TouchKey counts |
 | 7 | 2 | largest touch drop seen while waiting, per mille (`i16`) |
