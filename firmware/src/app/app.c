@@ -66,11 +66,10 @@ static void enter_suspend(uint32_t now_ms)
 
 static void leave_suspend(uint32_t now_ms)
 {
-    /* The USB wake-up interrupt already restarted the crystal: this only
-     * reports a failure, retried at the next suspend. */
-    if (!bsp_power_full_clock()) {
-        LOG_ERROR("crystal failed on resume");
-    }
+    /* The USB wake-up interrupt normally restarted the crystal already; if
+     * it failed, this tries again, since USB has no clock without it. A
+     * second failure goes unreported: no message could leave without USB. */
+    (void)bsp_power_full_clock();
     usb_device_wake_irq(false);
     led_pwm_start();
     if (app.als.present) {
@@ -190,7 +189,6 @@ static rgb16_t run_self_test(uint32_t now_ms)
             touch_detector_consume(&app.touch); /* the finger is still down */
         }
         app.self_test_report = true;
-        LOG_INFO("self-test: results 0x%02x", (unsigned)app.self_test.results);
     }
     return self_test_color(&app.self_test, now_ms);
 }
@@ -305,12 +303,6 @@ void app_init(const fault_record_t *fault)
 #endif
 
     bsp_watchdog_start(APP_WATCHDOG_MS);
-
-    LOG_INFO("DISLED firmware %s, reset cause %u%s", DISLED_FW_VERSION_STRING,
-             (unsigned)app.reset_cause, app.fault.valid ? ", after a FAULT" : "");
-    if (!app.crystal_ok) {
-        LOG_ERROR("crystal failed: USB disabled");
-    }
 }
 
 void app_run(void)

@@ -41,21 +41,17 @@ void led_pwm_init(uint32_t frequency_hz)
 
     BOARD_LED_TIMER->PSC = (uint16_t)prescaler;
     BOARD_LED_TIMER->ATRLR = (uint16_t)(s_period - 1u);
-    BOARD_LED_TIMER->SWEVGR = TIM_UG; /* loads the prescaler now */
-
-    set_modes(TIM_OCMode_PWM1);
     BOARD_LED_TIMER->CH4CVR = (uint16_t)(s_period / 2u);
     /* Channel 4 drives no pin: PB1 is the touch input. */
     BOARD_LED_TIMER->CCER = TIM_CC1E | TIM_CC2E | TIM_CC3E;
-    BOARD_LED_TIMER->CTLR1 = TIM_ARPE | TIM_CEN;
+    BOARD_LED_TIMER->CTLR1 = TIM_ARPE;
+    led_pwm_start(); /* its update event also loads the prescaler */
 
     /* Hand the pins to the timer only now, with every duty at 0 %. */
     bsp_gpio_config(BOARD_LED_RED_PORT, BOARD_LED_RED_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
     bsp_gpio_config(BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
     bsp_gpio_config(BOARD_LED_BLUE_PORT, BOARD_LED_BLUE_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
 
-    BOARD_LED_TIMER->INTFR = (uint16_t)~TIM_IT_Update;
-    BOARD_LED_TIMER->DMAINTENR = TIM_IT_Update;
     NVIC_EnableIRQ(TIM3_IRQn);
 }
 

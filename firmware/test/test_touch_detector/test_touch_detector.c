@@ -235,6 +235,31 @@ static void test_object_near_the_lid_is_absorbed(void)
     TEST_ASSERT_EQUAL_UINT16(1, touch_detector_recalibrations(&td));
 }
 
+static void test_a_rise_after_a_hand_near_the_lid_waits_its_own_delay(void)
+{
+    /* The hand leaves 1 s short of an object, then the reading rises above
+     * the baseline: the rise counts its own second, not the hand's time. */
+    hold((uint16_t)(BASELINE - 40u), 9000);
+    hold(BASELINE + 80u, 900);
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE, touch_detector_baseline(&td));
+
+    hold(BASELINE + 80u, 200);
+    TEST_ASSERT_EQUAL_UINT16(1, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE + 80u, touch_detector_baseline(&td));
+}
+
+static void test_a_press_restarts_the_hand_near_the_lid_delay(void)
+{
+    /* Without the restart, the hand would pass for an object 1 s after the tap. */
+    hold((uint16_t)(BASELINE - 40u), 9000);
+    hold(TOUCHED, 300);
+    hold((uint16_t)(BASELINE - 40u), 2000);
+    TEST_ASSERT_EQUAL_UINT(1, short_presses);
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_recalibrations(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE, touch_detector_baseline(&td));
+}
+
 static void test_taps_with_the_hand_resting_near_the_lid(void)
 {
     /* The resting hand (30 per mille) sits above the release threshold:
@@ -297,6 +322,8 @@ int main(void)
     RUN_TEST(test_hysteresis_keeps_the_press_between_thresholds);
     RUN_TEST(test_hand_near_the_lid_freezes_the_baseline);
     RUN_TEST(test_object_near_the_lid_is_absorbed);
+    RUN_TEST(test_a_rise_after_a_hand_near_the_lid_waits_its_own_delay);
+    RUN_TEST(test_a_press_restarts_the_hand_near_the_lid_delay);
     RUN_TEST(test_taps_with_the_hand_resting_near_the_lid);
     RUN_TEST(test_long_press_with_the_hand_resting_near_the_lid);
     RUN_TEST(test_blip_right_after_a_release_is_ignored);

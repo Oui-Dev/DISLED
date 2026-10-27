@@ -19,9 +19,9 @@ void bsp_power_slow_clock(void);
 /* Back to the crystal and the PLL (144 MHz), or their first start after
  * reset (bsp_init). Returns false if the core does not run from them: the
  * crystal did not start, and the chip stays on the internal oscillator
- * (8 MHz). A failed start is not retried before the next slow clock. Safe to
- * call when already fast. The _from_isr variant expects interrupts to be
- * off. */
+ * (8 MHz). Safe to call when already fast. The _from_isr variant expects
+ * interrupts to be off, and does not retry a failed start before the next
+ * slow clock; bsp_power_full_clock() retries it. */
 bool bsp_power_full_clock(void);
 bool bsp_power_full_clock_from_isr(void);
 

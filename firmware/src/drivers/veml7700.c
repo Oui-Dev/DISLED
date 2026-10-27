@@ -16,8 +16,13 @@
 
 /* ALS_CONF_0: ALS_GAIN x2 (bits 12:11), ALS_IT 400 ms (bits 9:6),
  * persistence 1, interrupt off. ALS_SD, bit 0, shuts the sensor down. */
-#define CONF_ON       ((0x1u << 11) | (0x2u << 6))
+#define CONF_GAIN_X2  (0x1u << 11)
+#define CONF_IT_400MS (0x2u << 6)
+#define CONF_ON       (CONF_GAIN_X2 | CONF_IT_400MS)
 #define CONF_SHUTDOWN (CONF_ON | 0x1u)
+
+/* veml7700_lux_milli() holds for this gain and integration time only. */
+_Static_assert(VEML7700_INTEGRATION_MS == 400u, "CONF_ON sets ALS_IT to 400 ms");
 
 static bool write_register(uint8_t reg, uint16_t value)
 {

@@ -102,7 +102,7 @@ static const char *const string_table[] = {
 };
 
 /* Longest string: the 24-digit serial number. */
-#define STRING_MAX_CHARS 32u
+#define STRING_MAX_CHARS BSP_UID_HEX_CHARS
 static uint16_t desc_string[1u + STRING_MAX_CHARS];
 
 const uint8_t *tud_descriptor_device_cb(void)

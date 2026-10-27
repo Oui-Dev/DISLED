@@ -76,16 +76,22 @@ static void configure_peripheral(void)
         .I2C_Ack = I2C_Ack_Enable,
         .I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit,
     };
-    I2C_Init(BOARD_I2C, &init);
-    I2C_Cmd(BOARD_I2C, ENABLE);
+    I2C_Init(BOARD_I2C, &init); /* also enables the peripheral */
+}
+
+/* Releases the bus and resets the peripheral: at start-up, and after a
+ * failed transfer so that the next one starts clean whatever went wrong. */
+static void recover(void)
+{
+    release_bus();
+    configure_peripheral();
 }
 
 void i2c_bus_init(uint32_t speed_hz)
 {
     s_speed_hz = speed_hz;
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
-    release_bus();
-    configure_peripheral();
+    recover();
 }
 
 /* Waits until all the flags of `event` are set. A NACK, a lost arbitration
@@ -125,15 +131,6 @@ static bool wait_bus_free(void)
         }
     }
     return true;
-}
-
-/* Ends a failed transfer: releases the bus and resets the peripheral, so
- * that the next transfer starts clean whatever went wrong. */
-static void recover(void)
-{
-    I2C_Cmd(BOARD_I2C, DISABLE);
-    release_bus();
-    configure_peripheral();
 }
 
 static bool start_write(uint8_t address)
@@ -197,7 +194,6 @@ bool i2c_bus_read_word(uint8_t address, uint8_t reg, uint8_t out[2])
             out[i] = I2C_ReceiveData(BOARD_I2C);
         }
     }
-    I2C_AcknowledgeConfig(BOARD_I2C, ENABLE);
     if (!ok) {
         recover();
     }

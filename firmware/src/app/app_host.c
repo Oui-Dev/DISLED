@@ -67,6 +67,10 @@ static void observe_changes(void)
     if (now.link != USB_LINK_CONFIGURED) {
         s_telemetry_period_ms = 0; /* the host left: stop streaming */
     }
+    if (now.link == USB_LINK_UNCONFIGURED) {
+        /* A suspended host still waits for the result; the next one never asked. */
+        app.self_test_report = false;
+    }
     if (!lamp_state_equal(&now.lamp, &s_seen.lamp)) {
         s_source = app.source;
     } else if (now.link != s_seen.link) {

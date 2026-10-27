@@ -92,7 +92,7 @@ nests.
 - **Faults are reported.** A crash or a failed `DISLED_ASSERT` leaves its
   cause in the backup registers, then the chip resets. A failed assertion
   shows as `mcause` 0x0A55nnnn, nnnn being its source line. The next boot reports
-  the fault in `INFO`, on the console and in `DIAGNOSTICS`. `DIAGNOSTICS`
+  the fault in `INFO` and in `DIAGNOSTICS`. `DIAGNOSTICS`
   also counts boots, watchdog resets and faults since power-up, and gives
   the smallest stack margin (the boot fills the stack with a pattern) and
   error counters.
@@ -116,8 +116,8 @@ on.
 
 | Build | Flash | RAM (2 KB stack included) |
 |---|---|---|
-| debug (HID + CDC console) | 23.4 KB | 4.8 KB |
-| release (HID) | 18.2 KB | 4.1 KB |
+| debug (HID + CDC console) | 23.0 KB | 4.8 KB |
+| release (HID) | 18.0 KB | 4.1 KB |
 
 ### Configuration
 

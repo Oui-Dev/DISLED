@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/* Set in ALS_CONF_0 by veml7700.c, which checks that the two agree. */
 #define VEML7700_INTEGRATION_MS 400u
 
 /* Checks the device ID and powers the sensor on. False if it does not

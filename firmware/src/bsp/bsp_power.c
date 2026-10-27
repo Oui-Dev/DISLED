@@ -28,18 +28,22 @@ static bool wait_for(const volatile uint32_t *reg, uint32_t mask, uint32_t value
     return false;
 }
 
+/* Back on the internal oscillator, which never stops, then the PLL and the
+ * crystal off. The PLL settings stay in CFGR0 for the way back. */
+static void stop_crystal(void)
+{
+    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_HSI;
+    (void)wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_HSI);
+    RCC->CTLR &= ~(RCC_PLLON | RCC_HSEON);
+}
+
 void bsp_power_slow_clock(void)
 {
     if (s_slow) {
         return;
     }
     __disable_irq();
-    /* The internal oscillator never stops: no need to start it. */
-    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_HSI;
-    (void)wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_HSI);
-    /* The PLL settings stay in CFGR0 for the way back. */
-    RCC->CTLR &= ~RCC_PLLON;
-    RCC->CTLR &= ~RCC_HSEON;
+    stop_crystal();
     /* 8 MHz / 8: the core and the buses run at 1 MHz (APB1 at 250 kHz). */
     RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV8;
     SystemCoreClock = HSI_VALUE / 8u;
@@ -58,22 +62,23 @@ bool bsp_power_full_clock_from_isr(void)
     RCC->CFGR0 = (RCC->CFGR0 & ~RCC_HPRE) | RCC_HPRE_DIV1;
     SystemCoreClock = HSI_VALUE;
     bsp_time_core_clock_changed();
-    /* No longer slow, even if the crystal fails below: the next suspend must
-     * slow the core down again, and the next interrupt not retry. */
+    /* Cleared even if the crystal fails below, so that the next interrupt
+     * does not wait for it again: bsp_power_full_clock() retries it. */
     s_slow = false;
 
     RCC->CTLR |= RCC_HSEON;
-    if (!wait_for(&RCC->CTLR, RCC_HSERDY, RCC_HSERDY)) {
-        RCC->CTLR &= ~RCC_HSEON;
-        return false;
+    bool ok = wait_for(&RCC->CTLR, RCC_HSERDY, RCC_HSERDY);
+    if (ok) {
+        RCC->CTLR |= RCC_PLLON;
+        ok = wait_for(&RCC->CTLR, RCC_PLLRDY, RCC_PLLRDY);
     }
-    RCC->CTLR |= RCC_PLLON;
-    if (!wait_for(&RCC->CTLR, RCC_PLLRDY, RCC_PLLRDY)) {
-        RCC->CTLR &= ~(RCC_PLLON | RCC_HSEON);
-        return false;
+    if (ok) {
+        RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_PLL;
+        ok = wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_PLL);
     }
-    RCC->CFGR0 = (RCC->CFGR0 & ~RCC_SW) | RCC_SW_PLL;
-    if (!wait_for(&RCC->CFGR0, RCC_SWS, RCC_SWS_PLL)) {
+    if (!ok) {
+        /* The core stays at 8 MHz, as SystemCoreClock says. */
+        stop_crystal();
         return false;
     }
     SystemCoreClock = PLL_HZ;
@@ -84,6 +89,11 @@ bool bsp_power_full_clock_from_isr(void)
 bool bsp_power_full_clock(void)
 {
     __disable_irq();
+    /* A crystal that failed in the wake-up interrupt gets another try:
+     * without the PLL, USB has no clock, so no suspend would come to retry. */
+    if ((RCC->CFGR0 & RCC_SWS) != RCC_SWS_PLL) {
+        s_slow = true;
+    }
     const bool fast = bsp_power_full_clock_from_isr();
     __enable_irq();
     return fast;
