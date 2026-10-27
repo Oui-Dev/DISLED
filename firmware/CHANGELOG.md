@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.0.0](https://github.com/Oui-Dev/DISLED/compare/fw-v0.3.2...fw-v1.0.0) (2026-10-27)
+
+
+### 🩹 Fixes
+
+* **firmware:** confirm a large light change again when it turns back ([4524281](https://github.com/Oui-Dev/DISLED/commit/452428173c7db2ada0f8c10bd69811f73090d256))
+* **firmware:** count only a self-test touch made during the blue glow ([14975a4](https://github.com/Oui-Dev/DISLED/commit/14975a4ba84396f59aa199791dd3b39b72543d61))
+* **firmware:** end a busy wait of a millisecond or more ([5dcd7be](https://github.com/Oui-Dev/DISLED/commit/5dcd7be22859fd0fbeb38c837c4661663a154106))
+* **firmware:** keep room for the answers while the host reads nothing ([43a6664](https://github.com/Oui-Dev/DISLED/commit/43a66643dd13d95189937fdadf5daf6cad6bfc0f))
+* **firmware:** keep the time from going back when the core clock changes ([a196a2f](https://github.com/Oui-Dev/DISLED/commit/a196a2ff6d553b46955cc280dd6179518827dfae))
+* **firmware:** leave the configured state on a USB bus reset ([40921bf](https://github.com/Oui-Dev/DISLED/commit/40921bf604e7855143349b653c8426c67fdf9a11))
+* **firmware:** pass the self-test touch on a press, not on a hand near the lid ([c758348](https://github.com/Oui-Dev/DISLED/commit/c75834896c51b173bac9e4fe89f032ba0c4a8a39))
+* **firmware:** read a touch sample before freeing its slot to the interrupt ([0fdea55](https://github.com/Oui-Dev/DISLED/commit/0fdea5551252add732e620f6d2ee1747c891b704))
+* **firmware:** report a self-test cut short by a USB suspend ([347ee82](https://github.com/Oui-Dev/DISLED/commit/347ee82f006ee419531d1439a4f3251ac5a93a8d))
+* **firmware:** start the crystal at boot with bounded waits ([e910f08](https://github.com/Oui-Dev/DISLED/commit/e910f0887de2bffbb6d9829b658baefc8bb963d0))
+* **firmware:** stop the telemetry when the host leaves, whatever else changed ([cd03fdc](https://github.com/Oui-Dev/DISLED/commit/cd03fdc7480588d9962cf66a763b4ea80baa0d58))
+* **firmware:** suspend at 1 MHz again after the crystal fails on resume ([ff4b41f](https://github.com/Oui-Dev/DISLED/commit/ff4b41fe458e57b55ba76040b9320d9f520a0132))
+
+
+### 🔥 Performance
+
+* **firmware:** drive the LED timer through its registers ([1894b19](https://github.com/Oui-Dev/DISLED/commit/1894b1915a768756aa9829d8de97ecb81aea51ab))
+* **firmware:** leave the console string out of release builds ([2ff6eaa](https://github.com/Oui-Dev/DISLED/commit/2ff6eaae6ba4fc3be2bef4ac96c985c9c3626200))
+* **firmware:** power the touch ADC down during USB suspend ([98469c3](https://github.com/Oui-Dev/DISLED/commit/98469c3c2e7ef6a02779923cfa3966d3c160dec9))
+* **firmware:** set the pin modes without the SDK's GPIO_Init ([3715390](https://github.com/Oui-Dev/DISLED/commit/3715390ff8ced025b1c16c06487e539d3e753d40))
+* **firmware:** set the touch ADC up through its registers ([3f02c0e](https://github.com/Oui-Dev/DISLED/commit/3f02c0e40932911212d0b87a7268060e54c5d941))
+* **firmware:** stop timing the tasks ([e68bcdd](https://github.com/Oui-Dev/DISLED/commit/e68bcdd63e801f9c4606d3cebb4878f7db6a6c6c))
+* **firmware:** use known clock values and read the reset cause once ([48aaa06](https://github.com/Oui-Dev/DISLED/commit/48aaa0607107514d471672745a29d16d6eec6728))
+
+
+### 💅 Refactors
+
+* **firmware:** count touch timeouts as lost samples ([6de3832](https://github.com/Oui-Dev/DISLED/commit/6de3832b3a4bd4b497f3bd7cd8694f88cd97ad6e))
+* **firmware:** drop a touch delta clamp that never applies ([4305d27](https://github.com/Oui-Dev/DISLED/commit/4305d2787e567f32e8a14a945aea5cef6c586eeb))
+* **firmware:** drop the logs that repeat what the host receives ([5c724ab](https://github.com/Oui-Dev/DISLED/commit/5c724ab9a7c23790b629dfb807bc39e1dce8fff8))
+* **firmware:** drop the self-test touch_ready input ([b5f5110](https://github.com/Oui-Dev/DISLED/commit/b5f511088cd2ffe3ea5e2e0c35e890db2cd306f1))
+* **firmware:** drop the unused %i and %X formats ([843c1e0](https://github.com/Oui-Dev/DISLED/commit/843c1e0f1aa0abb98fcccb849f8b2c007652501b))
+* **firmware:** keep only the console commands the app does not offer ([4e77d29](https://github.com/Oui-Dev/DISLED/commit/4e77d293fe6b8ed3caef2af5a6a4110278e8b4be))
+* **firmware:** let lamp_fsm_long_press return nothing ([164bc4e](https://github.com/Oui-Dev/DISLED/commit/164bc4ee69ec8a58e2d218f5ff83ec2b2b4ebf1c))
+* **firmware:** read the light sensor at a single range ([62480bb](https://github.com/Oui-Dev/DISLED/commit/62480bb8cf7b6c8290dbcff749572d5ba846df03))
+* **firmware:** remove the unused TinyUSB millisecond hook ([884d29e](https://github.com/Oui-Dev/DISLED/commit/884d29ee8c4fddd836cd25ff362fb8205b1b02af))
+* **firmware:** reset the I2C bus after any failed transfer ([f9c4522](https://github.com/Oui-Dev/DISLED/commit/f9c452201efcbd34f83819200f892e749797318c))
+* **firmware:** streamline and harden core components ([b32bfb6](https://github.com/Oui-Dev/DISLED/commit/b32bfb6940878bbf04b1625f040eec808909efb0))
+* **firmware:** track the touch baseline zones with one timer ([b45c960](https://github.com/Oui-Dev/DISLED/commit/b45c960d44455d57b06315803dcaf9581a246567))
+
 ## [0.3.2](https://github.com/Oui-Dev/DISLED/compare/fw-v0.3.1...fw-v0.3.2) (2026-10-26)
 
 

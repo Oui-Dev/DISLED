@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.1.1](https://github.com/Oui-Dev/DISLED/compare/app-v1.1.0...app-v1.1.1) (2026-10-27)
+
+
+### 🩹 Fixes
+
+* **app:** apply the settings at the first INFO of a connection only ([4669424](https://github.com/Oui-Dev/DISLED/commit/4669424d65c432081e866fffc8001ede538506b8))
+* **app:** cancel the lamp update when its window closes ([5a97cf8](https://github.com/Oui-Dev/DISLED/commit/5a97cf843233a334fe37fa9eddfd6e057bb59238))
+* **app:** grant the devtools shortcut to debug builds only and tighten the CSP ([6e3397c](https://github.com/Oui-Dev/DISLED/commit/6e3397c8d0b6eea87a35157199ff584f38d6d287))
+* **app:** hide the popup instead of closing it on Alt+F4 ([f6c531e](https://github.com/Oui-Dev/DISLED/commit/f6c531ed2f8eafb09a00a5542a7038c21488fe68))
+* **app:** keep a saved setting from failing when the lamp leaves ([ec63c53](https://github.com/Oui-Dev/DISLED/commit/ec63c537136bbd2851182c4f05316151ea5e11d4))
+* **app:** keep backend values from being overwritten by older command answers ([e866b20](https://github.com/Oui-Dev/DISLED/commit/e866b2063b74d6d688e4d71a323ba6b91200c14b))
+* **app:** let a second install click join the running lamp update ([7307b9f](https://github.com/Oui-Dev/DISLED/commit/7307b9f6b18cf20ec312551103d1f0a46077716b))
+* **app:** open Diagnostics from the tray menu off the event loop ([ef7f5b7](https://github.com/Oui-Dev/DISLED/commit/ef7f5b7f42d564076b0416434ee8728eda8e8a53))
+* **app:** run one update check at a time ([2f1a4c0](https://github.com/Oui-Dev/DISLED/commit/2f1a4c01dd318efd28350da04cad85000d3aa3ad))
+* **app:** show when the telemetry stream is off with figures on show ([e5ecce7](https://github.com/Oui-Dev/DISLED/commit/e5ecce757aee8dc1c97d454fc7960cda2390c1c6))
+* **app:** time out stalled update requests ([fd16a77](https://github.com/Oui-Dev/DISLED/commit/fd16a779f39b0d88003d60f322fae9dff22324d8))
+
+
+### 🔥 Performance
+
+* **app:** format each sample's uptime once and pause hidden charts ([902cd6f](https://github.com/Oui-Dev/DISLED/commit/902cd6f62f783a47311478f459104c6dac8322f2))
+* **app:** save CSV recordings off the event loop ([e153bbb](https://github.com/Oui-Dev/DISLED/commit/e153bbba293af7f6829bf469dfc96a7829dc9f7c))
+* **app:** send the telemetry to the Diagnostics window only ([511bd92](https://github.com/Oui-Dev/DISLED/commit/511bd92e88a9a358bf6e7d44b5119a63ad671497))
+* **app:** write the settings file once the changes settle ([ba940c5](https://github.com/Oui-Dev/DISLED/commit/ba940c52409074f0098dc1f8cdc4feaeadab6501))
+
 ## [1.1.0](https://github.com/Oui-Dev/DISLED/compare/app-v1.0.1...app-v1.1.0) (2026-10-26)
 
 
