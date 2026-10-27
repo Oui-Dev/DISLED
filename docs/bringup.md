@@ -36,11 +36,12 @@ Equipment:
 - [ ] The lamp fades in green.
 - [ ] Device Manager or System Information shows `1209:0002` with a HID
       interface and a serial port.
-- [ ] Console `info`: crystal **ok**, a 24-digit UID, reset cause 2 (pin)
-      after RESET or 3 (software) right after a flash, light sensor
-      **present**, 0 touch timeouts.
 - [ ] The desktop app (`npm run tauri dev` in `app/`) connects and shows the
       firmware version.
+- [ ] Its Diagnostics window shows a 24-digit serial (the chip UID) and the
+      reset cause "reset pin" after RESET, or "software" right after a
+      flash. Under Health: crystal **Running**, light sensor **Present**,
+      0 touch samples lost.
 
 ## 4. LED
 
@@ -153,9 +154,10 @@ for instance, at room temperature.
 
 ## 9. Diagnostics and self-test
 
-- [ ] Console `diag`: no faults, a stack margin above 1 KB, no I2C errors.
-- [ ] Console `selftest`: check the four colors by eye and touch the lid
-      while it glows blue. The log shows `results 0x0f`, and the lamp is
+- [ ] Diagnostics window, Health: no crashes, a stack margin above 1 KB, no
+      I2C errors.
+- [ ] Self-test tab, **Run the self-test**: check the four colors by eye and
+      touch the lid while it glows blue. Every check passes, and the lamp is
       back in its previous state.
 
 ## 10. Release firmware

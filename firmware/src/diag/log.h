@@ -19,7 +19,6 @@ typedef enum {
 #if DISLED_DEBUG
 
 __attribute__((format(printf, 2, 3))) void log_write(log_level_t level, const char *format, ...);
-void log_set_level(log_level_t level);
 
 #define LOG_ERROR(...) log_write(LOG_LEVEL_ERROR, __VA_ARGS__)
 #define LOG_WARN(...)  log_write(LOG_LEVEL_WARN, __VA_ARGS__)

@@ -15,19 +15,9 @@
 
 #define LINE_MAX 128u
 
-static log_level_t s_level = LOG_LEVEL_INFO;
-
-void log_set_level(log_level_t level)
-{
-    s_level = level;
-}
-
 void log_write(log_level_t level, const char *format, ...)
 {
     static const char tags[] = { 'E', 'W', 'I' };
-    if (level > s_level) {
-        return;
-    }
 
     char line[LINE_MAX];
     const uint32_t now = bsp_time_ms();

@@ -70,7 +70,7 @@ full power.
 
 ## Self-test (production)
 
-On request from the host or the debug console, the lamp shows red,
+On request from the host, the lamp shows red,
 green, blue and warm white for 1.5 s each, checks that the light sensor
 answers and that the idle touch reading is plausible, then glows blue and
 waits up to 10 s for a touch on the lid. It then restores its state and

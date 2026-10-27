@@ -244,7 +244,7 @@ static void handle_command(const uint8_t payload[PROTO_REPORT_SIZE], uint32_t no
             send_diagnostics(command.seq);
             break;
         case PROTO_CMD_SELF_TEST:
-            (void)app_start_self_test(command.seq);
+            app_start_self_test(command.seq);
             send_ack(command.seq, command.type);
             break;
         default:

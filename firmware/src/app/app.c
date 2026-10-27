@@ -214,16 +214,12 @@ static rgb16_t run_self_test(uint32_t now_ms)
     return self_test_color(&app.self_test, now_ms);
 }
 
-bool app_start_self_test(uint8_t seq)
+void app_start_self_test(uint8_t seq)
 {
-    if (self_test_running(&app.self_test)) {
-        return false;
-    }
     app.self_test_seq = seq;
     app.self_test_report = false;
     self_test_start(&app.self_test, bsp_time_ms());
     LOG_INFO("self-test: started");
-    return true;
 }
 
 static void task_output(uint32_t now_ms)

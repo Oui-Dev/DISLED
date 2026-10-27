@@ -58,8 +58,8 @@ extern app_context_t app;
 bool app_apply_request(const lamp_request_t *request);
 
 /* Starts the self-test; its result is reported to the host with `seq`.
- * Returns false if one is already running. */
-bool app_start_self_test(uint8_t seq);
+ * Never while one runs: the host gets BUSY instead. */
+void app_start_self_test(uint8_t seq);
 
 /* Name of a USB link state, for the logs and the console. */
 const char *app_link_name(usb_link_t link);

@@ -11,13 +11,8 @@
 #include <string.h>
 
 #include "app_context.h"
-#include "bsp/board.h"
-#include "bsp/bsp.h"
-#include "bsp/bsp_uid.h"
 #include "diag/console.h"
-#include "diag/log.h"
 #include "drivers/led_pwm.h"
-#include "drivers/tkey.h"
 #include "time_utils.h"
 
 static uint32_t s_watch_period_ms;
@@ -40,27 +35,6 @@ static bool parse_u32(const char *text, uint32_t *value)
     }
     *value = result;
     return true;
-}
-
-static void cmd_info(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    char uid[BSP_UID_HEX_CHARS + 1u];
-    bsp_uid_hex(uid);
-    uid[BSP_UID_HEX_CHARS] = '\0';
-    console_printf("firmware %s, board rev %u, uid %s\r\n", DISLED_FW_VERSION_STRING,
-                   (unsigned)BOARD_REVISION, uid);
-    console_printf("reset cause %u, crystal %s\r\n", (unsigned)app.reset_cause,
-                   app.crystal_ok ? "ok" : "FAILED");
-    if (app.fault.valid) {
-        console_printf("last fault: mcause 0x%08lx mepc 0x%08lx mtval 0x%08lx\r\n",
-                       (unsigned long)app.fault.mcause, (unsigned long)app.fault.mepc,
-                       (unsigned long)app.fault.mtval);
-    }
-    console_printf("touch: %lu samples lost, %lu timeouts; light sensor %s\r\n",
-                   (unsigned long)tkey_overruns(), (unsigned long)tkey_timeouts(),
-                   app.als.present ? "present" : "ABSENT");
 }
 
 /* Prints sub-ticks as ticks with two decimals. */
@@ -161,62 +135,11 @@ static void cmd_cap(int argc, char **argv)
     cmd_state(0, NULL);
 }
 
-static void cmd_log(int argc, char **argv)
-{
-    uint32_t level = 0;
-    if (argc != 2 || !parse_u32(argv[1], &level) || level > LOG_LEVEL_INFO) {
-        console_printf("usage: log <0 error .. 2 info>\r\n");
-        return;
-    }
-    log_set_level((log_level_t)level);
-}
-
-static void cmd_reset(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    bsp_system_reset();
-}
-
-static void cmd_diag(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    proto_diagnostics_t d;
-    app_diagnostics(&d);
-    console_printf("since power-up: %u boots, %u watchdog resets, %u faults\r\n", (unsigned)d.boots,
-                   (unsigned)d.watchdog_resets, (unsigned)d.faults);
-    if (d.faults != 0u) {
-        console_printf("last fault: mcause %08lx mepc %08lx mtval %08lx\r\n",
-                       (unsigned long)d.fault_mcause, (unsigned long)d.fault_mepc,
-                       (unsigned long)d.fault_mtval);
-    }
-    console_printf("since boot: stack free %u B, %u I2C errors, %u light sensor probes\r\n",
-                   (unsigned)d.stack_free_min, (unsigned)d.i2c_errors,
-                   (unsigned)d.light_sensor_probes);
-    console_printf("touch: %u samples lost, %u recalibrations; %u USB suspends; bias %d%%\r\n",
-                   (unsigned)d.touch_samples_lost, (unsigned)d.touch_recalibrations,
-                   (unsigned)d.usb_suspends, (int)d.auto_bias);
-}
-
-static void cmd_selftest(int argc, char **argv)
-{
-    (void)argc;
-    (void)argv;
-    console_printf(app_start_self_test(0) ? "self-test started: watch the colors, then touch\r\n"
-                                          : "a self-test is already running\r\n");
-}
-
 static const console_command_t commands[] = {
-    { "info", "", "firmware, chip and fault information", cmd_info },
     { "state", "", "lamp, USB and LED output", cmd_state },
     { "set", "<what> [value]", "change the lamp like the host does", cmd_set },
     { "watch", "<ms>|off", "print touch, light and current periodically", cmd_watch },
     { "cap", "<mA>|off", "override the LED current cap (thermal test only)", cmd_cap },
-    { "diag", "", "diagnostics counters (as sent to the host)", cmd_diag },
-    { "selftest", "", "run the production self-test", cmd_selftest },
-    { "log", "<0-2>", "log level", cmd_log },
-    { "reset", "", "restart the firmware", cmd_reset },
 };
 
 void app_console_init(void)
