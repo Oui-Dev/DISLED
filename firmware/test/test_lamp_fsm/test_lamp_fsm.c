@@ -57,9 +57,9 @@ static void test_short_press_is_ignored_while_off(void)
 static void test_long_press_turns_off_then_back_on_with_last_color(void)
 {
     lamp.color = LAMP_COLOR_ORANGE;
-    TEST_ASSERT_TRUE(lamp_fsm_long_press(&lamp));
+    lamp_fsm_long_press(&lamp);
     TEST_ASSERT_FALSE(lamp.on);
-    TEST_ASSERT_TRUE(lamp_fsm_long_press(&lamp));
+    lamp_fsm_long_press(&lamp);
     TEST_ASSERT_TRUE(lamp.on);
     TEST_ASSERT_EQUAL(LAMP_COLOR_ORANGE, lamp.color);
 }

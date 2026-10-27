@@ -110,7 +110,8 @@ static void task_touch(uint32_t now_ms)
         } else if (event == TOUCH_EVENT_SHORT_PRESS) {
             changed = lamp_fsm_short_press(&app.lamp);
         } else if (event == TOUCH_EVENT_LONG_PRESS) {
-            changed = lamp_fsm_long_press(&app.lamp);
+            lamp_fsm_long_press(&app.lamp);
+            changed = true;
         }
         if (changed) {
             app.source = CHANGE_SOURCE_TOUCH;

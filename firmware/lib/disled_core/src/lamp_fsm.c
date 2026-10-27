@@ -36,10 +36,9 @@ bool lamp_fsm_short_press(lamp_state_t *state)
     return true;
 }
 
-bool lamp_fsm_long_press(lamp_state_t *state)
+void lamp_fsm_long_press(lamp_state_t *state)
 {
     state->on = !state->on;
-    return true;
 }
 
 bool lamp_request_is_valid(const lamp_request_t *request)
