@@ -33,8 +33,7 @@ static void check_idle(self_test_t *t, const self_test_inputs_t *in)
         t->results |= SELF_TEST_LIGHT_OK;
     }
     t->touch_baseline = in->touch_baseline;
-    if (in->touch_ready && in->touch_baseline >= cfg->touch_idle_min &&
-        in->touch_baseline <= cfg->touch_idle_max) {
+    if (in->touch_baseline >= cfg->touch_idle_min && in->touch_baseline <= cfg->touch_idle_max) {
         t->results |= SELF_TEST_TOUCH_IDLE_OK;
     }
 }

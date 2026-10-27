@@ -40,6 +40,7 @@ void touch_detector_init(touch_detector_t *td, const touch_config_t *config)
 void touch_detector_recalibrate(touch_detector_t *td)
 {
     td->state = TOUCH_STATE_CALIBRATING;
+    td->baseline_q8 = 0;
     td->calibration_sum = 0;
     td->calibration_count = 0;
     reset_contact(td);

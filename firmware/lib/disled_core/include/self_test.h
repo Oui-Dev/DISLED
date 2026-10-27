@@ -36,8 +36,7 @@ typedef struct {
 typedef struct {
     bool light_present; /* the sensor answers */
     uint32_t lux_centi;
-    bool touch_ready; /* the touch detector has a baseline */
-    uint16_t touch_baseline;
+    uint16_t touch_baseline; /* 0 while the detector calibrates: not plausible */
     int16_t touch_delta_permille;
     /* The detector sees a press. A drop alone is no touch: a hand above
      * the lid reaches the press threshold too. */

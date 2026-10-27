@@ -89,7 +89,8 @@ void touch_detector_init(touch_detector_t *td, const touch_config_t *config);
  * short press at its release, a long press while the finger is still down. */
 touch_event_t touch_detector_feed(touch_detector_t *td, uint16_t raw, uint32_t now_ms);
 
-/* Builds a new baseline from the next readings, firing no gesture until then. */
+/* Builds a new baseline from the next readings, firing no gesture until then.
+ * The baseline reads 0 meanwhile, as before the first calibration. */
 void touch_detector_recalibrate(touch_detector_t *td);
 
 /* The current press (TOUCH_STATE_PRESSED) fires no gesture. */

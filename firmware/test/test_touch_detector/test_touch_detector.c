@@ -94,6 +94,18 @@ static void test_calibration_sets_the_baseline(void)
     TEST_ASSERT_EQUAL_INT16(0, touch_detector_delta_permille(&td));
 }
 
+static void test_recalibration_drops_the_old_baseline(void)
+{
+    /* As at the end of a USB suspend: the old baseline may no longer hold. */
+    touch_detector_recalibrate(&td);
+    TEST_ASSERT_EQUAL(TOUCH_STATE_CALIBRATING, touch_detector_state(&td));
+    TEST_ASSERT_EQUAL_UINT16(0, touch_detector_baseline(&td));
+
+    hold(BASELINE + 100u, 200);
+    TEST_ASSERT_EQUAL(TOUCH_STATE_IDLE, touch_detector_state(&td));
+    TEST_ASSERT_EQUAL_UINT16(BASELINE + 100u, touch_detector_baseline(&td));
+}
+
 static void test_flat_signal_gives_no_event(void)
 {
     hold(BASELINE, 5000);
@@ -273,6 +285,7 @@ int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_calibration_sets_the_baseline);
+    RUN_TEST(test_recalibration_drops_the_old_baseline);
     RUN_TEST(test_flat_signal_gives_no_event);
     RUN_TEST(test_short_press_fires_once_on_release);
     RUN_TEST(test_blip_shorter_than_debounce_is_ignored);

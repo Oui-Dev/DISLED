@@ -26,7 +26,6 @@ void setUp(void)
     in = (self_test_inputs_t){
         .light_present = true,
         .lux_centi = 12345,
-        .touch_ready = true,
         .touch_baseline = 2620,
         .touch_delta_permille = 0,
         .touch_pressed = false,

@@ -180,7 +180,6 @@ static rgb16_t run_self_test(uint32_t now_ms)
     const self_test_inputs_t measurements = {
         .light_present = app.als.present,
         .lux_centi = (app.als.lux_milli + 5u) / 10u,
-        .touch_ready = touch_detector_state(&app.touch) != TOUCH_STATE_CALIBRATING,
         .touch_baseline = touch_detector_baseline(&app.touch),
         .touch_delta_permille = touch_detector_delta_permille(&app.touch),
         .touch_pressed = touch_detector_state(&app.touch) == TOUCH_STATE_PRESSED,
