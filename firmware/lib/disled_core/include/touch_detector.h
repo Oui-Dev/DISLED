@@ -30,6 +30,13 @@ typedef enum {
     TOUCH_STATE_PRESSED,
 } touch_state_t;
 
+/* Where the idle signal lies, for the baseline. */
+typedef enum {
+    TOUCH_ZONE_NONE = 0, /* the baseline follows the signal */
+    TOUCH_ZONE_NEAR,     /* proximity band: baseline frozen up to object_ms */
+    TOUCH_ZONE_INVERTED, /* above the baseline: frozen up to inverted_ms */
+} touch_zone_t;
+
 typedef struct {
     uint16_t window_samples;     /* raw samples averaged per window */
     uint8_t calibration_windows; /* windows averaged into the first baseline */
@@ -71,10 +78,8 @@ typedef struct {
     bool long_fired; /* also set by touch_detector_consume() */
     bool rearming;   /* a release happened less than rearm_ms ago */
     uint32_t release_ms;
-    bool inverted;
-    uint32_t inverted_since_ms;
-    bool near; /* in the proximity band, baseline frozen */
-    uint32_t near_since_ms;
+    touch_zone_t zone;
+    uint32_t zone_since_ms;
     uint16_t recalibrations; /* automatic re-baselines since init */
 } touch_detector_t;
 
