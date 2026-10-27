@@ -6,6 +6,7 @@
 #include "bsp.h"
 
 #include "board.h"
+#include "bsp_gpio.h"
 #include "bsp_power.h"
 #include "bsp_time.h"
 #include "ch32.h"
@@ -51,14 +52,8 @@ static void init_clocks(void)
 
 static void init_unused_pins(void)
 {
-    GPIO_InitTypeDef init = {
-        .GPIO_Speed = GPIO_Speed_2MHz,
-        .GPIO_Mode = GPIO_Mode_AIN,
-    };
-    init.GPIO_Pin = BOARD_UNUSED_PINS_A;
-    GPIO_Init(GPIOA, &init);
-    init.GPIO_Pin = BOARD_UNUSED_PINS_B;
-    GPIO_Init(GPIOB, &init);
+    bsp_gpio_config(GPIOA, BOARD_UNUSED_PINS_A, GPIO_Mode_AIN, GPIO_Speed_2MHz);
+    bsp_gpio_config(GPIOB, BOARD_UNUSED_PINS_B, GPIO_Mode_AIN, GPIO_Speed_2MHz);
 }
 
 void bsp_init(void)

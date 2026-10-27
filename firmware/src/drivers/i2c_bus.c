@@ -6,6 +6,7 @@
 #include "i2c_bus.h"
 
 #include "bsp/board.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "time_utils.h"
@@ -29,13 +30,9 @@ static bool fail(void)
  * sending and release SDA, then a STOP condition resets its state. */
 static void release_bus(void)
 {
-    GPIO_InitTypeDef pins = {
-        .GPIO_Pin = BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN,
-        .GPIO_Speed = GPIO_Speed_10MHz,
-        .GPIO_Mode = GPIO_Mode_Out_OD,
-    };
     GPIO_SetBits(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN);
-    GPIO_Init(BOARD_I2C_PORT, &pins);
+    bsp_gpio_config(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN, GPIO_Mode_Out_OD,
+                    GPIO_Speed_10MHz);
     for (int i = 0; i < 9; i++) {
         if (GPIO_ReadInputDataBit(BOARD_I2C_PORT, BOARD_I2C_SDA_PIN) == Bit_SET) {
             break;
@@ -68,12 +65,8 @@ static void configure_peripheral(void)
     I2C_SoftwareResetCmd(BOARD_I2C, ENABLE);
     I2C_SoftwareResetCmd(BOARD_I2C, DISABLE);
 
-    GPIO_InitTypeDef pins = {
-        .GPIO_Pin = BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN,
-        .GPIO_Speed = GPIO_Speed_10MHz,
-        .GPIO_Mode = GPIO_Mode_AF_OD,
-    };
-    GPIO_Init(BOARD_I2C_PORT, &pins);
+    bsp_gpio_config(BOARD_I2C_PORT, BOARD_I2C_SCL_PIN | BOARD_I2C_SDA_PIN, GPIO_Mode_AF_OD,
+                    GPIO_Speed_10MHz);
 
     I2C_InitTypeDef init = {
         .I2C_ClockSpeed = s_speed_hz,

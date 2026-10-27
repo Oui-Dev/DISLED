@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "bsp/board.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/bsp_time.h"
 #include "bsp/ch32.h"
 #include "led_pwm.h"
@@ -43,12 +44,7 @@ void tkey_init(const tkey_config_t *config)
     s_discharge_time = config->discharge_time;
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-    GPIO_InitTypeDef pin = {
-        .GPIO_Pin = BOARD_TOUCH_PIN,
-        .GPIO_Speed = GPIO_Speed_2MHz,
-        .GPIO_Mode = GPIO_Mode_AIN,
-    };
-    GPIO_Init(BOARD_TOUCH_PORT, &pin);
+    bsp_gpio_config(BOARD_TOUCH_PORT, BOARD_TOUCH_PIN, GPIO_Mode_AIN, GPIO_Speed_2MHz);
 
     ADC_InitTypeDef adc = {
         .ADC_Mode = ADC_Mode_Independent,

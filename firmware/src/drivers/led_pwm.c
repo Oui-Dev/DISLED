@@ -9,6 +9,7 @@
 
 #include "bsp/board.h"
 #include "bsp/bsp.h"
+#include "bsp/bsp_gpio.h"
 #include "bsp/ch32.h"
 #include "pwm_dither.h"
 
@@ -71,13 +72,9 @@ void led_pwm_init(uint32_t frequency_hz)
     TIM_Cmd(BOARD_LED_TIMER, ENABLE);
 
     /* Hand the pins to the timer only now, with every duty at 0 %. */
-    GPIO_InitTypeDef pins = { .GPIO_Speed = GPIO_Speed_2MHz, .GPIO_Mode = GPIO_Mode_AF_PP };
-    pins.GPIO_Pin = BOARD_LED_RED_PIN;
-    GPIO_Init(BOARD_LED_RED_PORT, &pins);
-    pins.GPIO_Pin = BOARD_LED_GREEN_PIN;
-    GPIO_Init(BOARD_LED_GREEN_PORT, &pins);
-    pins.GPIO_Pin = BOARD_LED_BLUE_PIN;
-    GPIO_Init(BOARD_LED_BLUE_PORT, &pins);
+    bsp_gpio_config(BOARD_LED_RED_PORT, BOARD_LED_RED_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
+    bsp_gpio_config(BOARD_LED_GREEN_PORT, BOARD_LED_GREEN_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
+    bsp_gpio_config(BOARD_LED_BLUE_PORT, BOARD_LED_BLUE_PIN, GPIO_Mode_AF_PP, GPIO_Speed_2MHz);
 
     TIM_ClearITPendingBit(BOARD_LED_TIMER, TIM_IT_Update);
     TIM_ITConfig(BOARD_LED_TIMER, TIM_IT_Update, ENABLE);
