@@ -281,6 +281,8 @@ fn main() {
             handle.state::<LocaleState>().replace(locale);
             tray::create(&handle, locale)?;
             windows::hide_popup_on_blur_or_close(&handle);
+            #[cfg(target_os = "macos")]
+            windows::make_popup_a_panel(&handle);
             app.manage(DeviceHandle::spawn(handle.clone()));
             // A new version most often follows an update, whose restart keeps
             // the arguments, `--autostart` included. It checks again at once

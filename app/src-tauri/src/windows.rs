@@ -70,6 +70,10 @@ fn place(window: &WebviewWindow) {
 pub fn show_popup(app: &AppHandle) {
     if let Some(window) = popup(app) {
         place(&window);
+        #[cfg(target_os = "macos")]
+        if panel::show(&window) {
+            return;
+        }
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -97,6 +101,16 @@ pub fn hide_popup_on_blur_or_close(app: &AppHandle) {
             }
             _ => {}
         });
+    }
+}
+
+/// Makes the popup a panel on macOS, so that it opens over an app in full
+/// screen too. Should that fail, it stays a plain window, which shows
+/// everywhere else.
+#[cfg(target_os = "macos")]
+pub fn make_popup_a_panel(app: &AppHandle) {
+    if let Some(window) = popup(app) {
+        panel::convert(&window);
     }
 }
 
@@ -226,5 +240,61 @@ pub fn open_lamp_update(app: &AppHandle) {
             }
         });
         let _ = window.set_focus();
+    }
+}
+
+/// The popup as a panel on macOS. A plain window belongs to a single Space,
+/// and macOS shows none over an app in full screen; giving it the keyboard
+/// also activated the app, upon which macOS can switch to another Space. A
+/// panel joins every Space, full screen ones included, and takes the keyboard
+/// without activating the app.
+#[cfg(target_os = "macos")]
+mod panel {
+    use tauri::{Manager, WebviewWindow};
+    use tauri_nspanel::{CollectionBehavior, Panel, StyleMask};
+
+    tauri_nspanel::tauri_panel! {
+        panel!(PopupPanel {
+            config: {
+                // A window without a title bar refuses the keyboard otherwise.
+                can_become_key_window: true
+            }
+        })
+    }
+
+    /// Turns the popup into the panel, from the setup, on the main thread.
+    pub fn convert(window: &WebviewWindow) {
+        let Ok(panel) = PopupPanel::from_window(window) else {
+            return;
+        };
+        // Should AppKit refuse it, the panel still shows, and a click in it
+        // activates the app.
+        let _ = panel.add_style_mask(StyleMask::empty().nonactivating_panel().into());
+        panel.set_collection_behavior(
+            CollectionBehavior::new()
+                .can_join_all_spaces()
+                .full_screen_auxiliary()
+                .into(),
+        );
+        window.app_handle().manage(panel);
+    }
+
+    /// Brings the panel to the front with the keyboard, on the main thread
+    /// that AppKit requires. False until the setup has made the panel, while
+    /// a second launch can already ask for the popup.
+    pub fn show(window: &WebviewWindow) -> bool {
+        if window.try_state::<PopupPanel>().is_none() {
+            return false;
+        }
+        let popup = window.clone();
+        let _ = window.run_on_main_thread(move || {
+            if let Some(panel) = popup.try_state::<PopupPanel>() {
+                // In front before taking the keyboard, or it stays off the
+                // Space of an app in full screen.
+                panel.order_front_regardless();
+                panel.make_key_window();
+            }
+        });
+        true
     }
 }

@@ -34,6 +34,11 @@ semver.workspace = true
 # The languages of the system, for the "System" language setting.
 sys-locale = "^0.3.2"
 
+# The popup as a panel, the only kind of window that macOS shows over an app
+# in full screen.
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri-nspanel = "^2.1.1"
+
 # The tests write the TypeScript types of the front end with ts-rs, set up
 # in .cargo/config.toml. Release builds never compile ts-rs.
 [dev-dependencies]
