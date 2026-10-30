@@ -114,11 +114,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2022
+          - os: windows-2025
             bundles: nsis
-          - os: macos-14 # Apple Silicon
-            bundles: app,dmg # Tauri makes the updater archive from the app bundle
-          - os: ubuntu-22.04 # an old glibc, so that the .deb installs on older systems too
+          - os: macos-15
+            bundles: app,dmg
+          - os: ubuntu-24.04 # the .deb may need up to its glibc 2.39
             bundles: deb
     runs-on: ${{ matrix.os }}
     env:
