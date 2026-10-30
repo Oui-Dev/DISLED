@@ -15,15 +15,15 @@ tauri-build = "^2.7.4"
 [dependencies]
 disled-protocol.workspace = true
 tauri = { version = "^2.12.5", features = ["tray-icon"] }
-tauri-plugin-dialog = "^2.8.3"
+tauri-plugin-dialog = "^2.8.4"
 tauri-plugin-positioner = { version = "^2.4.0", features = ["tray-icon"] }
 tauri-plugin-store = "^2.5.0"
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 hidapi.workspace = true
 tauri-plugin-autostart = "^2.7.0"
-tauri-plugin-single-instance = "^2.5.4"
-tauri-plugin-updater = "^2.14.0"
+tauri-plugin-single-instance = "^2.5.5"
+tauri-plugin-updater = "^2.14.1"
 tauri-plugin-opener = "^2.7.2"
 # Lamp firmware updates: the signed firmware files and wchisp, shared with
 # the production tool, then the HTTP client and the TLS stack of the updater.
