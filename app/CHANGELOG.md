@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/Oui-Dev/DISLED/compare/app-v1.1.1...app-v1.1.2) (2026-10-30)
+
+
+### 🩹 Fixes
+
+* **app:** adress dependencies vulnerabilities ([0292c3c](https://github.com/Oui-Dev/DISLED/commit/0292c3cfc725742d76b56fc6994569869991ca8b))
+* **app:** make popup a macOS panel to prevent issue on full screen apps ([77d6591](https://github.com/Oui-Dev/DISLED/commit/77d65917361d230dafdc647b6878fab6fbf324a0))
+
 ## [1.1.1](https://github.com/Oui-Dev/DISLED/compare/app-v1.1.0...app-v1.1.1) (2026-10-27)
 
 
