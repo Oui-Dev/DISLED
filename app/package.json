@@ -33,7 +33,7 @@
     "@biomejs/biome": "^2.6.4",
     "@iconify-json/lucide": "^1.2.149",
     "@intlify/unplugin-vue-i18n": "^11.2.8",
-    "@tauri-apps/cli": "2.11.5",
+    "@tauri-apps/cli": "2.12.4",
     "@types/node": "^24",
     "@vitejs/plugin-vue": "^6.0.10",
     "typescript": "^6.0.3",
