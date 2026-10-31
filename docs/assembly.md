@@ -62,7 +62,7 @@ and the layer heights. The foot file holds the shape only.
   profile). Another material or another white shifts them: check them on
   the closed lamp ([bringup.md](bringup.md#4-led)).
 - **The clips.** Two hooks of the cube, on the left and right walls, go
-  0.35 mm into the base, so the fit depends on the accuracy of the printer.
+  0.4 mm into the base, so the fit depends on the accuracy of the printer.
   Try the empty cube on its base: it clicks in on both sides, holds when
   the lamp is lifted by the cube, and comes off when pinched on its grip
   stripes.

@@ -4,6 +4,34 @@ The versions of the DISLED enclosure, written by hand
 ([docs/releasing.md](../../docs/releasing.md#hardware-releases)). The
 dates are those of the designs.
 
+## 1.1.0 (2026-10-31)
+
+Enclosure V3, with clips that keep their hold.
+
+### 🚀 Enhancements
+
+* **top, bottom:** scarf seams on the contours and the holes hide the
+  seam line.
+
+### 🩹 Fixes
+
+* **clips:** the hooks and their pockets hold by a 45° face, up from 8°.
+  The 8° faces printed as unsupported overhangs, and the 0.05 mm preload
+  could only be taken by crushing their edges: the box got loose with
+  use. At 45°, the faces print clean, and the same preload bends the
+  skirt by 0.05 mm.
+* **clips:** the hooks stand out 0.55 mm, up from 0.5, and go 0.4 mm into
+  the base, up from 0.35. They sit 0.2 mm higher on the skirt. The wall
+  behind the pockets keeps its 1.1 mm, which the slicer prints with three
+  lines, so the pockets leave no mark on the outside of the base.
+* **clips:** the cube still comes off when pinched on its grip stripes,
+  and now also with a firm pull.
+
+### ⚠ Compatibility
+
+* A 1.1.0 cube fits a 1.0.0 base, with a firmer hold. A 1.0.0 cube
+  barely holds in a 1.1.0 base.
+
 ## 1.0.0 (2026-10-24)
 
 Enclosure V2, reworked after the first prototype with the board.
