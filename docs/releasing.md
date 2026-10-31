@@ -58,7 +58,15 @@ in the release pull request (step 3).
 The release stays a draft, with its tag, and nothing is published.
 
 - If the cause is outside the code (runner, secret), re-run the failed
-  jobs, and the publication follows.
+  jobs, and the publication follows. Not all the jobs: release-please
+  would run again, find the release already created, and skip every
+  build.
+- If an app build can no longer be re-run, because all the jobs were
+  re-run or GitHub has retired the runner, run the `release` workflow by
+  hand (Actions, release, Run workflow) with the version of the draft. It
+  builds the tag again with the workflow of `main`, replaces the files
+  already attached and publishes the release as the latest one, so only
+  for the latest app version.
 - If the code must change, fix it on `main`, and the fix goes out with the
   next version. Leave the unpublished draft as it is.
 - Never delete a release or a tag made by release-please. It finds the

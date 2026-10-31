@@ -14,6 +14,14 @@ name: release
 on:
   push:
     branches: [main]
+  # Builds the app draft of a version again and publishes it, when its
+  # failed jobs can no longer be re-run (docs/releasing.md).
+  workflow_dispatch:
+    inputs:
+      app-version:
+        description: Version of the app draft release (X.Y.Z)
+        type: string
+        required: true
 
 permissions:
   contents: write
@@ -36,10 +44,11 @@ jobs:
     outputs:
       firmware-released: ${{ steps.release.outputs['firmware--release_created'] }}
       firmware-tag: ${{ steps.release.outputs['firmware--tag_name'] }}
-      app-released: ${{ steps.release.outputs['app--release_created'] }}
-      app-tag: ${{ steps.release.outputs['app--tag_name'] }}
+      app-released: ${{ inputs.app-version && 'true' || steps.release.outputs['app--release_created'] }}
+      app-tag: ${{ inputs.app-version && format('app-v{0}', inputs.app-version) || steps.release.outputs['app--tag_name'] }}
     steps:
       - id: release
+        if: github.event_name == 'push'
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
