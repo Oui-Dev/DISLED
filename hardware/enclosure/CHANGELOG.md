@@ -4,6 +4,13 @@ The versions of the DISLED enclosure, written by hand
 ([docs/releasing.md](../../docs/releasing.md#hardware-releases)). The
 dates are those of the designs.
 
+## 1.1.1 (2026-10-31)
+
+### 🚀 Enhancements
+
+* **bottom:** variable layer heights, as for the top. The part itself does
+  not change.
+
 ## 1.1.0 (2026-10-31)
 
 Enclosure V3, with clips that keep their hold.

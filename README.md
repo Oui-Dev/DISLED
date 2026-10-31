@@ -6,7 +6,7 @@ colors and the brightness follows the room light. The desktop app also sets
 warm white or a fixed brightness, and updates the lamp
 ([user guide](docs/user-guide.md)).
 
-> **Status.** Released: the board (PCB 1.0.0), the enclosure (1.1.0), the
+> **Status.** Released: the board (PCB 1.0.0), the enclosure (1.1.1), the
 > tray app with lamp updates, and the production tool. Still to come: the
 > lamp's own USB IDs, requested from pid.codes, and the tests of the LED
 > current and of the heat. Binaries
