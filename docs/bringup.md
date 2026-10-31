@@ -7,8 +7,14 @@ firmware again.
 
 Equipment:
 
-- a multimeter, wired in series through a USB breakout or an opened cable,
-  with a temperature probe if available;
+- a multimeter, with a temperature probe if available. It reads the LED
+  current across the series resistors (step 4), with no cable to open;
+- optional, for the current of the whole board (steps 2, 4 and 7),
+  something that puts the multimeter in series on VBUS: a USB-A to USB-C
+  cable with only its red wire, VBUS, cut, or a USB-C passthrough board
+  whose VBUS runs through a jumper. A USB tester can do the same if it is
+  accurate to about 0.1 mA at low current: many are about 1 mA off, too
+  much for the 2.5 mA of USB suspend;
 - a Windows PC and a MacBook, both with an earthed monitor that has a USB
   hub;
 - a phone charger, a phone with a light-meter app, and a flashlight.
@@ -23,8 +29,8 @@ Equipment:
 
 ## 2. First power and bootloader
 
-- [ ] Plug in through the current meter. The blank chip draws a few mA, and
-      nothing heats.
+- [ ] Plug in, through the passthrough board and the multimeter if you
+      have them. The blank chip draws a few mA, and nothing heats.
 - [ ] Enter the bootloader ([flashing.md](flashing.md#enter-the-bootloader)).
       The WCH device appears as `4348:55E0` or `1A86:55E0`.
 - [ ] On Windows, once per computer, install the WinUSB driver with Zadig
@@ -57,11 +63,24 @@ Equipment:
 - [ ] `set level 1` is still visible in a dark room, and `set level 100` is
       bright.
 - [ ] `state` shows sensible duties and the estimated current.
-- [ ] On a **phone charger**, with no host, the lamp works, and the total
-      current stays under 100 mA with warm white at 100 %, since the LED
-      cap is 70 mA without a host. Measured: ____ mA.
-- [ ] On a **computer**, warm white at 100 % stays capped at an estimated
-      125 mA for the LED. Measured total: ____ mA.
+- [ ] Measure the LED current with the lamp open (the LED is bright
+      without the cube) and the multimeter on DC volts, across one series
+      resistor per channel: R15 for red, R13 for green (20 Ω each) and R17
+      for blue (10 Ω). The meter averages the PWM, so the voltage divided
+      by the resistance gives the mean current of the channel. With the
+      multimeter in series on VBUS instead, the LED current of all the
+      channels is the total minus the total with the lamp off.
+- [ ] On a **computer**, red then green at 100 % (`set color`, `set
+      level`) stay within the worst-case currents that the cap counts,
+      `app_power_config.full_scale_ma`: red ____ mA (at most 86), green
+      ____ mA (at most 63).
+- [ ] Warm white at 100 % stays under the 125 mA cap: red ____ + green
+      ____ + blue ____ = ____ mA, against ____ mA estimated by `state`.
+- [ ] On a **phone charger**, with no host, the lamp works. Two short
+      touches give red, and the flashlight on the sensor window takes it to
+      the top of the automatic range: red ____ mA, under the 70 mA cap.
+      Through the passthrough board, the whole board draws ____ mA, under
+      100 mA.
 
 ## 5. Light sensor
 
@@ -130,11 +149,16 @@ thresholds before flashing them.
 
 ## 7. USB power states
 
-- [ ] Put the computer to sleep: the lamp turns off within a second and
-      touches do nothing.
-- [ ] Asleep, the board draws at most 2.5 mA, the most USB allows a
-      suspended device. Measured: ____ mA. Above that, a deeper clock
-      divider in `firmware/src/bsp/bsp_power.c` is the first remedy.
+- [ ] Put the computer to sleep: the lamp turns off as soon as the computer
+      suspends its USB ports, within a second on Windows and a little later
+      on a Mac, and touches do nothing.
+- [ ] Optional: asleep, the board draws at most 2.5 mA, the most USB
+      allows a suspended device. No host checks it, and it only matters to
+      a laptop that powers its ports while asleep. Measure it through the
+      passthrough board, with the multimeter on its mA range from the
+      start: a change of range opens the circuit and restarts the board.
+      Measured: ____ mA. Above that, a deeper clock divider in
+      `firmware/src/bsp/bsp_power.c` is the first remedy.
 - [ ] Wake it up: the previous color and brightness come back, and the app
       reconnects.
 
@@ -143,13 +167,22 @@ thresholds before flashing them.
 Close the enclosure and put the lamp where it gets warmest, on a monitor
 for instance, at room temperature.
 
+- [ ] Tape the probe, the thermocouple of the multimeter or any
+      thermometer with a wire probe, inside the lid above the LED, and
+      bring its wire out of the closed lamp. A second run with the probe on
+      the LED body or on R15/R16, the red resistors, the warmest in warm
+      white, gives their temperature.
 - [ ] `cap 300` (debug builds only) lifts the current cap. Then
-      `set color 3` and `set level 100` give warm white at full power,
-      about 1.1 W.
-- [ ] After one hour, measure: LED body ____ °C, R17/R18 ____ °C, inside
-      of the lid ____ °C, room ____ °C.
+      `set color 3` and `set level 100` give warm white at full duty, the
+      color that draws the most: about 140 mA for the LED at worst, under
+      0.9 W for the whole board.
+- [ ] After one hour, measure: inside of the lid ____ °C, LED body ____ °C,
+      R15/R16 ____ °C, room ____ °C. Without a thermometer, a rough check:
+      the cube is barely warm to the touch, and it has neither warped nor
+      loosened on its base.
 - [ ] The LED must stay under 70 °C and the PLA under 45 °C. If they hold,
-      the configured cap may rise. Otherwise, lower it.
+      the configured cap may rise, so that warm white reaches 100 %.
+      Otherwise, lower it.
 - [ ] Run `cap off` at the end.
 
 ## 9. Diagnostics and self-test

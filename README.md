@@ -8,8 +8,8 @@ warm white or a fixed brightness, and updates the lamp
 
 > **Status.** Released: the board (PCB 1.0.0), the enclosure (1.0.0), the
 > tray app with lamp updates, and the production tool. Still to come: the
-> lamp's own USB IDs, requested from pid.codes, and the tests on a Mac, of
-> the LED current, of the current in USB suspend and of the heat. Binaries
+> lamp's own USB IDs, requested from pid.codes, and the tests of the LED
+> current and of the heat. Binaries
 > and hardware files are on the
 > [releases page](https://github.com/Oui-Dev/DISLED/releases).
 
@@ -28,7 +28,7 @@ warm white or a fixed brightness, and updates the lamp
 | [`crates/`](crates/) | Rust code shared by the app and the tools: protocol codec, flashing |
 | [`protocol/`](protocol/) | USB HID protocol specification and shared test vectors |
 | [`hardware/`](hardware/) | PCB (EasyEDA Pro, STEP) and enclosure (3MF) design files |
-| [`docs/`](docs/) | User guide, architecture, behavior, flashing, bring-up, production and releases |
+| [`docs/`](docs/) | User guide, assembly, architecture, behavior, flashing, bring-up, production and releases |
 
 ## Hardware at a glance
 
@@ -43,6 +43,7 @@ warm white or a fixed brightness, and updates the lamp
 | I want to… | Read |
 |---|---|
 | Use the lamp and install its app | [docs/user-guide.md](docs/user-guide.md) |
+| Build a lamp from the design files | [docs/assembly.md](docs/assembly.md) |
 | Contribute a change | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Build, test and flash the firmware | [firmware/README.md](firmware/README.md), [docs/flashing.md](docs/flashing.md) |
 | Run the desktop app from source | [app/README.md](app/README.md) |
